@@ -11,34 +11,39 @@ Une solution complète pour gérer efficacement vos commandes Ko-fi, vos produit
 
 ## ✨ Fonctionnalités
 
+### 🌐 **Multi-canal**
+- **Ko-fi** : commandes/paiements synchronisés automatiquement via webhook
+- **Reel** : ventes physiques/personnalisées saisies manuellement, avec suivi de la boutique partenaire
+- D'autres canaux pourront être ajoutés par la suite (le canal est une donnée, pas du code en dur)
+
 ### 📊 **Dashboard Principal**
 - Vue d'ensemble avec métriques visuelles
 - Revenus total, commandes en attente, alertes stock
+- Répartition des revenus par canal
 - Commandes récentes et produits populaires
-- Interface responsive et accessible
 
 ### 🛒 **Gestion des Commandes**
-- Ajout, modification et suivi des commandes
-- Filtrage par statut et recherche avancée
+- Ajout manuel (Reel, ou Ko-fi de secours) et suivi des commandes
+- Filtrage par canal, par statut et recherche avancée
 - Gestion des statuts (En attente → Expédiée → Livrée)
-- Interface tableau claire et intuitive
 
 ### 🎯 **Catalogue Produits**
 - Gestion complète du stock
 - Alertes stock faible automatiques
 - Catégorisation et recherche
-- Interface grille responsive
 
 ### 📦 **Modules Futurs**
 - Intégration expéditions La Poste
 - Rapports et analyses détaillées
-- Synchronisation Ko-fi automatique
+- Nouveaux canaux de vente
 
 ## 🚀 Installation Rapide
 
 ### Prérequis
-- Node.js 16+ 
+- Node.js 16+
 - npm ou yarn
+- Un compte [Supabase](https://supabase.com) (gratuit) pour la base de données
+- Un compte Ko-fi avec l'accès aux webhooks (Settings → API)
 
 ### Étapes d'installation
 
@@ -49,10 +54,36 @@ cd atelier-creatif-dashboard
 
 # 2. Installer les dépendances
 npm install
-
-# 3. Démarrer en mode développement
-npm start
 ```
+
+### Configuration du backend (Supabase + Ko-fi)
+
+Les commandes Ko-fi arrivent via un webhook, et les ventes Reel sont saisies manuellement : les deux ont besoin d'un stockage partagé. Ce projet utilise des **fonctions serverless Vercel** (`/api`) + **Supabase** (Postgres géré) pour ça.
+
+1. **Créer le projet Supabase**
+   - Sur [app.supabase.com](https://app.supabase.com), crée un nouveau projet.
+   - Dans l'éditeur SQL du projet, exécute le contenu de [`supabase/schema.sql`](supabase/schema.sql) — ça crée les tables `orders` et `products`, et insère les produits de démonstration.
+   - Dans *Project Settings → API*, récupère l'**URL du projet** et la **clé `service_role`** (⚠️ pas la clé `anon`, celle-ci reste secrète côté serveur uniquement).
+
+2. **Configurer le webhook Ko-fi**
+   - Sur Ko-fi, va dans *Settings → API* pour récupérer ton **verification token**.
+   - Une fois le projet déployé (voir [DEPLOYMENT.md](DEPLOYMENT.md)), configure l'URL de webhook Ko-fi sur `https://<ton-domaine>/api/kofi-webhook`.
+
+3. **Variables d'environnement**
+   - Copie `.env.example` vers `.env.local` (déjà ignoré par git) et remplis :
+     - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
+     - `KOFI_VERIFICATION_TOKEN`
+     - `DASHBOARD_ACCESS_TOKEN` : une clé que tu choisis toi-même, elle protège l'accès au dashboard et aux données clients (à saisir une fois dans l'écran de connexion du dashboard).
+   - En production, définis les mêmes variables dans Vercel (*Project Settings → Environment Variables*).
+
+### Démarrer en développement
+
+```bash
+# Lance le front ET les fonctions /api ensemble (nécessaire pour tester le webhook et les données)
+npm run dev
+```
+
+`npm run dev` utilise `vercel dev` (via `npx`) : la première exécution peut te demander de te connecter à Vercel et de lier le projet — un test complet de bout en bout (webhook → Supabase → dashboard) nécessite ça. Pour ne travailler que sur l'UI sans backend, `npm start` reste disponible mais les appels `/api/*` échoueront.
 
 🎉 **Votre dashboard sera accessible sur http://localhost:3000**
 
@@ -88,21 +119,38 @@ npm start
 ## 🛠️ Structure du Projet
 
 ```
+api/                        # Fonctions serverless Vercel (backend)
+├── lib/
+│   ├── supabaseClient.js   # Client Supabase (clé service_role, côté serveur uniquement)
+│   ├── auth.js             # Vérification du token d'accès dashboard
+│   └── kofiMapper.js       # Traduction payload Ko-fi -> commande
+├── kofi-webhook.js         # Réception des webhooks Ko-fi
+├── orders.js                # GET (liste, filtre ?channel=) / POST (création manuelle)
+├── orders/[id].js           # PATCH (statut, tracking)
+├── products.js               # GET / POST
+└── products/[id].js          # PATCH / DELETE
+
+supabase/
+└── schema.sql              # Schéma des tables orders/products à exécuter sur Supabase
+
 src/
-├── App.js              # Composant principal
-├── index.js            # Point d'entrée React
-├── index.css           # Styles Tailwind + custom
-└── reportWebVitals.js  # Monitoring performances
+├── App.js                  # Assemblage (auth, routing des sections)
+├── api/client.js           # Wrapper fetch (auth, gestion des erreurs)
+├── hooks/                  # useOrders, useProducts (fetch + mutations)
+├── components/
+│   ├── ui/                 # Card, Button, Badge, ChannelBadge
+│   ├── layout/              # Sidebar, Header
+│   ├── auth/AccessGate.js  # Écran de connexion (token dashboard)
+│   ├── dashboard/           # Dashboard + répartition par canal
+│   ├── orders/               # Liste des commandes + formulaire de saisie
+│   └── products/             # Catalogue produits
+├── index.js                 # Point d'entrée React
+└── index.css                 # Styles Tailwind + custom
 
 public/
-├── index.html          # Template HTML
-├── manifest.json       # PWA config
-└── favicon.ico         # Icône
-
-config/
-├── tailwind.config.js  # Configuration Tailwind
-├── postcss.config.js   # PostCSS setup
-└── package.json        # Dépendances NPM
+├── index.html               # Template HTML
+├── manifest.json             # PWA config
+└── favicon.ico               # Icône
 ```
 
 ## ⚙️ Personnalisation
@@ -117,17 +165,7 @@ colors: {
 ```
 
 ### Ajouter des Produits
-```javascript
-// src/App.js - Modifier initialProducts
-{
-  id: '4',
-  name: 'Nouveau Produit',
-  category: 'Votre Catégorie',
-  price: 12.50,
-  stock: 15,
-  image: '🎨'
-}
-```
+Les produits vivent maintenant dans Supabase, pas dans le code. Ajoute une ligne dans la table `products` (via l'éditeur Supabase, ou `POST /api/products` avec ton token d'accès en `Authorization: Bearer ...`).
 
 ### Personnaliser le Branding
 1. Remplacez "Atelier Créatif" par votre nom

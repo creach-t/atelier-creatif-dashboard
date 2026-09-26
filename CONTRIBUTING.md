@@ -19,9 +19,11 @@ cd atelier-creatif-dashboard
 # Installer les dépendances
 npm install
 
-# Démarrer en mode développement
+# Démarrer en mode développement (front seul, sans backend)
 npm start
 ```
+
+> Pour travailler sur le webhook Ko-fi ou les routes `/api/*`, il faut le backend (Supabase + `vercel dev`) : voir la section [Configuration du backend](README.md#configuration-du-backend-supabase--ko-fi) du README.
 
 ## 📋 Types de Contributions
 
@@ -68,7 +70,7 @@ feat: ajouter fonctionnalité de calcul des frais de port
 fix: corriger l'affichage des commandes en attente
 docs: mettre à jour le guide d'installation
 style: améliorer l'espacement des cards
-refactor: optimiser les hooks de localStorage
+refactor: extraire la logique de mapping Ko-fi dans un module dédié
 ```
 
 Types de commits :

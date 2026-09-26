@@ -56,21 +56,21 @@ npm run build
 
 ### Variables d'Environnement
 
-Créez un fichier `.env.production` :
+Le backend (webhook Ko-fi + API du dashboard) tourne en fonctions serverless Vercel dans `/api`. Ces variables doivent être définies dans **Vercel → Project Settings → Environment Variables** (jamais préfixées `REACT_APP_`, sinon elles seraient exposées dans le bundle client) :
 
 ```bash
-# API Ko-fi (optionnel)
-REACT_APP_KOFI_TOKEN=your_kofi_token_here
+# Supabase — Project Settings > API
+SUPABASE_URL=https://xxxxxxxxxxxx.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=service_role_key_ici
 
-# Analytics (optionnel)
-REACT_APP_GA_TRACKING_ID=GA_TRACKING_ID
+# Ko-fi — Settings > API sur ko-fi.com
+KOFI_VERIFICATION_TOKEN=ton_verification_token_kofi
 
-# URL de base pour les API
-REACT_APP_API_BASE_URL=https://api.votre-domaine.com
-
-# Mode de stockage
-REACT_APP_STORAGE_MODE=localStorage # ou 'api'
+# Clé d'accès au dashboard (choisie par toi, longue et aléatoire)
+DASHBOARD_ACCESS_TOKEN=choisis-une-cle-secrete-longue
 ```
+
+Voir [`README.md`](README.md#configuration-du-backend-supabase--ko-fi) pour la procédure complète (création du projet Supabase, exécution de `supabase/schema.sql`, configuration du webhook côté Ko-fi).
 
 ### Optimisations de Build
 
@@ -249,10 +249,14 @@ npm run build
 - Contrôler les chemins relatifs
 - Vérifier la console pour erreurs JS
 
-**localStorage non persistant :**
-- Vérifier les permissions cookies
-- Tester en navigation privée
-- Implémenter fallback API
+**Le dashboard demande la clé d'accès en boucle / erreurs 401 :**
+- Vérifier que `DASHBOARD_ACCESS_TOKEN` est bien défini sur Vercel et correspond à la clé saisie
+- La clé d'accès n'est stockée qu'en `localStorage` du navigateur — un mode navigation privée ou des cookies bloqués peuvent la faire perdre entre deux sessions
+
+**Les commandes Ko-fi n'arrivent pas :**
+- Vérifier l'URL du webhook côté Ko-fi (`https://<domaine>/api/kofi-webhook`)
+- Vérifier que `KOFI_VERIFICATION_TOKEN` correspond exactement à celui affiché sur Ko-fi
+- Consulter les logs de la fonction dans Vercel (Project → Deployments → Functions)
 
 ---
 
