@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
 import { Dashboard } from './components/dashboard/Dashboard';
@@ -8,32 +8,34 @@ import { Customers } from './components/customers/Customers';
 import { Reports } from './components/reports/Reports';
 import { Settings } from './components/settings/Settings';
 import { Login } from './components/auth/Login';
+import { OrderDetailModal } from './components/orders/OrderDetailModal';
+import { ProductDetailModal } from './components/products/ProductDetailModal';
 import { useOrders } from './hooks/useOrders';
 import { useProducts } from './hooks/useProducts';
 import { useCustomers } from './hooks/useCustomers';
+import { computeSoldByName } from './utils/computeSoldByName';
 import { onUnauthorized } from './api/client';
 import { supabase } from './api/supabaseClient';
 
 const CreativeDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [selectedOrderId, setSelectedOrderId] = useState(null);
-  const [selectedProductName, setSelectedProductName] = useState(null);
   const [selectedCustomerName, setSelectedCustomerName] = useState(null);
+  const [editProductName, setEditProductName] = useState(null);
   const [initialOrderStatusFilter, setInitialOrderStatusFilter] = useState(null);
+  // Popups globaux : ouvrir une commande ou un produit ne doit jamais changer d'onglet,
+  // où qu'on clique depuis (Dashboard, notifications, fiche client, rapports...).
+  const [viewingOrder, setViewingOrder] = useState(null);
+  const [viewingProductName, setViewingProductName] = useState(null);
   const { orders, createOrder, updateOrder } = useOrders();
   const { products, createProduct, updateProduct } = useProducts();
   const { customers, createCustomer, updateCustomer } = useCustomers();
 
-  const handleSelectOrder = (order) => {
-    setSelectedOrderId(order.id);
-    setActiveTab('orders');
-  };
+  const soldByName = useMemo(() => computeSoldByName(orders), [orders]);
+  const viewingProduct = viewingProductName ? products.find((p) => p.name === viewingProductName) : null;
 
-  const handleNavigateToProduct = (name) => {
-    setSelectedProductName(name);
-    setActiveTab('products');
-  };
+  const handleViewOrder = (order) => setViewingOrder(order);
+  const handleViewProduct = (name) => setViewingProductName(name);
 
   const handleNavigateToCustomer = (name) => {
     setSelectedCustomerName(name);
@@ -45,6 +47,14 @@ const CreativeDashboard = () => {
     setActiveTab('orders');
   };
 
+  // "Modifier" depuis la fiche (vue) d'un produit : seule action qui change vraiment
+  // d'onglet — c'est une étape volontaire, pas la conséquence d'un simple clic pour regarder.
+  const handleEditProduct = (name) => {
+    setViewingProductName(null);
+    setEditProductName(name);
+    setActiveTab('products');
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
@@ -52,8 +62,8 @@ const CreativeDashboard = () => {
           <Dashboard
             orders={orders}
             products={products}
-            onSelectOrder={handleSelectOrder}
-            onNavigateToProduct={handleNavigateToProduct}
+            onSelectOrder={handleViewOrder}
+            onNavigateToProduct={handleViewProduct}
             onGoToOrders={handleGoToOrders}
             onGoToProducts={() => setActiveTab('products')}
           />
@@ -67,9 +77,7 @@ const CreativeDashboard = () => {
             createOrder={createOrder}
             updateOrder={updateOrder}
             createProduct={createProduct}
-            onNavigateToProduct={handleNavigateToProduct}
-            selectedOrderId={selectedOrderId}
-            onClearSelectedOrder={() => setSelectedOrderId(null)}
+            onViewOrder={handleViewOrder}
             initialStatusFilter={initialOrderStatusFilter}
             onClearInitialStatusFilter={() => setInitialOrderStatusFilter(null)}
           />
@@ -81,8 +89,9 @@ const CreativeDashboard = () => {
             orders={orders}
             createProduct={createProduct}
             updateProduct={updateProduct}
-            selectedProductName={selectedProductName}
-            onClearSelectedProduct={() => setSelectedProductName(null)}
+            onViewProduct={handleViewProduct}
+            editProductName={editProductName}
+            onClearEditProductName={() => setEditProductName(null)}
           />
         );
       case 'customers':
@@ -92,7 +101,7 @@ const CreativeDashboard = () => {
             orders={orders}
             createCustomer={createCustomer}
             updateCustomer={updateCustomer}
-            onSelectOrder={handleSelectOrder}
+            onSelectOrder={handleViewOrder}
             selectedCustomerName={selectedCustomerName}
             onClearSelectedCustomer={() => setSelectedCustomerName(null)}
           />
@@ -105,8 +114,8 @@ const CreativeDashboard = () => {
             orders={orders}
             products={products}
             customers={customers}
-            updateOrder={updateOrder}
-            onNavigateToProduct={handleNavigateToProduct}
+            onViewOrder={handleViewOrder}
+            onViewProduct={handleViewProduct}
             onNavigateToCustomer={handleNavigateToCustomer}
           />
         );
@@ -124,9 +133,31 @@ const CreativeDashboard = () => {
         onCloseMobile={() => setMobileMenuOpen(false)}
       />
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-        <Header orders={orders} onSelectOrder={handleSelectOrder} onOpenMenu={() => setMobileMenuOpen(true)} activeTab={activeTab} />
+        <Header orders={orders} onSelectOrder={handleViewOrder} onOpenMenu={() => setMobileMenuOpen(true)} activeTab={activeTab} />
         <main className="flex-1 overflow-auto">{renderContent()}</main>
       </div>
+
+      {viewingOrder && (
+        <OrderDetailModal
+          order={viewingOrder}
+          products={products}
+          onUpdate={updateOrder}
+          onNavigateToProduct={(name) => {
+            setViewingOrder(null);
+            handleViewProduct(name);
+          }}
+          onClose={() => setViewingOrder(null)}
+        />
+      )}
+
+      {viewingProduct && (
+        <ProductDetailModal
+          product={viewingProduct}
+          sold={soldByName[viewingProduct.name] || 0}
+          onEdit={() => handleEditProduct(viewingProduct.name)}
+          onClose={() => setViewingProductName(null)}
+        />
+      )}
     </div>
   );
 };

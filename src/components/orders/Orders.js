@@ -5,7 +5,6 @@ import { Button } from '../ui/Button';
 import { Badge, STATUS_LABELS } from '../ui/Badge';
 import { ChannelBadge } from '../ui/ChannelBadge';
 import { OrderForm } from './OrderForm';
-import { OrderDetailModal } from './OrderDetailModal';
 
 const PERIODS = [
   { id: 'all', label: 'Tout' },
@@ -32,9 +31,7 @@ export const Orders = ({
   createOrder,
   updateOrder,
   createProduct,
-  onNavigateToProduct,
-  selectedOrderId,
-  onClearSelectedOrder,
+  onViewOrder,
   initialStatusFilter,
   onClearInitialStatusFilter,
 }) => {
@@ -43,7 +40,6 @@ export const Orders = ({
   const [period, setPeriod] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
-  const [detailOrder, setDetailOrder] = useState(null);
 
   const filteredOrders = useMemo(() => orders.filter((order) => {
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
@@ -53,24 +49,6 @@ export const Orders = ({
       (order.customer_name || '').toLowerCase().includes(term) || order.id.toLowerCase().includes(term);
     return matchesStatus && matchesChannel && matchesSearch && matchesPeriod(order, period);
   }), [orders, statusFilter, channelFilter, searchTerm, period]);
-
-  const openDetail = (order) => setDetailOrder(order);
-  const closeDetail = () => {
-    setDetailOrder(null);
-    onClearSelectedOrder && onClearSelectedOrder();
-  };
-
-  const handleNavigateToProduct = (name) => {
-    closeDetail();
-    onNavigateToProduct(name);
-  };
-
-  // Ouvre automatiquement le détail d'une commande sélectionnée depuis une notification.
-  React.useEffect(() => {
-    if (!selectedOrderId) return;
-    const match = orders.find((o) => o.id === selectedOrderId);
-    if (match) setDetailOrder(match);
-  }, [selectedOrderId, orders]);
 
   // Applique un filtre de statut demandé depuis une autre page (ex: Dashboard -> "Commandes en attente").
   React.useEffect(() => {
@@ -157,7 +135,7 @@ export const Orders = ({
               {filteredOrders.map((order) => (
                 <tr
                   key={order.id}
-                  onClick={() => openDetail(order)}
+                  onClick={() => onViewOrder(order)}
                   className="border-b border-purple-100 hover:bg-purple-25 cursor-pointer transition-colors"
                 >
                   <td className="p-4">
@@ -230,15 +208,6 @@ export const Orders = ({
           createProduct={createProduct}
           onCreate={createOrder}
           onClose={() => setShowForm(false)}
-        />
-      )}
-      {detailOrder && (
-        <OrderDetailModal
-          order={detailOrder}
-          products={products}
-          onUpdate={updateOrder}
-          onNavigateToProduct={handleNavigateToProduct}
-          onClose={closeDetail}
         />
       )}
     </div>

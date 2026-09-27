@@ -2,13 +2,10 @@ import React, { useMemo, useState } from 'react';
 import { Layers, Crown, Package } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { computeReportStats } from '../../utils/computeReportStats';
-import { computeSoldByName } from '../../utils/computeSoldByName';
 import { OverviewTab } from './OverviewTab';
 import { CustomersTab } from './CustomersTab';
 import { ProductsReportTab } from './ProductsReportTab';
-import { ProductDetailModal } from '../products/ProductDetailModal';
 import { CustomerDetailModal } from '../customers/CustomerDetailModal';
-import { OrderDetailModal } from '../orders/OrderDetailModal';
 
 const TABS = [
   { id: 'overview', label: 'Aperçu', icon: Layers },
@@ -16,12 +13,10 @@ const TABS = [
   { id: 'products', label: 'Produits', icon: Package },
 ];
 
-export const Reports = ({ orders, products, customers, updateOrder, onNavigateToProduct, onNavigateToCustomer }) => {
+export const Reports = ({ orders, products, customers, onViewOrder, onViewProduct, onNavigateToCustomer }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [yearFilter, setYearFilter] = useState('all');
-  const [viewingProductName, setViewingProductName] = useState(null);
   const [viewingCustomerName, setViewingCustomerName] = useState(null);
-  const [viewingOrder, setViewingOrder] = useState(null);
 
   const years = useMemo(
     () => [...new Set(orders.map((o) => (o.order_date || '').slice(0, 4)).filter(Boolean))].sort().reverse(),
@@ -46,9 +41,6 @@ export const Reports = ({ orders, products, customers, updateOrder, onNavigateTo
     return map;
   }, [orders]);
 
-  const soldByName = useMemo(() => computeSoldByName(orders), [orders]);
-
-  const viewingProduct = viewingProductName ? products.find((p) => p.name === viewingProductName) : null;
   const viewingCustomerStats = viewingCustomerName ? stats.customers.find((c) => c.name === viewingCustomerName) : null;
   const viewingCustomerRecord = viewingCustomerName ? (customers || []).find((c) => c.name === viewingCustomerName) : null;
   const viewingCustomer =
@@ -142,19 +134,7 @@ export const Reports = ({ orders, products, customers, updateOrder, onNavigateTo
         <CustomersTab stats={stats} firstOrderByName={firstOrderByName} onSelectCustomer={setViewingCustomerName} />
       )}
       {activeTab === 'products' && (
-        <ProductsReportTab products={products} orders={filteredOrders} onSelectProduct={setViewingProductName} />
-      )}
-
-      {viewingProduct && (
-        <ProductDetailModal
-          product={viewingProduct}
-          sold={soldByName[viewingProduct.name] || 0}
-          onEdit={() => {
-            setViewingProductName(null);
-            onNavigateToProduct(viewingProductName);
-          }}
-          onClose={() => setViewingProductName(null)}
-        />
+        <ProductsReportTab products={products} orders={filteredOrders} onSelectProduct={onViewProduct} />
       )}
 
       {viewingCustomer && (
@@ -163,26 +143,13 @@ export const Reports = ({ orders, products, customers, updateOrder, onNavigateTo
           orders={orders.filter((o) => o.customer_name === viewingCustomer.name)}
           onSelectOrder={(order) => {
             setViewingCustomerName(null);
-            setViewingOrder(order);
+            onViewOrder(order);
           }}
           onEdit={() => {
             setViewingCustomerName(null);
             onNavigateToCustomer(viewingCustomerName);
           }}
           onClose={() => setViewingCustomerName(null)}
-        />
-      )}
-
-      {viewingOrder && (
-        <OrderDetailModal
-          order={viewingOrder}
-          products={products}
-          onUpdate={updateOrder}
-          onNavigateToProduct={(name) => {
-            setViewingOrder(null);
-            setViewingProductName(name);
-          }}
-          onClose={() => setViewingOrder(null)}
         />
       )}
     </div>

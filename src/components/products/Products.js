@@ -4,7 +4,6 @@ import { Plus, Search, Edit, ExternalLink } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { ProductForm } from './ProductForm';
-import { ProductDetailModal } from './ProductDetailModal';
 import { ProductThumbnail } from '../ui/ProductThumbnail';
 import { computeSoldByName } from '../../utils/computeSoldByName';
 
@@ -33,15 +32,15 @@ export const Products = ({
   orders,
   createProduct,
   updateProduct,
-  selectedProductName,
-  onClearSelectedProduct,
+  onViewProduct,
+  editProductName,
+  onClearEditProductName,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [sortKey, setSortKey] = useState('best_selling');
   const [editingProduct, setEditingProduct] = useState(null);
   const [showForm, setShowForm] = useState(false);
-  const [viewingProduct, setViewingProduct] = useState(null);
 
   const soldByName = useMemo(() => computeSoldByName(orders), [orders]);
 
@@ -74,7 +73,6 @@ export const Products = ({
   };
 
   const openEdit = (product) => {
-    setViewingProduct(null);
     setEditingProduct(product);
     setShowForm(true);
   };
@@ -87,15 +85,18 @@ export const Products = ({
     }
   };
 
-  // Ouvre la fiche (vue) d'un produit sélectionné depuis le détail d'une commande ou le Dashboard —
-  // la modification reste une étape volontaire supplémentaire, pas la conséquence directe du clic.
+  // Ouvre directement l'édition d'un produit demandée depuis la fiche (vue) globale —
+  // cliquer "Modifier" là-bas nous amène ici et saute droit à l'édition.
   useEffect(() => {
-    if (!selectedProductName) return;
-    const match = products.find((p) => p.name === selectedProductName);
-    if (match) setViewingProduct(match);
-    onClearSelectedProduct && onClearSelectedProduct();
+    if (!editProductName) return;
+    const match = products.find((p) => p.name === editProductName);
+    if (match) {
+      setEditingProduct(match);
+      setShowForm(true);
+    }
+    onClearEditProductName && onClearEditProductName();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedProductName, products]);
+  }, [editProductName, products]);
 
   return (
     <div className="p-6 space-y-6">
@@ -179,7 +180,7 @@ export const Products = ({
           const hasPrice = Number(product.price) > 0;
           return (
             <Card key={product.id} className="p-6" hover>
-              <button type="button" onClick={() => setViewingProduct(product)} className="w-full text-center">
+              <button type="button" onClick={() => onViewProduct(product.name)} className="w-full text-center">
                 <ProductThumbnail image={product.image} className="mb-4" />
                 <h4 className="font-semibold text-gray-900 mb-2">{product.name}</h4>
                 <p className="text-sm text-gray-600 mb-3">{product.category}</p>
@@ -218,15 +219,6 @@ export const Products = ({
           <p className="text-sm text-gray-500 col-span-full text-center py-6">Aucun produit trouvé.</p>
         )}
       </div>
-
-      {viewingProduct && (
-        <ProductDetailModal
-          product={viewingProduct}
-          sold={soldByName[viewingProduct.name] || 0}
-          onEdit={() => openEdit(viewingProduct)}
-          onClose={() => setViewingProduct(null)}
-        />
-      )}
 
       {showForm && (
         <ProductForm
