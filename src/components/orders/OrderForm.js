@@ -22,7 +22,7 @@ export const OrderForm = ({ products, onCreate, onRequestCreateProduct, onClose 
   const total = items.reduce((sum, item) => sum + (Number(item.quantity) || 0) * (Number(item.price) || 0), 0);
 
   const filteredCatalog = useMemo(
-    () => (products || []).filter((p) => p.name.toLowerCase().includes(catalogSearch.toLowerCase())).slice(0, 8),
+    () => (products || []).filter((p) => p.name.toLowerCase().includes(catalogSearch.toLowerCase())),
     [products, catalogSearch]
   );
 
@@ -177,7 +177,12 @@ export const OrderForm = ({ products, onCreate, onRequestCreateProduct, onClose 
                     className="w-full pl-9 pr-3 py-2 border border-purple-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
                   />
                 </div>
-                <div className="max-h-40 overflow-y-auto space-y-1">
+                {filteredCatalog.length > 0 && (
+                  <p className="text-[11px] text-gray-400 px-1">
+                    {filteredCatalog.length} produit{filteredCatalog.length > 1 ? 's' : ''}
+                  </p>
+                )}
+                <div className="max-h-60 overflow-y-auto space-y-1">
                   {filteredCatalog.map((p) => (
                     <button
                       key={p.id}
