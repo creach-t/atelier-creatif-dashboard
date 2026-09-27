@@ -24,11 +24,10 @@ export const ImportHistory = ({ onDone, onSkip }) => {
     try {
       const text = await file.text();
       const normalized = normalizeKofiCsvRows(parseCsv(text));
-      const withId = normalized.filter((r) => r.transaction_id);
 
-      if (withId.length === 0) {
+      if (normalized.length === 0) {
         setError(
-          'Aucune colonne "Transaction ID" reconnue dans ce fichier — le format ne correspond peut-être pas à ce qui est attendu, dis-le-moi et on ajuste.'
+          "Aucune transaction reconnue dans ce fichier — le format ne correspond peut-être pas à ce qui est attendu, dis-le-moi et on ajuste."
         );
         return;
       }
@@ -64,14 +63,18 @@ export const ImportHistory = ({ onDone, onSkip }) => {
 
       {fileName && rows && !result && (
         <p className="text-sm text-gray-700 mb-4">
-          {rows.length} ligne(s) détectée(s) dans {fileName}.
+          {rows.length} transaction(s) détectée(s) dans {fileName}
+          {rows.some((r) => r.isOutgoing)
+            ? ` (dont ${rows.filter((r) => r.isOutgoing).length} paiement(s) sortant(s) — abonnements ou achats sur ta propre boutique — qui seront ignorés, ce ne sont pas des ventes)`
+            : ''}
+          .
         </p>
       )}
       {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
       {result && (
         <p className="text-sm text-green-600 mb-4">
-          {result.imported} commande(s) importée(s)
-          {result.skipped > 0 ? `, ${result.skipped} ligne(s) ignorée(s) (sans transaction ID)` : ''}.
+          {result.imported} commande(s) importée(s)/mise(s) à jour
+          {result.skipped > 0 ? `, ${result.skipped} ligne(s) ignorée(s)` : ''}.
         </p>
       )}
 
