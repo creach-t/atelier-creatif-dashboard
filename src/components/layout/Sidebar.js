@@ -45,8 +45,8 @@ export const Sidebar = ({ activeTab, setActiveTab, mobileOpen, onCloseMobile }) 
         />
       )}
       <div
-        className={`w-64 bg-gradient-to-b from-purple-50 to-pink-50 border-r border-purple-100 h-screen relative
-        fixed md:static top-0 left-0 z-40 transition-transform duration-200
+        className={`w-64 bg-gradient-to-b from-purple-50 to-pink-50 border-r border-purple-100 h-screen
+        fixed md:relative top-0 left-0 z-40 transition-transform duration-200
         ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
       >
         <div className="p-6 flex items-center justify-between">
