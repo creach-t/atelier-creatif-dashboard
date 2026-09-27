@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Plus, Trash2, X } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Plus, Trash2, X, Search, Library } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 
@@ -7,7 +7,7 @@ const emptyItem = () => ({ name: '', quantity: 1, price: 0 });
 
 const defaultStatusFor = (channel) => (channel === 'reel' ? 'delivered' : 'pending');
 
-export const OrderForm = ({ onCreate, onClose }) => {
+export const OrderForm = ({ products, onCreate, onRequestCreateProduct, onClose }) => {
   const [channel, setChannel] = useState('reel');
   const [customerName, setCustomerName] = useState('');
   const [shopName, setShopName] = useState('');
@@ -16,8 +16,28 @@ export const OrderForm = ({ onCreate, onClose }) => {
   const [items, setItems] = useState([emptyItem()]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [showCatalogPicker, setShowCatalogPicker] = useState(false);
+  const [catalogSearch, setCatalogSearch] = useState('');
 
   const total = items.reduce((sum, item) => sum + (Number(item.quantity) || 0) * (Number(item.price) || 0), 0);
+
+  const filteredCatalog = useMemo(
+    () => (products || []).filter((p) => p.name.toLowerCase().includes(catalogSearch.toLowerCase())).slice(0, 8),
+    [products, catalogSearch]
+  );
+
+  const addFromCatalog = (product) => {
+    setItems((prev) => {
+      const isOnlyEmptyRow = prev.length === 1 && !prev[0].name.trim();
+      const newItem = { name: product.name, quantity: 1, price: Number(product.price) || 0 };
+      return isOnlyEmptyRow ? [newItem] : [...prev, newItem];
+    });
+    setCatalogSearch('');
+  };
+
+  const handleCreateProduct = () => {
+    onRequestCreateProduct && onRequestCreateProduct(catalogSearch.trim());
+  };
 
   const handleChannelChange = (value) => {
     setChannel(value);
@@ -128,12 +148,67 @@ export const OrderForm = ({ onCreate, onClose }) => {
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
               <label className="block text-sm font-medium text-gray-700">Articles</label>
-              <button type="button" onClick={addItem} className="text-sm text-purple-600 font-medium flex items-center gap-1">
-                <Plus size={14} /> Ajouter
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowCatalogPicker((v) => !v)}
+                  className="text-sm text-purple-600 font-medium flex items-center gap-1"
+                >
+                  <Library size={14} /> Depuis le catalogue
+                </button>
+                <button type="button" onClick={addItem} className="text-sm text-purple-600 font-medium flex items-center gap-1">
+                  <Plus size={14} /> Article libre
+                </button>
+              </div>
             </div>
+
+            {showCatalogPicker && (
+              <div className="mb-3 p-3 border border-purple-200 rounded-xl bg-purple-25 space-y-2">
+                <div className="relative">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    autoFocus
+                    value={catalogSearch}
+                    onChange={(e) => setCatalogSearch(e.target.value)}
+                    placeholder="Rechercher un produit du catalogue..."
+                    className="w-full pl-9 pr-3 py-2 border border-purple-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                  />
+                </div>
+                <div className="max-h-40 overflow-y-auto space-y-1">
+                  {filteredCatalog.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => addFromCatalog(p)}
+                      className="w-full flex items-center justify-between px-3 py-2 text-sm bg-white hover:bg-purple-50 rounded-lg border border-purple-100 text-left"
+                    >
+                      <span className="truncate">{p.name}</span>
+                      <span className="text-gray-500 shrink-0 ml-2">{Number(p.price).toFixed(2)}€</span>
+                    </button>
+                  ))}
+                  {filteredCatalog.length === 0 && (
+                    <div className="text-center py-2">
+                      <p className="text-xs text-gray-500 mb-2">
+                        Aucun produit ne correspond{catalogSearch.trim() ? ` à « ${catalogSearch.trim()} »` : ''}.
+                      </p>
+                      {catalogSearch.trim() && onRequestCreateProduct && (
+                        <button
+                          type="button"
+                          onClick={handleCreateProduct}
+                          className="text-xs font-semibold text-purple-600 hover:underline"
+                        >
+                          Créer « {catalogSearch.trim()} » comme nouveau produit
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2">
               {items.map((item, index) => (
                 <div key={index} className="flex flex-col sm:flex-row gap-2 p-2 sm:p-0 bg-gray-50 sm:bg-transparent rounded-lg">

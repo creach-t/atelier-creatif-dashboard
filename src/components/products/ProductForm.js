@@ -6,7 +6,7 @@ import { ProductThumbnail } from '../ui/ProductThumbnail';
 
 const emptyProduct = { name: '', category: '', price: '', image: '🎁', kofi_url: '' };
 
-export const ProductForm = ({ product, onSave, onClose }) => {
+export const ProductForm = ({ product, initialName, onSave, onClose }) => {
   const isEditing = Boolean(product);
   const [form, setForm] = useState(
     product
@@ -17,7 +17,7 @@ export const ProductForm = ({ product, onSave, onClose }) => {
           image: product.image || '🎁',
           kofi_url: product.kofi_url || '',
         }
-      : emptyProduct
+      : { ...emptyProduct, name: initialName || '' }
   );
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);

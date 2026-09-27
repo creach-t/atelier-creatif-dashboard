@@ -4,7 +4,7 @@ import { apiClient } from '../../api/client';
 import { supabase } from '../../api/supabaseClient';
 
 const menuItems = [
-  { id: 'dashboard', label: 'Dashboard', icon: Home },
+  { id: 'dashboard', label: "Vue d'ensemble", icon: Home },
   { id: 'orders', label: 'Commandes', icon: ShoppingCart },
   { id: 'products', label: 'Produits', icon: Palette },
   { id: 'customers', label: 'Clients', icon: Users },

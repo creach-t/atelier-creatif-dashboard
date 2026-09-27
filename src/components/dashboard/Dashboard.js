@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Eye, DollarSign, Clock, Palette, Truck, ChevronRight } from 'lucide-react';
+import { Eye, DollarSign, Clock, Palette, Truck, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge, STATUS_LABELS } from '../ui/Badge';
@@ -19,10 +19,12 @@ const channelBreakdown = (orders) => {
   });
 };
 
-const monthLabel = (() => {
-  const label = new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+const formatMonthLabel = (date) => {
+  const label = date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
   return label.charAt(0).toUpperCase() + label.slice(1);
-})();
+};
+
+const monthKeyOf = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 
 const ChartTooltip = ({ active, payload, label }) => {
   if (!active || !payload || !payload.length) return null;
@@ -39,10 +41,24 @@ const ChartTooltip = ({ active, payload, label }) => {
 };
 
 export const Dashboard = ({ orders, products, onSelectOrder, onNavigateToProduct, onGoToOrders, onGoToProducts }) => {
-  const currentMonthKey = useMemo(() => new Date().toISOString().slice(0, 7), []);
+  const realNow = useMemo(() => new Date(), []);
+  const realMonthKey = monthKeyOf(realNow);
+  const [viewedDate, setViewedDate] = useState(() => new Date());
+
+  const viewedMonthKey = monthKeyOf(viewedDate);
+  const monthLabel = formatMonthLabel(viewedDate);
+  const isCurrentMonth = viewedMonthKey === realMonthKey;
+
+  const shiftMonth = (delta) => {
+    setViewedDate((d) => {
+      const next = new Date(d.getFullYear(), d.getMonth() + delta, 1);
+      return next;
+    });
+  };
+
   const currentMonthOrders = useMemo(
-    () => orders.filter((order) => (order.order_date || '').startsWith(currentMonthKey)),
-    [orders, currentMonthKey]
+    () => orders.filter((order) => (order.order_date || '').startsWith(viewedMonthKey)),
+    [orders, viewedMonthKey]
   );
 
   const monthRevenue = currentMonthOrders.reduce((sum, order) => sum + Number(order.total || 0), 0);
@@ -76,9 +92,31 @@ export const Dashboard = ({ orders, products, onSelectOrder, onNavigateToProduct
 
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h3 className="text-2xl font-bold text-gray-900">Vue d'ensemble</h3>
-        <p className="text-sm text-gray-500 mt-1">{monthLabel}</p>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => shiftMonth(-1)}
+          className="p-2 text-gray-500 hover:bg-purple-50 rounded-lg shrink-0"
+          aria-label="Mois précédent"
+        >
+          <ChevronLeft size={18} />
+        </button>
+        <p className="text-sm font-semibold text-gray-700 min-w-[11rem] text-center">{monthLabel}</p>
+        <button
+          onClick={() => shiftMonth(1)}
+          disabled={isCurrentMonth}
+          className="p-2 text-gray-500 hover:bg-purple-50 rounded-lg disabled:opacity-30 disabled:hover:bg-transparent shrink-0"
+          aria-label="Mois suivant"
+        >
+          <ChevronRight size={18} />
+        </button>
+        {!isCurrentMonth && (
+          <button
+            onClick={() => setViewedDate(new Date())}
+            className="text-xs font-semibold text-purple-600 hover:underline"
+          >
+            Revenir à ce mois-ci
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

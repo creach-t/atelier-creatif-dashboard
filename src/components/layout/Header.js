@@ -3,7 +3,7 @@ import { Menu } from 'lucide-react';
 import { NotificationBell } from './NotificationBell';
 
 const TITLES = {
-  dashboard: 'Dashboard',
+  dashboard: "Vue d'ensemble",
   orders: 'Commandes',
   products: 'Produits',
   customers: 'Clients',

@@ -4,6 +4,7 @@ import { Plus, Search, Edit, ExternalLink } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { ProductForm } from './ProductForm';
+import { ProductDetailModal } from './ProductDetailModal';
 import { ProductThumbnail } from '../ui/ProductThumbnail';
 import { computeSoldByName } from '../../utils/computeSoldByName';
 
@@ -27,12 +28,23 @@ const ChartTooltip = ({ active, payload }) => {
   );
 };
 
-export const Products = ({ products, orders, createProduct, updateProduct, selectedProductName, onClearSelectedProduct }) => {
+export const Products = ({
+  products,
+  orders,
+  createProduct,
+  updateProduct,
+  selectedProductName,
+  onClearSelectedProduct,
+  draftProductName,
+  onClearDraftProductName,
+}) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [sortKey, setSortKey] = useState('best_selling');
   const [editingProduct, setEditingProduct] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [viewingProduct, setViewingProduct] = useState(null);
+  const [createInitialName, setCreateInitialName] = useState('');
 
   const soldByName = useMemo(() => computeSoldByName(orders), [orders]);
 
@@ -61,10 +73,12 @@ export const Products = ({ products, orders, createProduct, updateProduct, selec
 
   const openCreate = () => {
     setEditingProduct(null);
+    setCreateInitialName('');
     setShowForm(true);
   };
 
   const openEdit = (product) => {
+    setViewingProduct(null);
     setEditingProduct(product);
     setShowForm(true);
   };
@@ -77,17 +91,25 @@ export const Products = ({ products, orders, createProduct, updateProduct, selec
     }
   };
 
-  // Ouvre automatiquement la fiche d'un produit sélectionné depuis le détail d'une commande.
+  // Ouvre la fiche (vue) d'un produit sélectionné depuis le détail d'une commande ou le Dashboard —
+  // la modification reste une étape volontaire supplémentaire, pas la conséquence directe du clic.
   useEffect(() => {
     if (!selectedProductName) return;
     const match = products.find((p) => p.name === selectedProductName);
-    if (match) {
-      setEditingProduct(match);
-      setShowForm(true);
-    }
+    if (match) setViewingProduct(match);
     onClearSelectedProduct && onClearSelectedProduct();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedProductName, products]);
+
+  // Ouvre directement la création avec le nom déjà saisi, demandée depuis le formulaire de commande.
+  useEffect(() => {
+    if (!draftProductName) return;
+    setEditingProduct(null);
+    setCreateInitialName(draftProductName);
+    setShowForm(true);
+    onClearDraftProductName && onClearDraftProductName();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftProductName]);
 
   return (
     <div className="p-6 space-y-6">
@@ -171,7 +193,7 @@ export const Products = ({ products, orders, createProduct, updateProduct, selec
           const hasPrice = Number(product.price) > 0;
           return (
             <Card key={product.id} className="p-6" hover>
-              <div className="text-center">
+              <button type="button" onClick={() => setViewingProduct(product)} className="w-full text-center">
                 <ProductThumbnail image={product.image} className="mb-4" />
                 <h4 className="font-semibold text-gray-900 mb-2">{product.name}</h4>
                 <p className="text-sm text-gray-600 mb-3">{product.category}</p>
@@ -187,22 +209,22 @@ export const Products = ({ products, orders, createProduct, updateProduct, selec
                     {sold} vendu{sold > 1 ? 's' : ''}
                   </span>
                 </div>
-                {product.kofi_url && (
-                  <a
-                    href={product.kofi_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-1 text-xs text-purple-600 hover:underline mb-2"
-                  >
-                    <ExternalLink size={12} />
-                    Voir sur Ko-fi
-                  </a>
-                )}
-                <Button variant="ghost" size="sm" className="w-full" onClick={() => openEdit(product)}>
-                  <Edit size={14} />
-                  Modifier
-                </Button>
-              </div>
+              </button>
+              {product.kofi_url && (
+                <a
+                  href={product.kofi_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-1 text-xs text-purple-600 hover:underline mb-2"
+                >
+                  <ExternalLink size={12} />
+                  Voir sur Ko-fi
+                </a>
+              )}
+              <Button variant="ghost" size="sm" className="w-full" onClick={() => openEdit(product)}>
+                <Edit size={14} />
+                Modifier
+              </Button>
             </Card>
           );
         })}
@@ -211,8 +233,22 @@ export const Products = ({ products, orders, createProduct, updateProduct, selec
         )}
       </div>
 
+      {viewingProduct && (
+        <ProductDetailModal
+          product={viewingProduct}
+          sold={soldByName[viewingProduct.name] || 0}
+          onEdit={() => openEdit(viewingProduct)}
+          onClose={() => setViewingProduct(null)}
+        />
+      )}
+
       {showForm && (
-        <ProductForm product={editingProduct} onSave={handleSave} onClose={() => setShowForm(false)} />
+        <ProductForm
+          product={editingProduct}
+          initialName={createInitialName}
+          onSave={handleSave}
+          onClose={() => setShowForm(false)}
+        />
       )}
     </div>
   );
