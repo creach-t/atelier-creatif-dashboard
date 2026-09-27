@@ -2,7 +2,8 @@ const { getSupabaseClient } = require('./lib/supabaseClient');
 const { mapKofiPayload } = require('./lib/kofiMapper');
 
 // Ko-fi POST en application/x-www-form-urlencoded avec un champ `data`
-// contenant le JSON de l'événement. Vercel parse déjà req.body pour ce content-type.
+// contenant le JSON de l'événement. server.js monte express.urlencoded()
+// avant cette route, donc req.body.data est déjà disponible ici.
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });

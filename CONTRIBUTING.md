@@ -23,7 +23,7 @@ npm install
 npm start
 ```
 
-> Pour travailler sur le webhook Ko-fi ou les routes `/api/*`, il faut le backend (Supabase + `vercel dev`) : voir la section [Configuration du backend](README.md#configuration-du-backend-supabase--ko-fi) du README.
+> Pour travailler sur le webhook Ko-fi ou les routes `/api/*`, il faut le backend (Supabase + `npm run dev`, qui lance le front et l'API Express ensemble) : voir la section [Configuration du backend](README.md#configuration-du-backend-supabase--ko-fi) du README.
 
 ## 📋 Types de Contributions
 

@@ -1,0 +1,37 @@
+# ─────────────────────────────────────────────
+# Stage 1 — Build React app
+# ─────────────────────────────────────────────
+FROM node:22-alpine AS builder
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci
+
+COPY . .
+RUN npm run build
+
+# ─────────────────────────────────────────────
+# Stage 2 — Runtime : Express sert l'API + le build statique
+# ─────────────────────────────────────────────
+FROM node:22-alpine AS production
+
+WORKDIR /app
+
+RUN apk add --no-cache curl
+
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+COPY --from=builder /app/build ./build
+COPY api ./api
+COPY server.js ./
+
+ENV NODE_ENV=production
+ENV PORT=3000
+EXPOSE 3000
+
+HEALTHCHECK --interval=15s --timeout=5s --start-period=15s --retries=3 \
+  CMD curl -f http://localhost:3000/health || exit 1
+
+CMD ["node", "server.js"]

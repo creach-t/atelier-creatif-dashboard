@@ -2,269 +2,117 @@
 
 Ce guide vous accompagne pour déployer Cashly en production.
 
-## 🎯 Options de Déploiement
+## 🎯 Architecture de déploiement
 
-### 1. 🟢 Vercel (Recommandé - Gratuit)
+Cashly tourne en **Docker** sur un VPS auto-hébergé, derrière **Traefik** (reverse proxy + TLS Let's Encrypt) et un **tunnel Cloudflare** (accès SSH sécurisé au VPS, sans exposer le port 22). C'est le même modèle que les autres projets déployés sur `creachtheo.fr`.
 
-**Avantages :** Déploiement automatique, HTTPS gratuit, performances optimales
-
-```bash
-# 1. Installer Vercel CLI
-npm i -g vercel
-
-# 2. Dans le dossier du projet
-vercel
-
-# 3. Suivre les instructions
-# ✅ Link to existing project? No
-# ✅ Project name: cashly
-# ✅ Directory: ./
-# ✅ Build Command: npm run build
-# ✅ Output Directory: build
+```
+GitHub (push sur main)
+   │
+   ▼
+GitHub Actions : tests → build image Docker → push sur GHCR
+   │
+   ▼
+SSH (via cloudflared + Cloudflare Access) → VPS
+   │
+   ▼
+docker compose pull && up  →  container "cashly" (Express, port 3000)
+   │
+   ▼
+Traefik (Host: cashly.creachtheo.fr) → HTTPS via Let's Encrypt
 ```
 
-**Configuration automatique :**
-- Build: `npm run build`
-- Output: `build/`
-- Node.js: 18.x
+Le container embarque **à la fois** l'API (Express, [`server.js`](server.js)) et le build React statique — un seul service à déployer, pas de split frontend/backend.
 
-### 2. 🔵 Netlify (Alternative gratuite)
+## ⚙️ Configuration initiale du VPS (une seule fois)
 
-```bash
-# 1. Build local
-npm run build
+Ces étapes supposent que Traefik (réseau Docker `traefik-public`) et le tunnel Cloudflare vers le VPS existent déjà (repris de l'infra `modern-cv-react`). Si ce n'est pas encore le cas, il faut d'abord le mettre en place avant de continuer.
 
-# 2. Drag & drop du dossier build/ sur netlify.com
-# Ou connecter votre repo GitHub
+1. **Ajouter le hostname au tunnel Cloudflare** : dans la configuration du tunnel existant (Cloudflare Zero Trust → Networks → Tunnels), ajoute une route publique pour `cashly.creachtheo.fr` si ton tunnel sert aussi l'ingress HTTP (sinon, il suffit que le DNS `cashly.creachtheo.fr` pointe vers le VPS, proxifié par Cloudflare, comme pour `creachtheo.fr`).
+2. **Créer le dossier de déploiement** sur le VPS, ex : `/opt/deployments/cashly` (le chemin exact = valeur du secret `VPS_DEPLOY_PATH`, voir plus bas).
+3. **Créer le fichier `.env`** dans ce dossier, à la main, en SSH sur le VPS (jamais via le CI, jamais commité) :
+   ```bash
+   SUPABASE_URL=https://xxxxxxxxxxxx.supabase.co
+   SUPABASE_SERVICE_ROLE_KEY=ta_cle_secrete_supabase
+   KOFI_VERIFICATION_TOKEN=ton_verification_token_kofi
+   DASHBOARD_ACCESS_TOKEN=choisis-une-cle-secrete-longue
+   ```
+4. **Vérifier que le réseau Docker `traefik-public` existe** : `docker network ls | grep traefik-public` (sinon `docker network create traefik-public`).
 
-# 3. Configuration :
-# Build command: npm run build
-# Publish directory: build
-```
+## 🔄 Déploiement continu (GitHub Actions)
 
-### 3. 🟠 Hébergement traditionnel
+Le workflow [`.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml) fait, à chaque push sur `main` :
 
-```bash
-# 1. Build de production
-npm run build
+1. **Tests & build** (`npm ci`, `npm test`, `npm run build`) — bloquant
+2. **Audit de sécurité** (`npm audit`) — informatif, ne bloque jamais
+3. **Build & push de l'image Docker** vers `ghcr.io/creach-t/atelier-creatif-dashboard`
+4. **Déploiement** : connexion SSH au VPS via `cloudflared access ssh` (Cloudflare Access, service token), copie de `docker-compose.prod.yml`, puis `docker compose pull && up -d`
 
-# 2. Upload du contenu de build/ via FTP
-# 3. Pointer votre domaine vers le dossier
-```
+### Secrets GitHub à configurer
 
-## ⚙️ Configuration de Production
+Repository → **Settings → Secrets and variables → Actions** → *New repository secret* :
 
-### Variables d'Environnement
-
-Le backend (webhook Ko-fi + API du dashboard) tourne en fonctions serverless Vercel dans `/api`. Ces variables doivent être définies dans **Vercel → Project Settings → Environment Variables** (jamais préfixées `REACT_APP_`, sinon elles seraient exposées dans le bundle client) :
-
-```bash
-# Supabase — Project Settings > API
-SUPABASE_URL=https://xxxxxxxxxxxx.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=service_role_key_ici
-
-# Ko-fi — Settings > API sur ko-fi.com
-KOFI_VERIFICATION_TOKEN=ton_verification_token_kofi
-
-# Clé d'accès au dashboard (choisie par toi, longue et aléatoire)
-DASHBOARD_ACCESS_TOKEN=choisis-une-cle-secrete-longue
-```
-
-Voir [`README.md`](README.md#configuration-du-backend-supabase--ko-fi) pour la procédure complète (création du projet Supabase, exécution de `supabase/schema.sql`, configuration du webhook côté Ko-fi).
-
-### Optimisations de Build
-
-Dans `package.json`, assurez-vous que les scripts sont optimaux :
-
-```json
-{
-  "scripts": {
-    "build": "GENERATE_SOURCEMAP=false react-scripts build",
-    "build:analyze": "npm run build && npx bundle-analyzer build/static/js/*.js"
-  }
-}
-```
-
-## 🔒 Sécurité & Performance
-
-### Checklist Sécurité
-- [ ] Variables sensibles dans `.env` (non commitées)
-- [ ] HTTPS activé sur le domaine
-- [ ] Content Security Policy configurée
-- [ ] Pas de données sensibles en dur dans le code
-
-### Optimisations Performance
-- [ ] Images optimisées (WebP si possible)
-- [ ] Code splitting activé (par défaut avec CRA)
-- [ ] Service Worker pour mise en cache
-- [ ] Compression gzip/brotli activée
-
-## 🌐 Configuration Domaine
-
-### Domaine Personnalisé sur Vercel
-
-```bash
-# 1. Dans le dashboard Vercel
-# Settings > Domains > Add Domain
-
-# 2. Configurer DNS chez votre registrar :
-# Type: CNAME
-# Name: www (ou @)
-# Value: cname.vercel-dns.com
-```
-
-### SSL/HTTPS
-- ✅ Automatique sur Vercel/Netlify
-- ✅ Let's Encrypt gratuit
-- ✅ Redirection HTTP → HTTPS
-
-## 📊 Monitoring & Analytics
-
-### Google Analytics (Optionnel)
-
-1. **Installer la dépendance :**
-```bash
-npm install gtag
-```
-
-2. **Configuration dans `src/index.js` :**
-```javascript
-import { gtag } from 'gtag';
-
-// Configuration GA
-if (process.env.REACT_APP_GA_TRACKING_ID) {
-  gtag('config', process.env.REACT_APP_GA_TRACKING_ID);
-}
-```
-
-### Monitoring d'Erreurs
-
-```bash
-# Sentry (optionnel)
-npm install @sentry/react
-
-# Configuration basique
-import * as Sentry from "@sentry/react";
-
-Sentry.init({
-  dsn: process.env.REACT_APP_SENTRY_DSN,
-  environment: process.env.NODE_ENV,
-});
-```
-
-## 🔄 Déploiement Continu
-
-### GitHub Actions + Vercel
-
-Le workflow [`.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml) : à chaque push sur `main`, les tests et le build tournent, et si tout passe, le déploiement en production sur Vercel se déclenche automatiquement (via la CLI Vercel, pas une action tierce).
-
-**Secrets à ajouter dans GitHub** (Repository → Settings → Secrets and variables → Actions → New repository secret) :
-
-| Secret | Où le trouver |
+| Secret | Description |
 |---|---|
-| `VERCEL_TOKEN` | [vercel.com/account/tokens](https://vercel.com/account/tokens) → Create Token |
-| `VERCEL_ORG_ID` | Dans le projet lié en local : fichier `.vercel/project.json` généré après un premier `vercel link` (ou Vercel → Project Settings → General) |
-| `VERCEL_PROJECT_ID` | Même fichier `.vercel/project.json` (ou Project Settings → General) |
+| `SSH_HOSTNAME` | Hostname SSH exposé par le tunnel Cloudflare (ex: `ssh.creachtheo.fr`) — identique à celui de `modern-cv-react` si même VPS |
+| `SSH_USER` | Utilisateur SSH sur le VPS |
+| `SSH_PRIVATE_KEY` | Clé privée SSH (format PEM) autorisée sur le VPS |
+| `CF_ACCESS_CLIENT_ID` | Service token Cloudflare Access (ID) |
+| `CF_ACCESS_CLIENT_SECRET` | Service token Cloudflare Access (secret) |
+| `VPS_DEPLOY_PATH` | Chemin sur le VPS où vit `docker-compose.prod.yml` et `.env` (ex: `/opt/deployments/cashly`) — **différent** de celui de `modern-cv-react` |
+| `GHCR_PAT` | Personal Access Token GitHub (scope `read:packages`) pour que le VPS puisse pull l'image, si elle n'est pas publique |
 
-Pour générer `.vercel/project.json` : lance `vercel link` une fois dans le dossier du projet (te demande de te connecter et de choisir/créer le projet Vercel), le fichier apparaît alors dans `.vercel/` (déjà ignoré par git).
+⚠️ Ce sont des **secrets par repo** : même si le VPS/tunnel est partagé avec `modern-cv-react`, il faut les re-déclarer ici (avec les mêmes valeurs pour la partie infra, mais un `VPS_DEPLOY_PATH` propre à Cashly).
 
-**⚠️ Variables d'environnement Vercel** : `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `KOFI_VERIFICATION_TOKEN`, `DASHBOARD_ACCESS_TOKEN` doivent en plus être définies directement dans Vercel (Project Settings → Environment Variables) — ce ne sont pas des secrets GitHub, elles sont lues par les fonctions serverless au runtime, pas par le workflow CI.
+### Rollback
 
-### Processus Automatisé
-1. Push sur `main` → tests + build (`npm ci`, `npm test`, `npm run build`)
-2. Tests/build passent → déploiement automatique en production sur Vercel
-3. Un audit de sécurité (`npm audit`) tourne aussi mais reste informatif — il ne bloque jamais le déploiement
-4. Rollback facile depuis le dashboard Vercel (Deployments → ⋯ → Promote to Production sur un déploiement précédent)
+```bash
+# En SSH sur le VPS, dans le dossier de déploiement :
+IMAGE_TAG=sha-<commit-court-précédent> docker compose -f docker-compose.prod.yml up -d --force-recreate
+```
+Les tags d'image (`sha-xxxxxxx`) sont visibles dans GitHub → Packages, ou dans l'historique des runs Actions.
+
+## 🔍 Vérifier un déploiement
+
+```bash
+curl -I https://cashly.creachtheo.fr/health
+# doit répondre 200 "ok"
+```
+
+En SSH sur le VPS :
+```bash
+docker ps --filter name=cashly
+docker logs -f cashly
+```
 
 ## 📱 PWA (Progressive Web App)
 
-### Activation du Service Worker
+Le fichier `public/manifest.json` est déjà configuré (installable sur mobile/desktop, icônes). Le service worker CRA n'est pas activé par défaut — voir `src/index.js` (`reportWebVitals`) si tu veux l'ajouter plus tard pour du hors-ligne.
 
-Dans `src/index.js` :
-```javascript
-// Activer le service worker pour mise en cache
-import { register } from './serviceWorker';
-register(); // Au lieu de unregister()
-```
+## 🐛 Dépannage
 
-### Configuration Manifest
-
-Le fichier `public/manifest.json` est déjà configuré pour PWA !
-
-**Fonctionnalités PWA :**
-- ✅ Installation sur mobile/desktop
-- ✅ Fonctionnement hors-ligne
-- ✅ Notifications push (future)
-- ✅ Icônes adaptatives
-
-## 🐛 Debugging Production
-
-### Logs d'Erreur
-
-```javascript
-// Dans src/App.js
-window.addEventListener('error', (e) => {
-  console.error('Production Error:', e.error);
-  // Envoyer à votre service de monitoring
-});
-```
-
-### Mode Debug
+**Le build de l'image Docker échoue :**
 ```bash
-# Build avec sourcemaps pour debug
-GENERATE_SOURCEMAP=true npm run build
+docker build -t cashly:test .
 ```
+Reproduit le build en local pour voir l'erreur exacte (souvent : dépendance manquante, ou `npm run build` qui échoue — teste `npm run build` seul d'abord).
 
-## 🎯 Checklist Final
-
-### Avant Déploiement
-- [ ] Tests passent (`npm test`)
-- [ ] Build réussit (`npm run build`)
-- [ ] Responsive testé sur mobile/tablet
-- [ ] Performance vérifiée (Lighthouse)
-- [ ] Liens et formulaires fonctionnels
-
-### Après Déploiement
-- [ ] Site accessible via le domaine
-- [ ] HTTPS fonctionne
-- [ ] Toutes les pages se chargent
-- [ ] Données localStorage persistent
-- [ ] Pas d'erreurs console
-
-### Monitoring
-- [ ] Analytics configuré
-- [ ] Monitoring d'erreurs actif
-- [ ] Alertes déploiement configurées
-- [ ] Backup des données important
-
-## 🆘 Dépannage
-
-### Erreurs Communes
-
-**Build échoue :**
-```bash
-# Nettoyer le cache
-rm -rf node_modules package-lock.json
-npm install
-npm run build
-```
-
-**Page blanche après déploiement :**
-- Vérifier `"homepage"` dans `package.json`
-- Contrôler les chemins relatifs
-- Vérifier la console pour erreurs JS
+**Le déploiement GitHub Actions échoue à l'étape SSH :**
+- Vérifie que `cloudflared` (2026.5.1, épinglé dans le workflow) peut toujours joindre `SSH_HOSTNAME`
+- Vérifie que le service token Cloudflare Access (`CF_ACCESS_CLIENT_ID`/`SECRET`) est toujours valide
 
 **Le dashboard demande la clé d'accès en boucle / erreurs 401 :**
-- Vérifier que `DASHBOARD_ACCESS_TOKEN` est bien défini sur Vercel et correspond à la clé saisie
-- La clé d'accès n'est stockée qu'en `localStorage` du navigateur — un mode navigation privée ou des cookies bloqués peuvent la faire perdre entre deux sessions
+- Vérifie que `DASHBOARD_ACCESS_TOKEN` dans le `.env` du VPS correspond à la clé saisie dans le dashboard
+- La clé d'accès est stockée en `localStorage` du navigateur — un mode navigation privée ou des cookies bloqués peuvent la faire perdre entre deux sessions
 
 **Les commandes Ko-fi n'arrivent pas :**
-- Vérifier l'URL du webhook côté Ko-fi (`https://<domaine>/api/kofi-webhook`)
-- Vérifier que `KOFI_VERIFICATION_TOKEN` correspond exactement à celui affiché sur Ko-fi
-- Consulter les logs de la fonction dans Vercel (Project → Deployments → Functions)
+- Vérifie l'URL du webhook côté Ko-fi (`https://cashly.creachtheo.fr/api/kofi-webhook`)
+- Vérifie que `KOFI_VERIFICATION_TOKEN` dans le `.env` du VPS correspond exactement à celui affiché sur Ko-fi
+- `docker logs cashly` sur le VPS pour voir l'erreur exacte
+
+**Le container redémarre en boucle (`docker ps` montre `Restarting`) :**
+- `docker logs cashly` — le cas le plus probable est `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` absents ou faux dans le `.env` du VPS
 
 ---
 
-🎉 **Votre dashboard est maintenant en production !** 
-
-Pour toute question, consultez la [documentation](README.md) ou ouvrez une [issue](https://github.com/creach-t/atelier-creatif-dashboard/issues).
+🎉 Pour toute question, consultez la [documentation](README.md) ou ouvrez une [issue](https://github.com/creach-t/atelier-creatif-dashboard/issues).

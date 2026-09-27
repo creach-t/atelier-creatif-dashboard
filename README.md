@@ -58,32 +58,31 @@ npm install
 
 ### Configuration du backend (Supabase + Ko-fi)
 
-Les commandes Ko-fi arrivent via un webhook, et les ventes Reel sont saisies manuellement : les deux ont besoin d'un stockage partagé. Ce projet utilise des **fonctions serverless Vercel** (`/api`) + **Supabase** (Postgres géré) pour ça.
+Les commandes Ko-fi arrivent via un webhook, et les ventes Reel sont saisies manuellement : les deux ont besoin d'un stockage partagé. Le backend est un petit serveur **Express** ([`server.js`](server.js), routes dans [`api/`](api)) qui sert à la fois l'API et le build React — déployé en Docker sur un VPS, derrière Traefik et un tunnel Cloudflare (voir [DEPLOYMENT.md](DEPLOYMENT.md)). La donnée vit dans **Supabase** (Postgres géré).
 
 1. **Créer le projet Supabase**
    - Sur [app.supabase.com](https://app.supabase.com), crée un nouveau projet.
    - Dans l'éditeur SQL du projet, exécute le contenu de [`supabase/schema.sql`](supabase/schema.sql) — ça crée les tables `orders` et `products`, et insère les produits de démonstration.
-   - Dans *Project Settings → API*, récupère l'**URL du projet** et la **clé `service_role`** (⚠️ pas la clé `anon`, celle-ci reste secrète côté serveur uniquement).
+   - Dans *Project Settings → API Keys*, récupère l'**URL du projet** et la **clé secrète** : Supabase migre les clés `anon`/`service_role` (JWT) vers de nouvelles clés `sb_publishable_...`/`sb_secret_...` — prends la **secret key** (`sb_secret_...`), ou la clé `service_role` si ton projet affiche encore l'ancien système. Les deux fonctionnent de façon identique avec ce projet. ⚠️ Jamais la clé publishable/anon, qui n'a pas les droits d'écriture nécessaires.
 
 2. **Configurer le webhook Ko-fi**
    - Sur Ko-fi, va dans *Settings → API* pour récupérer ton **verification token**.
-   - Une fois le projet déployé (voir [DEPLOYMENT.md](DEPLOYMENT.md)), configure l'URL de webhook Ko-fi sur `https://<ton-domaine>/api/kofi-webhook`.
+   - Une fois déployé (voir [DEPLOYMENT.md](DEPLOYMENT.md)), configure l'URL de webhook Ko-fi sur `https://cashly.creachtheo.fr/api/kofi-webhook`.
 
 3. **Variables d'environnement**
    - Copie `.env.example` vers `.env.local` (déjà ignoré par git) et remplis :
-     - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
+     - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (la clé secrète récupérée à l'étape 1)
      - `KOFI_VERIFICATION_TOKEN`
      - `DASHBOARD_ACCESS_TOKEN` : une clé que tu choisis toi-même, elle protège l'accès au dashboard et aux données clients (à saisir une fois dans l'écran de connexion du dashboard).
-   - En production, définis les mêmes variables dans Vercel (*Project Settings → Environment Variables*).
+   - En production, ces mêmes variables vivent dans un fichier `.env` sur le VPS, à côté de `docker-compose.prod.yml` (jamais commité, jamais transmis par le CI) — détails dans [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ### Démarrer en développement
 
 ```bash
-# Lance le front ET les fonctions /api ensemble (nécessaire pour tester le webhook et les données)
 npm run dev
 ```
 
-`npm run dev` utilise `vercel dev` (via `npx`) : la première exécution peut te demander de te connecter à Vercel et de lier le projet — un test complet de bout en bout (webhook → Supabase → dashboard) nécessite ça. Pour ne travailler que sur l'UI sans backend, `npm start` reste disponible mais les appels `/api/*` échoueront.
+Lance en parallèle le serveur React (`react-scripts start`, port 3000) et l'API Express (port 4000) ; les appels `/api/*` du front sont automatiquement redirigés vers l'API grâce au champ `proxy` de `package.json`. Pour ne travailler que sur l'UI sans backend, `npm start` seul reste disponible mais les appels `/api/*` échoueront.
 
 🎉 **Votre dashboard sera accessible sur http://localhost:3000**
 
@@ -119,9 +118,11 @@ npm run dev
 ## 🛠️ Structure du Projet
 
 ```
-api/                        # Fonctions serverless Vercel (backend)
+server.js                   # Serveur Express : sert l'API (routes ci-dessous) + le build React
+
+api/                         # Routes API (montées par server.js)
 ├── lib/
-│   ├── supabaseClient.js   # Client Supabase (clé service_role, côté serveur uniquement)
+│   ├── supabaseClient.js   # Client Supabase (clé secrète, côté serveur uniquement)
 │   ├── auth.js             # Vérification du token d'accès dashboard
 │   └── kofiMapper.js       # Traduction payload Ko-fi -> commande
 ├── kofi-webhook.js         # Réception des webhooks Ko-fi
@@ -129,6 +130,9 @@ api/                        # Fonctions serverless Vercel (backend)
 ├── orders/[id].js           # PATCH (statut, tracking)
 ├── products.js               # GET / POST
 └── products/[id].js          # PATCH / DELETE
+
+Dockerfile                   # Build multi-stage : React puis image Node/Express de prod
+docker-compose.prod.yml      # Service Docker + labels Traefik (cashly.creachtheo.fr)
 
 supabase/
 └── schema.sql              # Schéma des tables orders/products à exécuter sur Supabase
@@ -223,7 +227,8 @@ Ce projet est sous licence MIT. Voir le fichier [LICENSE](LICENSE) pour plus de 
 - **React Team** pour le framework
 - **Tailwind CSS** pour le système de design
 - **Lucide** pour les icônes élégantes
-- **Vercel** pour l'hébergement
+- **Supabase** pour la base de données
+- **Traefik** & **Cloudflare** pour l'infra de déploiement
 
 ---
 

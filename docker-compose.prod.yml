@@ -1,0 +1,27 @@
+services:
+  cashly:
+    image: ghcr.io/creach-t/atelier-creatif-dashboard:${IMAGE_TAG:-latest}
+    container_name: cashly
+    expose:
+      - "3000"
+    restart: unless-stopped
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.cashly.rule=Host(`cashly.creachtheo.fr`)"
+      - "traefik.http.routers.cashly.entrypoints=websecure"
+      - "traefik.http.routers.cashly.tls.certresolver=myresolver"
+      - "traefik.http.services.cashly.loadbalancer.server.port=3000"
+    networks:
+      - traefik-public
+
+networks:
+  traefik-public:
+    external: true
