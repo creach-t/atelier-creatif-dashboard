@@ -12,7 +12,7 @@ const TABS = [
   { id: 'products', label: 'Produits', icon: Package },
 ];
 
-export const Reports = ({ orders, products }) => {
+export const Reports = ({ orders, products, onNavigateToProduct, onNavigateToCustomer }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [yearFilter, setYearFilter] = useState('all');
 
@@ -104,8 +104,10 @@ export const Reports = ({ orders, products }) => {
       </div>
 
       {activeTab === 'overview' && <OverviewTab stats={stats} orders={filteredOrders} />}
-      {activeTab === 'customers' && <CustomersTab stats={stats} />}
-      {activeTab === 'products' && <ProductsReportTab products={products} orders={filteredOrders} />}
+      {activeTab === 'customers' && <CustomersTab stats={stats} onNavigateToCustomer={onNavigateToCustomer} />}
+      {activeTab === 'products' && (
+        <ProductsReportTab products={products} orders={filteredOrders} onNavigateToProduct={onNavigateToProduct} />
+      )}
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Plus, Search, Edit, Mail } from 'lucide-react';
 import { Card } from '../ui/Card';
@@ -38,7 +38,15 @@ const ChartTooltip = ({ active, payload }) => {
   );
 };
 
-export const Customers = ({ customers, orders, createCustomer, updateCustomer }) => {
+export const Customers = ({
+  customers,
+  orders,
+  createCustomer,
+  updateCustomer,
+  onSelectOrder,
+  selectedCustomerName,
+  onClearSelectedCustomer,
+}) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortKey, setSortKey] = useState('total_desc');
   const [showForm, setShowForm] = useState(false);
@@ -83,6 +91,15 @@ export const Customers = ({ customers, orders, createCustomer, updateCustomer })
     setEditingCustomer(customer);
     setShowForm(true);
   };
+
+  // Ouvre la fiche d'un client sélectionné depuis Rapports > Clients.
+  useEffect(() => {
+    if (!selectedCustomerName) return;
+    const match = rows.find((c) => c.name === selectedCustomerName);
+    if (match) setViewingCustomer(match);
+    onClearSelectedCustomer && onClearSelectedCustomer();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCustomerName, rows]);
 
   const handleSave = async (payload) => {
     if (editingCustomer) {
@@ -228,6 +245,10 @@ export const Customers = ({ customers, orders, createCustomer, updateCustomer })
         <CustomerDetailModal
           customer={viewingCustomer}
           orders={orders.filter((o) => o.customer_name === viewingCustomer.name)}
+          onSelectOrder={(order) => {
+            setViewingCustomer(null);
+            onSelectOrder && onSelectOrder(order);
+          }}
           onEdit={() => openEdit(viewingCustomer)}
           onClose={() => setViewingCustomer(null)}
         />

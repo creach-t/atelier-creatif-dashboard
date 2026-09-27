@@ -5,7 +5,7 @@ import { getInitials, getCustomerBadges } from '../../utils/customerBadges';
 
 const rankIcon = (i) => (i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : null);
 
-export const CustomersTab = ({ stats }) => {
+export const CustomersTab = ({ stats, onNavigateToCustomer }) => {
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() => {
@@ -51,7 +51,12 @@ export const CustomersTab = ({ stats }) => {
             const badges = getCustomerBadges(c);
             const rank = rankIcon(globalRank);
             return (
-              <div key={c.name} className="flex items-center gap-4 py-4">
+              <button
+                key={c.name}
+                type="button"
+                onClick={() => onNavigateToCustomer && onNavigateToCustomer(c.name)}
+                className="w-full flex items-center gap-4 py-4 text-left hover:bg-purple-25 transition-colors -mx-2 px-2 rounded-lg"
+              >
                 <div className="w-8 text-center shrink-0">
                   {rank ? <span className="text-lg">{rank}</span> : <span className="text-sm font-bold text-gray-400">#{globalRank + 1}</span>}
                 </div>
@@ -78,7 +83,7 @@ export const CustomersTab = ({ stats }) => {
                   <p className="text-base font-bold text-gray-900">{c.total.toFixed(2)}€</p>
                   {c.count > 1 && <p className="text-xs text-gray-500">moy. {(c.total / c.count).toFixed(2)}€</p>}
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>

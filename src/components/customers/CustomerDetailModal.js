@@ -1,12 +1,12 @@
 import React from 'react';
-import { X, Mail, Edit, StickyNote } from 'lucide-react';
+import { X, Mail, Edit, StickyNote, ChevronRight } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge, STATUS_LABELS } from '../ui/Badge';
 import { ChannelBadge } from '../ui/ChannelBadge';
 import { getCustomerBadges, getInitials } from '../../utils/customerBadges';
 
-export const CustomerDetailModal = ({ customer, orders, onEdit, onClose }) => {
+export const CustomerDetailModal = ({ customer, orders, onSelectOrder, onEdit, onClose }) => {
   const badges = getCustomerBadges(customer);
   const customerOrders = [...(orders || [])].sort((a, b) => (b.order_date || '').localeCompare(a.order_date || ''));
 
@@ -74,9 +74,14 @@ export const CustomerDetailModal = ({ customer, orders, onEdit, onClose }) => {
 
           <div>
             <p className="text-sm font-medium text-gray-700 mb-2">Historique des commandes</p>
-            <div className="space-y-2 max-h-64 overflow-y-auto">
+            <div className="space-y-2">
               {customerOrders.map((order) => (
-                <div key={order.id} className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg gap-2">
+                <button
+                  key={order.id}
+                  type="button"
+                  onClick={() => onSelectOrder && onSelectOrder(order)}
+                  className="w-full flex items-center justify-between px-3 py-2 bg-gray-50 hover:bg-purple-50 rounded-lg gap-2 text-left transition-colors"
+                >
                   <div className="flex items-center gap-2 min-w-0">
                     <ChannelBadge channel={order.channel} />
                     <span className="text-xs text-gray-500 shrink-0">{order.order_date}</span>
@@ -84,8 +89,9 @@ export const CustomerDetailModal = ({ customer, orders, onEdit, onClose }) => {
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="text-sm font-semibold text-gray-900">{Number(order.total).toFixed(2)}€</span>
                     <Badge variant={order.status}>{STATUS_LABELS[order.status] || order.status}</Badge>
+                    <ChevronRight size={14} className="text-gray-300" />
                   </div>
-                </div>
+                </button>
               ))}
               {customerOrders.length === 0 && (
                 <p className="text-sm text-gray-400 text-center py-4">Aucune commande pour le moment.</p>

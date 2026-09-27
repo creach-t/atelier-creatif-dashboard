@@ -19,6 +19,7 @@ const CreativeDashboard = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [selectedProductName, setSelectedProductName] = useState(null);
+  const [selectedCustomerName, setSelectedCustomerName] = useState(null);
   const [initialOrderStatusFilter, setInitialOrderStatusFilter] = useState(null);
   const { orders, createOrder, updateOrder } = useOrders();
   const { products, createProduct, updateProduct } = useProducts();
@@ -32,6 +33,11 @@ const CreativeDashboard = () => {
   const handleNavigateToProduct = (name) => {
     setSelectedProductName(name);
     setActiveTab('products');
+  };
+
+  const handleNavigateToCustomer = (name) => {
+    setSelectedCustomerName(name);
+    setActiveTab('customers');
   };
 
   const handleGoToOrders = (statusFilter) => {
@@ -86,12 +92,22 @@ const CreativeDashboard = () => {
             orders={orders}
             createCustomer={createCustomer}
             updateCustomer={updateCustomer}
+            onSelectOrder={handleSelectOrder}
+            selectedCustomerName={selectedCustomerName}
+            onClearSelectedCustomer={() => setSelectedCustomerName(null)}
           />
         );
       case 'settings':
         return <Settings />;
       case 'reports':
-        return <Reports orders={orders} products={products} />;
+        return (
+          <Reports
+            orders={orders}
+            products={products}
+            onNavigateToProduct={handleNavigateToProduct}
+            onNavigateToCustomer={handleNavigateToCustomer}
+          />
+        );
       default:
         return <Dashboard orders={orders} products={products} />;
     }

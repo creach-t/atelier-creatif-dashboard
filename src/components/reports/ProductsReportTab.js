@@ -3,20 +3,21 @@ import { Search, Package } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { computeSoldByName } from '../../utils/computeSoldByName';
 
-export const ProductsReportTab = ({ products, orders }) => {
+export const ProductsReportTab = ({ products, orders, onNavigateToProduct }) => {
   const [search, setSearch] = useState('');
 
   const soldByName = useMemo(() => computeSoldByName(orders), [orders]);
 
+  const knownNames = useMemo(() => new Set(products.map((p) => p.name)), [products]);
+
   const ranked = useMemo(() => {
-    const rows = products.map((p) => ({ ...p, sold: soldByName[p.name] || 0 }));
+    const rows = products.map((p) => ({ ...p, sold: soldByName[p.name] || 0, hasProduct: true }));
     // Inclut aussi les articles vendus qui n'ont pas (ou plus) de fiche produit associée.
-    const knownNames = new Set(products.map((p) => p.name));
     Object.entries(soldByName).forEach(([name, sold]) => {
-      if (!knownNames.has(name)) rows.push({ id: name, name, category: '—', sold, price: 0 });
+      if (!knownNames.has(name)) rows.push({ id: name, name, category: '—', sold, price: 0, hasProduct: false });
     });
     return rows.sort((a, b) => b.sold - a.sold);
-  }, [products, soldByName]);
+  }, [products, soldByName, knownNames]);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return ranked;
@@ -54,23 +55,33 @@ export const ProductsReportTab = ({ products, orders }) => {
       </p>
 
       <div className="max-h-[540px] overflow-y-auto divide-y divide-gray-100">
-        {filtered.map((p) => (
-          <div key={p.id} className="py-4 flex items-center gap-4">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1.5">
-                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700">{p.category}</span>
-                <span className="text-sm font-semibold text-gray-900 truncate">{p.name}</span>
+        {filtered.map((p) => {
+          const Wrapper = p.hasProduct ? 'button' : 'div';
+          return (
+            <Wrapper
+              key={p.id}
+              type={p.hasProduct ? 'button' : undefined}
+              onClick={p.hasProduct ? () => onNavigateToProduct && onNavigateToProduct(p.name) : undefined}
+              className={`w-full py-4 flex items-center gap-4 text-left ${
+                p.hasProduct ? 'hover:bg-purple-25 transition-colors -mx-2 px-2 rounded-lg' : ''
+              }`}
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700">{p.category}</span>
+                  <span className="text-sm font-semibold text-gray-900 truncate">{p.name}</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden max-w-xs">
+                  <div className="h-full rounded-full bg-gradient-to-r from-purple-400 to-pink-400" style={{ width: `${(p.sold / maxUnits) * 100}%` }} />
+                </div>
               </div>
-              <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden max-w-xs">
-                <div className="h-full rounded-full bg-gradient-to-r from-purple-400 to-pink-400" style={{ width: `${(p.sold / maxUnits) * 100}%` }} />
+              <div className="text-right shrink-0">
+                <p className="text-lg font-bold text-gray-900 leading-none">{p.sold}</p>
+                <p className="text-[10px] font-medium text-gray-500 mt-0.5">vente{p.sold > 1 ? 's' : ''}</p>
               </div>
-            </div>
-            <div className="text-right shrink-0">
-              <p className="text-lg font-bold text-gray-900 leading-none">{p.sold}</p>
-              <p className="text-[10px] font-medium text-gray-500 mt-0.5">vente{p.sold > 1 ? 's' : ''}</p>
-            </div>
-          </div>
-        ))}
+            </Wrapper>
+          );
+        })}
       </div>
     </Card>
   );
