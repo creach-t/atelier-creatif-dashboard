@@ -5,7 +5,7 @@ import { getInitials, getCustomerBadges } from '../../utils/customerBadges';
 
 const rankIcon = (i) => (i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : null);
 
-export const CustomersTab = ({ stats, onNavigateToCustomer }) => {
+export const CustomersTab = ({ stats, firstOrderByName, onSelectCustomer }) => {
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() => {
@@ -54,7 +54,7 @@ export const CustomersTab = ({ stats, onNavigateToCustomer }) => {
               <button
                 key={c.name}
                 type="button"
-                onClick={() => onNavigateToCustomer && onNavigateToCustomer(c.name)}
+                onClick={() => onSelectCustomer && onSelectCustomer(c.name)}
                 className="w-full flex items-center gap-4 py-4 text-left hover:bg-purple-25 transition-colors -mx-2 px-2 rounded-lg"
               >
                 <div className="w-8 text-center shrink-0">
@@ -73,7 +73,7 @@ export const CustomersTab = ({ stats, onNavigateToCustomer }) => {
                     ))}
                   </div>
                   <p className="text-xs text-gray-500">
-                    {c.count} commande{c.count > 1 ? 's' : ''} · depuis {c.first}
+                    {c.count} commande{c.count > 1 ? 's' : ''} · depuis {(firstOrderByName && firstOrderByName[c.name]) || c.first}
                   </p>
                   <div className="mt-2 w-full h-1 rounded-full bg-gray-100 overflow-hidden max-w-xs">
                     <div className="h-full rounded-full bg-gradient-to-r from-purple-400 to-pink-400" style={{ width: `${(c.total / maxTotal) * 100}%` }} />

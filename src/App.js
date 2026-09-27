@@ -104,6 +104,8 @@ const CreativeDashboard = () => {
           <Reports
             orders={orders}
             products={products}
+            customers={customers}
+            updateOrder={updateOrder}
             onNavigateToProduct={handleNavigateToProduct}
             onNavigateToCustomer={handleNavigateToCustomer}
           />

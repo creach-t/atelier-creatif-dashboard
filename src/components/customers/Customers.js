@@ -19,9 +19,10 @@ const computeStatsByName = (orders) => {
   (orders || []).forEach((o) => {
     const name = o.customer_name;
     if (!name) return;
-    if (!map[name]) map[name] = { total: 0, count: 0, last: o.order_date };
+    if (!map[name]) map[name] = { total: 0, count: 0, first: o.order_date, last: o.order_date };
     map[name].total += Number(o.total || 0);
     map[name].count += 1;
+    if (o.order_date && o.order_date < map[name].first) map[name].first = o.order_date;
     if (o.order_date && o.order_date > map[name].last) map[name].last = o.order_date;
   });
   return map;
@@ -56,7 +57,7 @@ export const Customers = ({
   const statsByName = useMemo(() => computeStatsByName(orders), [orders]);
 
   const rows = useMemo(
-    () => customers.map((c) => ({ ...c, ...(statsByName[c.name] || { total: 0, count: 0, last: null }) })),
+    () => customers.map((c) => ({ ...c, ...(statsByName[c.name] || { total: 0, count: 0, first: null, last: null }) })),
     [customers, statsByName]
   );
 

@@ -3,7 +3,7 @@ import { Search, Package } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { computeSoldByName } from '../../utils/computeSoldByName';
 
-export const ProductsReportTab = ({ products, orders, onNavigateToProduct }) => {
+export const ProductsReportTab = ({ products, orders, onSelectProduct }) => {
   const [search, setSearch] = useState('');
 
   const soldByName = useMemo(() => computeSoldByName(orders), [orders]);
@@ -61,7 +61,7 @@ export const ProductsReportTab = ({ products, orders, onNavigateToProduct }) => 
             <Wrapper
               key={p.id}
               type={p.hasProduct ? 'button' : undefined}
-              onClick={p.hasProduct ? () => onNavigateToProduct && onNavigateToProduct(p.name) : undefined}
+              onClick={p.hasProduct ? () => onSelectProduct && onSelectProduct(p.name) : undefined}
               className={`w-full py-4 flex items-center gap-4 text-left ${
                 p.hasProduct ? 'hover:bg-purple-25 transition-colors -mx-2 px-2 rounded-lg' : ''
               }`}

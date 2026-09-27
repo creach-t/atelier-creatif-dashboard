@@ -45,7 +45,7 @@ export const CustomerDetailModal = ({ customer, orders, onSelectOrder, onEdit, o
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <div className="p-3 bg-purple-25 rounded-xl text-center">
               <p className="text-xs text-gray-500 mb-1">Total dépensé</p>
               <p className="text-base font-bold text-purple-600">{Number(customer.total || 0).toFixed(2)}€</p>
@@ -55,7 +55,11 @@ export const CustomerDetailModal = ({ customer, orders, onSelectOrder, onEdit, o
               <p className="text-base font-bold text-gray-900">{customer.count || 0}</p>
             </div>
             <div className="p-3 bg-purple-25 rounded-xl text-center">
-              <p className="text-xs text-gray-500 mb-1">Dernière</p>
+              <p className="text-xs text-gray-500 mb-1">Cliente depuis</p>
+              <p className="text-sm font-semibold text-gray-900">{customer.first || '—'}</p>
+            </div>
+            <div className="p-3 bg-purple-25 rounded-xl text-center">
+              <p className="text-xs text-gray-500 mb-1">Dernière commande</p>
               <p className="text-sm font-semibold text-gray-900">{customer.last || '—'}</p>
             </div>
           </div>
