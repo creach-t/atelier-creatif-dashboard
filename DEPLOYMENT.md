@@ -1,6 +1,6 @@
 # 🚀 Guide de Déploiement
 
-Ce guide vous accompagne pour déployer votre Dashboard Atelier Créatif en production.
+Ce guide vous accompagne pour déployer Cashly en production.
 
 ## 🎯 Options de Déploiement
 
@@ -17,7 +17,7 @@ vercel
 
 # 3. Suivre les instructions
 # ✅ Link to existing project? No
-# ✅ Project name: atelier-creatif-dashboard
+# ✅ Project name: cashly
 # ✅ Directory: ./
 # ✅ Build Command: npm run build
 # ✅ Output Directory: build
@@ -156,20 +156,25 @@ Sentry.init({
 
 ### GitHub Actions + Vercel
 
-Le workflow `.github/workflows/ci-cd.yml` est déjà configuré !
+Le workflow [`.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml) : à chaque push sur `main`, les tests et le build tournent, et si tout passe, le déploiement en production sur Vercel se déclenche automatiquement (via la CLI Vercel, pas une action tierce).
 
-**Secrets à ajouter dans GitHub :**
-1. Repository Settings > Secrets and variables > Actions
-2. Ajouter :
-   - `VERCEL_TOKEN`
-   - `VERCEL_ORG_ID`
-   - `VERCEL_PROJECT_ID`
+**Secrets à ajouter dans GitHub** (Repository → Settings → Secrets and variables → Actions → New repository secret) :
+
+| Secret | Où le trouver |
+|---|---|
+| `VERCEL_TOKEN` | [vercel.com/account/tokens](https://vercel.com/account/tokens) → Create Token |
+| `VERCEL_ORG_ID` | Dans le projet lié en local : fichier `.vercel/project.json` généré après un premier `vercel link` (ou Vercel → Project Settings → General) |
+| `VERCEL_PROJECT_ID` | Même fichier `.vercel/project.json` (ou Project Settings → General) |
+
+Pour générer `.vercel/project.json` : lance `vercel link` une fois dans le dossier du projet (te demande de te connecter et de choisir/créer le projet Vercel), le fichier apparaît alors dans `.vercel/` (déjà ignoré par git).
+
+**⚠️ Variables d'environnement Vercel** : `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `KOFI_VERIFICATION_TOKEN`, `DASHBOARD_ACCESS_TOKEN` doivent en plus être définies directement dans Vercel (Project Settings → Environment Variables) — ce ne sont pas des secrets GitHub, elles sont lues par les fonctions serverless au runtime, pas par le workflow CI.
 
 ### Processus Automatisé
-1. Push sur `main` → Build automatique
-2. Tests passent → Déploiement auto
-3. Preview sur pull requests
-4. Rollback facile en cas de problème
+1. Push sur `main` → tests + build (`npm ci`, `npm test`, `npm run build`)
+2. Tests/build passent → déploiement automatique en production sur Vercel
+3. Un audit de sécurité (`npm audit`) tourne aussi mais reste informatif — il ne bloque jamais le déploiement
+4. Rollback facile depuis le dashboard Vercel (Deployments → ⋯ → Promote to Production sur un déploiement précédent)
 
 ## 📱 PWA (Progressive Web App)
 

@@ -1,8 +1,8 @@
-# 🎨 Atelier Créatif - Dashboard de Gestion
+# 💸 Cashly
 
-> **Dashboard élégant et intuitif pour illustratrices indépendantes**
+> **Dashboard de gestion de ventes multi-canal pour créatifs indépendants**
 
-Une solution complète pour gérer efficacement vos commandes Ko-fi, vos produits créatifs et vos expéditions, le tout dans une interface moderne aux couleurs pastels.
+Une solution complète pour gérer efficacement vos commandes Ko-fi, vos ventes en boutique partenaire (Reel), vos produits et vos expéditions, le tout dans une interface moderne aux couleurs pastels.
 
 ![Dashboard Preview](https://img.shields.io/badge/Version-1.0.0-purple)
 ![React](https://img.shields.io/badge/React-18.2.0-blue)
@@ -168,7 +168,7 @@ colors: {
 Les produits vivent maintenant dans Supabase, pas dans le code. Ajoute une ligne dans la table `products` (via l'éditeur Supabase, ou `POST /api/products` avec ton token d'accès en `Authorization: Bearer ...`).
 
 ### Personnaliser le Branding
-1. Remplacez "Atelier Créatif" par votre nom
+1. Remplacez "Cashly" par votre nom dans [`src/components/layout/Sidebar.js`](src/components/layout/Sidebar.js), [`src/components/auth/AccessGate.js`](src/components/auth/AccessGate.js), `public/index.html` et `public/manifest.json`
 2. Modifiez les gradients de couleur
 3. Ajoutez votre logo dans la sidebar
 

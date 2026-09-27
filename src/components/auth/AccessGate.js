@@ -33,7 +33,7 @@ export const AccessGate = ({ onUnlock }) => {
           <div className="w-12 h-12 bg-gradient-to-r from-purple-400 to-pink-400 rounded-xl flex items-center justify-center mb-4">
             <Lock size={22} className="text-white" />
           </div>
-          <h1 className="text-lg font-bold text-gray-900">Atelier Créatif</h1>
+          <h1 className="text-lg font-bold text-gray-900">Cashly</h1>
           <p className="text-sm text-gray-600 mt-1">Entre ta clé d'accès pour ouvrir le dashboard</p>
         </div>
 

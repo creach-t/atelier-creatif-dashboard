@@ -14,7 +14,7 @@ export const Sidebar = ({ activeTab, setActiveTab }) => {
     <div className="w-64 bg-gradient-to-b from-purple-50 to-pink-50 border-r border-purple-100 h-screen relative">
       <div className="p-6">
         <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-          Atelier Créatif
+          Cashly
         </h1>
         <p className="text-sm text-gray-600 mt-1">Gestion multi-canal</p>
       </div>

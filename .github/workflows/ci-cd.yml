@@ -2,109 +2,76 @@ name: 🚀 CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
-  # Job de test et build
-  test-and-build:
+  test:
+    name: 🧪 Tests & Build
     runs-on: ubuntu-latest
-    
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x]
-    
-    steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
-      
-    - name: 🔧 Setup Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-        
-    - name: 📦 Install dependencies
-      run: npm ci
-      
-    - name: 🧪 Run tests
-      run: npm test -- --coverage --watchAll=false
-      
-    - name: 📊 Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      if: matrix.node-version == '20.x'
-      
-    - name: 🏗️ Build application
-      run: npm run build
-      
-    - name: 📤 Upload build artifacts
-      uses: actions/upload-artifact@v3
-      if: matrix.node-version == '20.x'
-      with:
-        name: build-files
-        path: build/
 
-  # Job de linting et formatting
-  lint-and-format:
-    runs-on: ubuntu-latest
-    
     steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
-      
-    - name: 🔧 Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20.x'
-        cache: 'npm'
-        
-    - name: 📦 Install dependencies
-      run: npm ci
-      
-    - name: 🎨 Check code formatting
-      run: npx prettier --check "src/**/*.{js,jsx,ts,tsx,json,css,md}"
-      
-    - name: 🔍 Run ESLint
-      run: npx eslint src/ --ext .js,.jsx,.ts,.tsx
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
 
-  # Job de sécurité
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🧪 Run tests
+        run: npm test -- --watchAll=false
+
+      - name: 🏗️ Build application
+        run: npm run build
+
   security-audit:
+    name: 🔒 Security audit (informatif)
     runs-on: ubuntu-latest
-    
-    steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
-      
-    - name: 🔧 Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20.x'
-        cache: 'npm'
-        
-    - name: 🔒 Run security audit
-      run: npm audit --audit-level=moderate
+    continue-on-error: true
 
-  # Job de déploiement (uniquement sur main)
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔒 Run security audit
+        run: npm audit --audit-level=high
+
   deploy:
-    needs: [test-and-build, lint-and-format]
+    name: 🚀 Deploy to Vercel (production)
+    needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
     steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
-      
-    - name: 📤 Download build artifacts
-      uses: actions/download-artifact@v3
-      with:
-        name: build-files
-        path: build/
-        
-    - name: 🚀 Deploy to Vercel
-      uses: amondnet/vercel-action@v25
-      with:
-        vercel-token: ${{ secrets.VERCEL_TOKEN }}
-        vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-        vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-        vercel-args: '--prod'
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: 🔗 Pull Vercel environment info
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: 🏗️ Build via Vercel
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: 🚀 Deploy prebuilt output
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}

@@ -1,7 +1,7 @@
 {
-  "name": "atelier-creatif-dashboard",
+  "name": "cashly",
   "version": "1.0.0",
-  "description": "Dashboard de gestion multi-canal (Ko-fi, Reel) pour illustratrice indépendante",
+  "description": "Cashly - Dashboard de gestion de ventes multi-canal (Ko-fi, Reel) pour créatifs indépendants",
   "keywords": [
     "react",
     "dashboard",
