@@ -12,8 +12,10 @@ require('dotenv').config({ path: path.resolve(__dirname, '.env.local') });
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Limite par défaut d'Express (100kb) trop basse pour l'import CSV Ko-fi (des centaines
+// de lignes, chacune avec sa ligne brute conservée dans raw_payload).
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Les handlers api/orders/[id].js et api/products/[id].js lisent l'id via req.query.id
 // (convention Vercel) — on le reproduit ici à partir du param de route Express.

@@ -36,10 +36,11 @@ module.exports = async (req, res) => {
       return;
     }
 
+    // upsert plutôt que update : increvable même si la ligne profiles n'a jamais été
+    // créée (trigger auth.users manqué, compte créé avant migration, etc.)
     const { data, error } = await supabase
       .from('profiles')
-      .update(updates)
-      .eq('id', user.id)
+      .upsert({ id: user.id, ...updates })
       .select()
       .single();
 
