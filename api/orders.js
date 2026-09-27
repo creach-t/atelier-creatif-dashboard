@@ -62,6 +62,7 @@ module.exports = async (req, res) => {
       tracking: body.tracking || null,
       shipping: body.shipping || null,
       shop_name: body.channel === 'reel' ? body.shop_name || null : null,
+      notes: body.notes || null,
     };
 
     const { data, error } = await supabase.from('orders').insert(order).select().single();

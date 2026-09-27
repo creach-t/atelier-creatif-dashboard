@@ -28,6 +28,7 @@ const matchesPeriod = (order, period) => {
 export const Orders = ({
   orders,
   products,
+  customers,
   createOrder,
   updateOrder,
   createProduct,
@@ -225,6 +226,7 @@ export const Orders = ({
       {showForm && (
         <OrderForm
           products={products}
+          customers={customers}
           createProduct={createProduct}
           onCreate={createOrder}
           onClose={() => setShowForm(false)}

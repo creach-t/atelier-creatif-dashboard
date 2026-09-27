@@ -4,6 +4,7 @@ import { Plus, Search, Edit, Mail } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { CustomerForm } from './CustomerForm';
+import { CustomerDetailModal } from './CustomerDetailModal';
 import { getCustomerBadges } from '../../utils/customerBadges';
 
 const SORTS = {
@@ -42,6 +43,7 @@ export const Customers = ({ customers, orders, createCustomer, updateCustomer })
   const [sortKey, setSortKey] = useState('total_desc');
   const [showForm, setShowForm] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);
+  const [viewingCustomer, setViewingCustomer] = useState(null);
 
   const statsByName = useMemo(() => computeStatsByName(orders), [orders]);
 
@@ -77,6 +79,7 @@ export const Customers = ({ customers, orders, createCustomer, updateCustomer })
   };
 
   const openEdit = (customer) => {
+    setViewingCustomer(null);
     setEditingCustomer(customer);
     setShowForm(true);
   };
@@ -171,7 +174,11 @@ export const Customers = ({ customers, orders, createCustomer, updateCustomer })
               {filtered.map((c) => {
                 const badges = getCustomerBadges(c);
                 return (
-                  <tr key={c.id} className="border-b border-purple-100 hover:bg-purple-25">
+                  <tr
+                    key={c.id}
+                    onClick={() => setViewingCustomer(c)}
+                    className="border-b border-purple-100 hover:bg-purple-25 cursor-pointer"
+                  >
                     <td className="p-4">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
                         <p className="font-medium text-gray-900">{c.name}</p>
@@ -192,7 +199,13 @@ export const Customers = ({ customers, orders, createCustomer, updateCustomer })
                     <td className="p-4 font-semibold text-gray-900">{Number(c.total || 0).toFixed(2)}€</td>
                     <td className="p-4 hidden lg:table-cell text-sm text-gray-500">{c.last || '—'}</td>
                     <td className="p-4">
-                      <button onClick={() => openEdit(c)} className="p-2 text-gray-600 hover:bg-purple-50 rounded-lg">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEdit(c);
+                        }}
+                        className="p-2 text-gray-600 hover:bg-purple-50 rounded-lg"
+                      >
                         <Edit size={16} />
                       </button>
                     </td>
@@ -210,6 +223,15 @@ export const Customers = ({ customers, orders, createCustomer, updateCustomer })
           </table>
         </div>
       </Card>
+
+      {viewingCustomer && (
+        <CustomerDetailModal
+          customer={viewingCustomer}
+          orders={orders.filter((o) => o.customer_name === viewingCustomer.name)}
+          onEdit={() => openEdit(viewingCustomer)}
+          onClose={() => setViewingCustomer(null)}
+        />
+      )}
 
       {showForm && (
         <CustomerForm customer={editingCustomer} onSave={handleSave} onClose={() => setShowForm(false)} />

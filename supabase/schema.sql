@@ -48,6 +48,7 @@ create table if not exists orders (
   tracking text,
   shipping text,
   shop_name text,
+  notes text,
   kofi_transaction_id text unique,
   raw_payload jsonb,
   created_at timestamptz not null default now()

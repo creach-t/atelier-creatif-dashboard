@@ -57,6 +57,7 @@ const CreativeDashboard = () => {
           <Orders
             orders={orders}
             products={products}
+            customers={customers}
             createOrder={createOrder}
             updateOrder={updateOrder}
             createProduct={createProduct}

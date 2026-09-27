@@ -2,7 +2,7 @@ const { getSupabaseClient } = require('../lib/supabaseClient');
 const { requireUser } = require('../lib/auth');
 
 const ALLOWED_STATUSES = ['pending', 'shipped', 'delivered', 'cancelled'];
-const PATCHABLE_FIELDS = ['status', 'tracking', 'shipping'];
+const PATCHABLE_FIELDS = ['status', 'tracking', 'shipping', 'notes'];
 
 module.exports = async (req, res) => {
   const user = await requireUser(req, res);
