@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, ShoppingCart, Palette, Truck, TrendingUp, User } from 'lucide-react';
+import { Home, ShoppingCart, Palette, Truck, TrendingUp, Settings, User } from 'lucide-react';
 
 const menuItems = [
   { id: 'dashboard', label: 'Dashboard', icon: Home },
@@ -7,6 +7,7 @@ const menuItems = [
   { id: 'products', label: 'Produits', icon: Palette },
   { id: 'shipping', label: 'Expéditions', icon: Truck },
   { id: 'reports', label: 'Rapports', icon: TrendingUp },
+  { id: 'settings', label: 'Réglages', icon: Settings },
 ];
 
 export const Sidebar = ({ activeTab, setActiveTab }) => {

@@ -5,12 +5,19 @@ import { apiClient } from '../../api/client';
 import { parseCsv } from '../../utils/parseCsv';
 import { normalizeKofiCsvRows } from '../../utils/normalizeKofiCsv';
 
-export const ImportHistory = ({ onDone, onSkip }) => {
+export const ImportKofiHistory = () => {
   const [rows, setRows] = useState(null);
   const [fileName, setFileName] = useState('');
   const [error, setError] = useState(null);
   const [result, setResult] = useState(null);
   const [importing, setImporting] = useState(false);
+
+  const reset = () => {
+    setRows(null);
+    setFileName('');
+    setError(null);
+    setResult(null);
+  };
 
   const handleFile = async (e) => {
     const file = e.target.files[0];
@@ -52,11 +59,12 @@ export const ImportHistory = ({ onDone, onSkip }) => {
   };
 
   return (
-    <Card className="p-8 w-full max-w-md">
-      <h2 className="text-lg font-bold text-gray-900 mb-2">Importe ton historique Ko-fi</h2>
+    <Card className="p-6">
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">Importer l'historique Ko-fi</h3>
       <p className="text-sm text-gray-600 mb-4">
         Sur Ko-fi : More → Transactions → Download CSV. Le webhook ne rattrape pas les ventes
-        passées — cet import comble le trou une bonne fois pour toutes.
+        passées — cet import comble le trou. Réimporter le même fichier corrige les commandes déjà
+        importées au lieu d'en créer des doublons.
       </p>
 
       <input type="file" accept=".csv" onChange={handleFile} className="mb-4 text-sm" />
@@ -65,7 +73,7 @@ export const ImportHistory = ({ onDone, onSkip }) => {
         <p className="text-sm text-gray-700 mb-4">
           {rows.length} transaction(s) détectée(s) dans {fileName}
           {rows.some((r) => r.isOutgoing)
-            ? ` (dont ${rows.filter((r) => r.isOutgoing).length} paiement(s) sortant(s) — abonnements ou achats sur ta propre boutique — qui seront ignorés, ce ne sont pas des ventes)`
+            ? ` (dont ${rows.filter((r) => r.isOutgoing).length} paiement(s) sortant(s) ignoré(s) — abonnements ou achats sur ta propre boutique)`
             : ''}
           .
         </p>
@@ -80,17 +88,12 @@ export const ImportHistory = ({ onDone, onSkip }) => {
 
       <div className="flex gap-3">
         {!result ? (
-          <>
-            <Button onClick={handleImport} disabled={!rows || importing} className="flex-1 justify-center">
-              {importing ? 'Import...' : 'Importer'}
-            </Button>
-            <Button variant="ghost" onClick={onSkip} className="flex-1 justify-center">
-              Passer
-            </Button>
-          </>
+          <Button onClick={handleImport} disabled={!rows || importing} size="sm">
+            {importing ? 'Import...' : 'Importer'}
+          </Button>
         ) : (
-          <Button onClick={onDone} className="flex-1 justify-center">
-            Continuer
+          <Button variant="secondary" onClick={reset} size="sm">
+            Importer un autre fichier
           </Button>
         )}
       </div>

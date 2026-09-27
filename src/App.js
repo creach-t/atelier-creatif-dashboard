@@ -1,16 +1,16 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Truck, TrendingUp } from 'lucide-react';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
 import { Dashboard } from './components/dashboard/Dashboard';
 import { Orders } from './components/orders/Orders';
 import { Products } from './components/products/Products';
+import { Settings } from './components/settings/Settings';
 import { Login } from './components/auth/Login';
-import { Onboarding } from './components/onboarding/Onboarding';
 import { Card } from './components/ui/Card';
 import { useOrders } from './hooks/useOrders';
 import { useProducts } from './hooks/useProducts';
-import { apiClient, onUnauthorized } from './api/client';
+import { onUnauthorized } from './api/client';
 import { supabase } from './api/supabaseClient';
 
 const CreativeDashboard = () => {
@@ -26,6 +26,8 @@ const CreativeDashboard = () => {
         return <Orders orders={orders} createOrder={createOrder} updateOrder={updateOrder} />;
       case 'products':
         return <Products products={products} />;
+      case 'settings':
+        return <Settings />;
       case 'shipping':
         return (
           <div className="p-6">
@@ -72,31 +74,16 @@ const LoadingScreen = () => (
 
 const App = () => {
   const [session, setSession] = useState(undefined); // undefined = pas encore vérifié
-  const [profile, setProfile] = useState(undefined);
-
-  const loadProfile = useCallback(async () => {
-    try {
-      const data = await apiClient.get('/profile');
-      setProfile(data);
-    } catch (err) {
-      setProfile(null);
-    }
-  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
 
     const { data: subscription } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
-      if (!newSession) setProfile(undefined);
     });
 
     return () => subscription.subscription.unsubscribe();
   }, []);
-
-  useEffect(() => {
-    if (session) loadProfile();
-  }, [session, loadProfile]);
 
   useEffect(() => onUnauthorized(() => supabase.auth.signOut()), []);
 
@@ -106,14 +93,6 @@ const App = () => {
 
   if (!session) {
     return <Login />;
-  }
-
-  if (profile === undefined) {
-    return <LoadingScreen />;
-  }
-
-  if (profile && !profile.onboarding_completed) {
-    return <Onboarding onComplete={loadProfile} />;
   }
 
   return <CreativeDashboard />;
