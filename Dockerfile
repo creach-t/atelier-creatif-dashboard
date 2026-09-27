@@ -9,6 +9,14 @@ COPY package*.json ./
 RUN npm ci
 
 COPY . .
+
+# Variables publiques (safe à exposer au navigateur) injectées au build — CRA les intègre
+# dans le bundle statique, elles doivent donc être connues à ce stade, pas au runtime.
+ARG REACT_APP_SUPABASE_URL
+ARG REACT_APP_SUPABASE_ANON_KEY
+ENV REACT_APP_SUPABASE_URL=$REACT_APP_SUPABASE_URL
+ENV REACT_APP_SUPABASE_ANON_KEY=$REACT_APP_SUPABASE_ANON_KEY
+
 RUN npm run build
 
 # ─────────────────────────────────────────────

@@ -80,6 +80,8 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             GIT_SHA=${{ github.sha }}
+            REACT_APP_SUPABASE_URL=${{ secrets.REACT_APP_SUPABASE_URL }}
+            REACT_APP_SUPABASE_ANON_KEY=${{ secrets.REACT_APP_SUPABASE_ANON_KEY }}
 
   # ──────────────────────────────────────────────
   # Job 3 : Deploy sur VPS via tunnel Cloudflare (zero-downtime)

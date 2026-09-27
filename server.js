@@ -4,6 +4,11 @@
 const path = require('path');
 const express = require('express');
 
+// En prod (Docker), les variables d'env sont déjà injectées par docker-compose (env_file) —
+// ce fichier n'existe pas dans le container, donc ce chargement est un no-op silencieux.
+// En dev local, ça permet à npm run dev/npm run server de lire .env.local comme react-scripts le fait déjà côté front.
+require('dotenv').config({ path: path.resolve(__dirname, '.env.local') });
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -29,10 +34,12 @@ const safe = (handler) => (req, res) => {
 };
 
 app.all('/api/kofi-webhook', safe(require('./api/kofi-webhook')));
+app.all('/api/orders/import', safe(require('./api/orders/import'))); // avant /:id, sinon "import" matcherait comme id
 app.all('/api/orders', safe(require('./api/orders')));
 app.all('/api/orders/:id', safe(withIdParam(require('./api/orders/[id]'))));
 app.all('/api/products', safe(require('./api/products')));
 app.all('/api/products/:id', safe(withIdParam(require('./api/products/[id]'))));
+app.all('/api/profile', safe(require('./api/profile')));
 
 app.get('/health', (req, res) => res.status(200).send('ok'));
 

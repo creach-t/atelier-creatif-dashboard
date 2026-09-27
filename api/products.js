@@ -1,13 +1,18 @@
 const { getSupabaseClient } = require('./lib/supabaseClient');
-const { requireDashboardAuth } = require('./lib/auth');
+const { requireUser } = require('./lib/auth');
 
 module.exports = async (req, res) => {
-  if (!requireDashboardAuth(req, res)) return;
+  const user = await requireUser(req, res);
+  if (!user) return;
 
   const supabase = getSupabaseClient();
 
   if (req.method === 'GET') {
-    const { data, error } = await supabase.from('products').select('*').order('name');
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('name');
     if (error) {
       res.status(500).json({ error: error.message });
       return;
@@ -29,6 +34,7 @@ module.exports = async (req, res) => {
     }
 
     const product = {
+      user_id: user.id,
       name: body.name,
       category: body.category,
       price: body.price,

@@ -1,16 +1,21 @@
 const { getSupabaseClient } = require('./lib/supabaseClient');
-const { requireDashboardAuth } = require('./lib/auth');
+const { requireUser } = require('./lib/auth');
 
 const ALLOWED_CHANNELS = ['kofi', 'reel'];
 const ALLOWED_STATUSES = ['pending', 'shipped', 'delivered', 'cancelled'];
 
 module.exports = async (req, res) => {
-  if (!requireDashboardAuth(req, res)) return;
+  const user = await requireUser(req, res);
+  if (!user) return;
 
   const supabase = getSupabaseClient();
 
   if (req.method === 'GET') {
-    let query = supabase.from('orders').select('*').order('created_at', { ascending: false });
+    let query = supabase
+      .from('orders')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
 
     const { channel } = req.query;
     if (channel && ALLOWED_CHANNELS.includes(channel)) {
@@ -41,6 +46,7 @@ module.exports = async (req, res) => {
     const status = ALLOWED_STATUSES.includes(body.status) ? body.status : 'pending';
 
     const order = {
+      user_id: user.id,
       channel: body.channel,
       customer_name: body.customer_name || null,
       customer_email: body.customer_email || null,

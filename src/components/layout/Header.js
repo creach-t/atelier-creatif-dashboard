@@ -1,5 +1,6 @@
 import React from 'react';
-import { Bell, Settings } from 'lucide-react';
+import { Bell, LogOut } from 'lucide-react';
+import { supabase } from '../../api/supabaseClient';
 
 export const Header = () => (
   <header className="bg-white border-b border-purple-100 px-6 py-4">
@@ -13,8 +14,12 @@ export const Header = () => (
           <Bell size={20} />
           <div className="absolute -top-1 -right-1 w-3 h-3 bg-pink-400 rounded-full"></div>
         </button>
-        <button className="p-2 text-gray-600 hover:bg-purple-50 rounded-xl transition-colors">
-          <Settings size={20} />
+        <button
+          onClick={() => supabase.auth.signOut()}
+          className="p-2 text-gray-600 hover:bg-purple-50 rounded-xl transition-colors"
+          title="Se déconnecter"
+        >
+          <LogOut size={20} />
         </button>
       </div>
     </div>

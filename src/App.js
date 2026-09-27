@@ -1,15 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Truck, TrendingUp } from 'lucide-react';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
 import { Dashboard } from './components/dashboard/Dashboard';
 import { Orders } from './components/orders/Orders';
 import { Products } from './components/products/Products';
-import { AccessGate } from './components/auth/AccessGate';
+import { Login } from './components/auth/Login';
+import { Onboarding } from './components/onboarding/Onboarding';
 import { Card } from './components/ui/Card';
 import { useOrders } from './hooks/useOrders';
 import { useProducts } from './hooks/useProducts';
-import { apiClient, getAccessToken, onUnauthorized } from './api/client';
+import { apiClient, onUnauthorized } from './api/client';
+import { supabase } from './api/supabaseClient';
 
 const CreativeDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -62,18 +64,56 @@ const CreativeDashboard = () => {
   );
 };
 
+const LoadingScreen = () => (
+  <div className="flex h-screen items-center justify-center bg-gradient-to-br from-purple-25 via-pink-25 to-blue-25">
+    <p className="text-gray-500">Chargement...</p>
+  </div>
+);
+
 const App = () => {
-  const [unlocked, setUnlocked] = useState(!!getAccessToken());
+  const [session, setSession] = useState(undefined); // undefined = pas encore vérifié
+  const [profile, setProfile] = useState(undefined);
 
-  useEffect(() => onUnauthorized(() => setUnlocked(false)), []);
+  const loadProfile = useCallback(async () => {
+    try {
+      const data = await apiClient.get('/profile');
+      setProfile(data);
+    } catch (err) {
+      setProfile(null);
+    }
+  }, []);
 
-  const handleUnlock = async () => {
-    await apiClient.get('/orders');
-    setUnlocked(true);
-  };
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setSession(data.session));
 
-  if (!unlocked) {
-    return <AccessGate onUnlock={handleUnlock} />;
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+      if (!newSession) setProfile(undefined);
+    });
+
+    return () => subscription.subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (session) loadProfile();
+  }, [session, loadProfile]);
+
+  useEffect(() => onUnauthorized(() => supabase.auth.signOut()), []);
+
+  if (session === undefined) {
+    return <LoadingScreen />;
+  }
+
+  if (!session) {
+    return <Login />;
+  }
+
+  if (profile === undefined) {
+    return <LoadingScreen />;
+  }
+
+  if (profile && !profile.onboarding_completed) {
+    return <Onboarding onComplete={loadProfile} />;
   }
 
   return <CreativeDashboard />;

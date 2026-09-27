@@ -1,14 +1,28 @@
-const { getSupabaseClient } = require('../lib/supabaseClient');
-const { requireUser } = require('../lib/auth');
+const { getSupabaseClient } = require('./lib/supabaseClient');
+const { requireUser } = require('./lib/auth');
 
-const PATCHABLE_FIELDS = ['name', 'category', 'price', 'stock', 'min_stock', 'image'];
+const PATCHABLE_FIELDS = ['display_name', 'kofi_verification_token', 'onboarding_completed'];
 
 module.exports = async (req, res) => {
   const user = await requireUser(req, res);
   if (!user) return;
 
-  const { id } = req.query;
   const supabase = getSupabaseClient();
+
+  if (req.method === 'GET') {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+    res.status(200).json(data);
+    return;
+  }
 
   if (req.method === 'PATCH') {
     const body = req.body || {};
@@ -23,10 +37,9 @@ module.exports = async (req, res) => {
     }
 
     const { data, error } = await supabase
-      .from('products')
+      .from('profiles')
       .update(updates)
-      .eq('id', id)
-      .eq('user_id', user.id)
+      .eq('id', user.id)
       .select()
       .single();
 
@@ -35,20 +48,6 @@ module.exports = async (req, res) => {
       return;
     }
     res.status(200).json(data);
-    return;
-  }
-
-  if (req.method === 'DELETE') {
-    const { error } = await supabase
-      .from('products')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', user.id);
-    if (error) {
-      res.status(500).json({ error: error.message });
-      return;
-    }
-    res.status(204).end();
     return;
   }
 

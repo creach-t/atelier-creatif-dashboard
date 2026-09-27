@@ -34,9 +34,8 @@ Ces étapes supposent que Traefik (réseau Docker `traefik-public`) et le tunnel
    ```bash
    SUPABASE_URL=https://xxxxxxxxxxxx.supabase.co
    SUPABASE_SERVICE_ROLE_KEY=ta_cle_secrete_supabase
-   KOFI_VERIFICATION_TOKEN=ton_verification_token_kofi
-   DASHBOARD_ACCESS_TOKEN=choisis-une-cle-secrete-longue
    ```
+   Cashly étant multi-utilisateur, il n'y a plus de token Ko-fi ni de clé d'accès globale : chaque utilisateur connecte son propre Ko-fi via l'onboarding, et l'authentification passe par Supabase Auth. Seules les credentials Supabase restent nécessaires au runtime.
 4. **Vérifier que le réseau Docker `traefik-public` existe** : `docker network ls | grep traefik-public` (sinon `docker network create traefik-public`).
 
 ## 🔄 Déploiement continu (GitHub Actions)
@@ -61,8 +60,12 @@ Repository → **Settings → Secrets and variables → Actions** → *New repos
 | `CF_ACCESS_CLIENT_SECRET` | Service token Cloudflare Access (secret) |
 | `VPS_DEPLOY_PATH` | Chemin sur le VPS où vit `docker-compose.prod.yml` et `.env` (ex: `/opt/deployments/cashly`) — **différent** de celui de `modern-cv-react` |
 | `GHCR_PAT` | Personal Access Token GitHub (scope `read:packages`) pour que le VPS puisse pull l'image, si elle n'est pas publique |
+| `REACT_APP_SUPABASE_URL` | URL du projet Supabase — identique à `SUPABASE_URL`, dupliqué exprès (build-arg Docker, pas runtime) |
+| `REACT_APP_SUPABASE_ANON_KEY` | Clé **publishable/anon** Supabase (pas la clé secrète !) — safe à exposer au navigateur, sert à l'authentification côté front |
 
 ⚠️ Ce sont des **secrets par repo** : même si le VPS/tunnel est partagé avec `modern-cv-react`, il faut les re-déclarer ici (avec les mêmes valeurs pour la partie infra, mais un `VPS_DEPLOY_PATH` propre à Cashly).
+
+⚠️ `REACT_APP_SUPABASE_URL`/`REACT_APP_SUPABASE_ANON_KEY` sont utilisées comme **build-args Docker**, pas comme variables d'env du container — elles sont figées dans le bundle React au moment du `docker build`. Si tu changes de projet Supabase, il faut redéclencher un build (pas juste redémarrer le container).
 
 ### Rollback
 
@@ -101,14 +104,14 @@ Reproduit le build en local pour voir l'erreur exacte (souvent : dépendance man
 - Vérifie que `cloudflared` (2026.5.1, épinglé dans le workflow) peut toujours joindre `SSH_HOSTNAME`
 - Vérifie que le service token Cloudflare Access (`CF_ACCESS_CLIENT_ID`/`SECRET`) est toujours valide
 
-**Le dashboard demande la clé d'accès en boucle / erreurs 401 :**
-- Vérifie que `DASHBOARD_ACCESS_TOKEN` dans le `.env` du VPS correspond à la clé saisie dans le dashboard
-- La clé d'accès est stockée en `localStorage` du navigateur — un mode navigation privée ou des cookies bloqués peuvent la faire perdre entre deux sessions
+**Le dashboard renvoie 401 après connexion :**
+- Vérifie que `REACT_APP_SUPABASE_URL`/`REACT_APP_SUPABASE_ANON_KEY` utilisées au build correspondent bien au même projet Supabase que `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` côté serveur (un décalage entre les deux fait échouer la vérification du JWT)
+- La session Supabase Auth est gérée par le SDK côté navigateur — un mode navigation privée ou des cookies/localStorage bloqués peuvent la faire perdre entre deux visites
 
-**Les commandes Ko-fi n'arrivent pas :**
-- Vérifie l'URL du webhook côté Ko-fi (`https://cashly.creachtheo.fr/api/kofi-webhook`)
-- Vérifie que `KOFI_VERIFICATION_TOKEN` dans le `.env` du VPS correspond exactement à celui affiché sur Ko-fi
-- `docker logs cashly` sur le VPS pour voir l'erreur exacte
+**Les commandes Ko-fi n'arrivent pas pour un utilisateur :**
+- Vérifie l'URL du webhook côté Ko-fi (`https://cashly.creachtheo.fr/api/kofi-webhook`, identique pour tous les comptes)
+- Vérifie que le verification token collé dans l'onboarding (table `profiles.kofi_verification_token`) correspond exactement à celui affiché sur Ko-fi
+- `docker logs cashly` sur le VPS pour voir l'erreur exacte (401 "Unknown verification token" = pas de profil trouvé avec ce token)
 
 **Le container redémarre en boucle (`docker ps` montre `Restarting`) :**
 - `docker logs cashly` — le cas le plus probable est `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` absents ou faux dans le `.env` du VPS

@@ -1,28 +1,4 @@
-const TOKEN_KEY = 'dashboard_access_token';
-
-export function getAccessToken() {
-  try {
-    return window.localStorage.getItem(TOKEN_KEY) || '';
-  } catch (err) {
-    return '';
-  }
-}
-
-export function setAccessToken(token) {
-  try {
-    window.localStorage.setItem(TOKEN_KEY, token);
-  } catch (err) {
-    // localStorage indisponible (navigation privée, etc.) — on continue sans persister.
-  }
-}
-
-export function clearAccessToken() {
-  try {
-    window.localStorage.removeItem(TOKEN_KEY);
-  } catch (err) {
-    // no-op
-  }
-}
+import { supabase } from './supabaseClient';
 
 const unauthorizedListeners = new Set();
 
@@ -31,20 +7,25 @@ export function onUnauthorized(callback) {
   return () => unauthorizedListeners.delete(callback);
 }
 
+async function getAuthHeader() {
+  const { data } = await supabase.auth.getSession();
+  const token = data && data.session && data.session.access_token;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 async function request(path, options = {}) {
-  const token = getAccessToken();
+  const authHeader = await getAuthHeader();
 
   const response = await fetch(`/api${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...authHeader,
       ...options.headers,
     },
   });
 
   if (response.status === 401) {
-    clearAccessToken();
     unauthorizedListeners.forEach((cb) => cb());
     throw new Error('Unauthorized');
   }

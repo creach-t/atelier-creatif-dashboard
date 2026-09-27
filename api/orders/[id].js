@@ -1,11 +1,12 @@
 const { getSupabaseClient } = require('../lib/supabaseClient');
-const { requireDashboardAuth } = require('../lib/auth');
+const { requireUser } = require('../lib/auth');
 
 const ALLOWED_STATUSES = ['pending', 'shipped', 'delivered', 'cancelled'];
 const PATCHABLE_FIELDS = ['status', 'tracking', 'shipping'];
 
 module.exports = async (req, res) => {
-  if (!requireDashboardAuth(req, res)) return;
+  const user = await requireUser(req, res);
+  if (!user) return;
 
   if (req.method !== 'PATCH') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -35,6 +36,7 @@ module.exports = async (req, res) => {
     .from('orders')
     .update(updates)
     .eq('id', id)
+    .eq('user_id', user.id)
     .select()
     .single();
 

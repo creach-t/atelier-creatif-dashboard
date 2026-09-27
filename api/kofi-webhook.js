@@ -4,6 +4,11 @@ const { mapKofiPayload } = require('./lib/kofiMapper');
 // Ko-fi POST en application/x-www-form-urlencoded avec un champ `data`
 // contenant le JSON de l'événement. server.js monte express.urlencoded()
 // avant cette route, donc req.body.data est déjà disponible ici.
+//
+// Multi-utilisateur : Ko-fi envoie le même verification_token à chaque événement
+// pour un créateur donné, et chaque créateur a le sien (stocké dans profiles.kofi_verification_token
+// via l'onboarding) — c'est ce qui permet de retrouver le bon compte sans connaître
+// à l'avance qui possède quel token.
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -24,15 +29,32 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const expectedToken = process.env.KOFI_VERIFICATION_TOKEN;
-  if (!expectedToken || payload.verification_token !== expectedToken) {
-    res.status(401).json({ error: 'Invalid verification token' });
+  if (!payload.verification_token) {
+    res.status(401).json({ error: 'Missing verification token' });
     return;
   }
 
   try {
-    const order = mapKofiPayload(payload);
     const supabase = getSupabaseClient();
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('kofi_verification_token', payload.verification_token)
+      .maybeSingle();
+
+    if (profileError) {
+      console.error('Supabase lookup error (kofi-webhook):', profileError);
+      res.status(500).json({ error: 'Failed to resolve account' });
+      return;
+    }
+
+    if (!profile) {
+      res.status(401).json({ error: 'Unknown verification token' });
+      return;
+    }
+
+    const order = { ...mapKofiPayload(payload), user_id: profile.id };
 
     const { error } = await supabase
       .from('orders')

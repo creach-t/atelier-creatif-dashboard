@@ -1,19 +1,25 @@
-function requireDashboardAuth(req, res) {
-  const expected = process.env.DASHBOARD_ACCESS_TOKEN;
-  if (!expected) {
-    res.status(500).json({ error: 'DASHBOARD_ACCESS_TOKEN is not configured on the server.' });
-    return false;
-  }
+const { getSupabaseClient } = require('./supabaseClient');
 
+// Vérifie le JWT de session Supabase Auth envoyé par le front (Authorization: Bearer <access_token>).
+// Retourne l'utilisateur Supabase si valide, sinon répond 401 elle-même et retourne null.
+async function requireUser(req, res) {
   const header = req.headers.authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
 
-  if (!token || token !== expected) {
+  if (!token) {
     res.status(401).json({ error: 'Unauthorized' });
-    return false;
+    return null;
   }
 
-  return true;
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase.auth.getUser(token);
+
+  if (error || !data || !data.user) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return null;
+  }
+
+  return data.user;
 }
 
-module.exports = { requireDashboardAuth };
+module.exports = { requireUser };

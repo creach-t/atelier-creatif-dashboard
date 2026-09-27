@@ -11,8 +11,12 @@ Une solution complète pour gérer efficacement vos commandes Ko-fi, vos ventes 
 
 ## ✨ Fonctionnalités
 
+### 👥 **Multi-utilisateur**
+- Chaque créateur a son propre compte (Supabase Auth), ses propres commandes/produits — isolation totale via Row Level Security
+- Parcours d'inscription guidé : connecter son Ko-fi (token + URL de webhook) puis importer l'historique des ventes passées (CSV Ko-fi)
+
 ### 🌐 **Multi-canal**
-- **Ko-fi** : commandes/paiements synchronisés automatiquement via webhook
+- **Ko-fi** : commandes/paiements synchronisés automatiquement via webhook (identifié par compte via le verification token)
 - **Reel** : ventes physiques/personnalisées saisies manuellement, avec suivi de la boutique partenaire
 - D'autres canaux pourront être ajoutés par la suite (le canal est une donnée, pas du code en dur)
 
@@ -58,23 +62,20 @@ npm install
 
 ### Configuration du backend (Supabase + Ko-fi)
 
-Les commandes Ko-fi arrivent via un webhook, et les ventes Reel sont saisies manuellement : les deux ont besoin d'un stockage partagé. Le backend est un petit serveur **Express** ([`server.js`](server.js), routes dans [`api/`](api)) qui sert à la fois l'API et le build React — déployé en Docker sur un VPS, derrière Traefik et un tunnel Cloudflare (voir [DEPLOYMENT.md](DEPLOYMENT.md)). La donnée vit dans **Supabase** (Postgres géré).
+Cashly est multi-utilisateur : l'authentification (**Supabase Auth**) isole les données de chaque créateur, et chaque créateur connecte son propre Ko-fi via l'onboarding (pas de config globale). Le backend est un petit serveur **Express** ([`server.js`](server.js), routes dans [`api/`](api)) qui sert à la fois l'API et le build React — déployé en Docker sur un VPS, derrière Traefik et un tunnel Cloudflare (voir [DEPLOYMENT.md](DEPLOYMENT.md)). La donnée vit dans **Supabase** (Postgres géré).
 
 1. **Créer le projet Supabase**
    - Sur [app.supabase.com](https://app.supabase.com), crée un nouveau projet.
-   - Dans l'éditeur SQL du projet, exécute le contenu de [`supabase/schema.sql`](supabase/schema.sql) — ça crée les tables `orders` et `products`, et insère les produits de démonstration.
-   - Dans *Project Settings → API Keys*, récupère l'**URL du projet** et la **clé secrète** : Supabase migre les clés `anon`/`service_role` (JWT) vers de nouvelles clés `sb_publishable_...`/`sb_secret_...` — prends la **secret key** (`sb_secret_...`), ou la clé `service_role` si ton projet affiche encore l'ancien système. Les deux fonctionnent de façon identique avec ce projet. ⚠️ Jamais la clé publishable/anon, qui n'a pas les droits d'écriture nécessaires.
+   - Dans l'éditeur SQL du projet, exécute le contenu de [`supabase/schema.sql`](supabase/schema.sql) (installation neuve) — ça crée les tables `profiles`, `orders`, `products`, le trigger qui crée un profil à chaque inscription, et les policies RLS. Pour une base existante créée avant le passage multi-utilisateur, utilise plutôt [`supabase/migrations/0002_multi_tenant.sql`](supabase/migrations/0002_multi_tenant.sql).
+   - Dans *Project Settings → API Keys*, récupère l'**URL du projet**, la **clé secrète** (`sb_secret_...`, ou `service_role` si l'ancien système) — jamais exposée au navigateur — et la **clé publishable** (`sb_publishable_...`, ou `anon`) — celle-là est safe à exposer au front, elle sert à l'authentification.
 
-2. **Configurer le webhook Ko-fi**
-   - Sur Ko-fi, va dans *Settings → API* pour récupérer ton **verification token**.
-   - Une fois déployé (voir [DEPLOYMENT.md](DEPLOYMENT.md)), configure l'URL de webhook Ko-fi sur `https://cashly.creachtheo.fr/api/kofi-webhook`.
-
-3. **Variables d'environnement**
+2. **Variables d'environnement**
    - Copie `.env.example` vers `.env.local` (déjà ignoré par git) et remplis :
-     - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (la clé secrète récupérée à l'étape 1)
-     - `KOFI_VERIFICATION_TOKEN`
-     - `DASHBOARD_ACCESS_TOKEN` : une clé que tu choisis toi-même, elle protège l'accès au dashboard et aux données clients (à saisir une fois dans l'écran de connexion du dashboard).
-   - En production, ces mêmes variables vivent dans un fichier `.env` sur le VPS, à côté de `docker-compose.prod.yml` (jamais commité, jamais transmis par le CI) — détails dans [DEPLOYMENT.md](DEPLOYMENT.md).
+     - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` — utilisées côté serveur uniquement
+     - `REACT_APP_SUPABASE_URL`, `REACT_APP_SUPABASE_ANON_KEY` — utilisées côté front (authentification), doivent être connues **au build**, pas seulement au runtime (voir [DEPLOYMENT.md](DEPLOYMENT.md) pour la prod)
+   - Il n'y a plus de token d'accès global ni de token Ko-fi global : chaque utilisateur configure son propre Ko-fi (verification token) depuis l'écran d'onboarding après inscription, stocké dans `profiles.kofi_verification_token`.
+
+3. **Ko-fi** : rien à configurer côté serveur — chaque utilisateur, une fois son compte créé, connecte son Ko-fi lui-même via l'écran d'onboarding (URL de webhook affichée + champ pour coller son verification token), avec un import optionnel de l'historique (CSV Ko-fi : More → Transactions → Download CSV).
 
 ### Démarrer en développement
 
@@ -123,31 +124,38 @@ server.js                   # Serveur Express : sert l'API (routes ci-dessous) +
 api/                         # Routes API (montées par server.js)
 ├── lib/
 │   ├── supabaseClient.js   # Client Supabase (clé secrète, côté serveur uniquement)
-│   ├── auth.js             # Vérification du token d'accès dashboard
+│   ├── auth.js             # Vérification du JWT de session Supabase Auth
 │   └── kofiMapper.js       # Traduction payload Ko-fi -> commande
-├── kofi-webhook.js         # Réception des webhooks Ko-fi
-├── orders.js                # GET (liste, filtre ?channel=) / POST (création manuelle)
+├── kofi-webhook.js         # Réception des webhooks Ko-fi (résout le compte via profiles.kofi_verification_token)
+├── orders.js                # GET (liste, filtre ?channel=) / POST (création manuelle) — filtré par user_id
 ├── orders/[id].js           # PATCH (statut, tracking)
-├── products.js               # GET / POST
-└── products/[id].js          # PATCH / DELETE
+├── orders/import.js          # POST — import de l'historique Ko-fi (CSV, onboarding)
+├── products.js               # GET / POST — filtré par user_id
+├── products/[id].js          # PATCH / DELETE
+└── profile.js                 # GET / PATCH — display_name, kofi_verification_token, onboarding_completed
 
 Dockerfile                   # Build multi-stage : React puis image Node/Express de prod
 docker-compose.prod.yml      # Service Docker + labels Traefik (cashly.creachtheo.fr)
 
 supabase/
-└── schema.sql              # Schéma des tables orders/products à exécuter sur Supabase
+├── schema.sql              # Schéma complet (installation neuve, multi-utilisateur)
+└── migrations/0002_multi_tenant.sql  # Migration additive pour une base existante
 
 src/
-├── App.js                  # Assemblage (auth, routing des sections)
-├── api/client.js           # Wrapper fetch (auth, gestion des erreurs)
+├── App.js                  # Routage selon l'état du compte (login → onboarding → dashboard)
+├── api/
+│   ├── client.js            # Wrapper fetch (JWT Supabase, gestion des erreurs)
+│   └── supabaseClient.js    # Client Supabase côté navigateur (clé publishable, auth uniquement)
 ├── hooks/                  # useOrders, useProducts (fetch + mutations)
 ├── components/
 │   ├── ui/                 # Card, Button, Badge, ChannelBadge
 │   ├── layout/              # Sidebar, Header
-│   ├── auth/AccessGate.js  # Écran de connexion (token dashboard)
+│   ├── auth/Login.js        # Écran de connexion / inscription (Supabase Auth)
+│   ├── onboarding/           # Connexion Ko-fi + import de l'historique (CSV)
 │   ├── dashboard/           # Dashboard + répartition par canal
 │   ├── orders/               # Liste des commandes + formulaire de saisie
 │   └── products/             # Catalogue produits
+├── utils/                    # parseCsv.js, normalizeKofiCsv.js
 ├── index.js                 # Point d'entrée React
 └── index.css                 # Styles Tailwind + custom
 
@@ -169,17 +177,19 @@ colors: {
 ```
 
 ### Ajouter des Produits
-Les produits vivent maintenant dans Supabase, pas dans le code. Ajoute une ligne dans la table `products` (via l'éditeur Supabase, ou `POST /api/products` avec ton token d'accès en `Authorization: Bearer ...`).
+Les produits vivent dans Supabase, pas dans le code, et sont propres à chaque compte (`user_id`). Ajoute une ligne dans la table `products` via l'éditeur Supabase, ou `POST /api/products` avec ton JWT de session en `Authorization: Bearer ...` (récupérable via `supabase.auth.getSession()` depuis la console du navigateur une fois connecté).
 
 ### Personnaliser le Branding
-1. Remplacez "Cashly" par votre nom dans [`src/components/layout/Sidebar.js`](src/components/layout/Sidebar.js), [`src/components/auth/AccessGate.js`](src/components/auth/AccessGate.js), `public/index.html` et `public/manifest.json`
+1. Remplacez "Cashly" par votre nom dans [`src/components/layout/Sidebar.js`](src/components/layout/Sidebar.js), [`src/components/auth/Login.js`](src/components/auth/Login.js), `public/index.html` et `public/manifest.json`
 2. Modifiez les gradients de couleur
 3. Ajoutez votre logo dans la sidebar
 
 ## 🔧 Scripts Disponibles
 
 ```bash
-npm start          # Développement (http://localhost:3000)
+npm start          # Front seul (http://localhost:3000), sans backend
+npm run server     # API Express seule (port 3000 par défaut, ou PORT=xxxx)
+npm run dev        # Front + API ensemble, avec proxy /api -> API (dev complet)
 npm run build      # Build production
 npm test           # Tests unitaires
 npm run eject      # Éjection Create React App (⚠️ irréversible)
