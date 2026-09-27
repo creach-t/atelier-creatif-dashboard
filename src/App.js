@@ -19,6 +19,7 @@ const CreativeDashboard = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [selectedProductName, setSelectedProductName] = useState(null);
+  const [initialOrderStatusFilter, setInitialOrderStatusFilter] = useState(null);
   const { orders, createOrder, updateOrder } = useOrders();
   const { products, createProduct, updateProduct } = useProducts();
   const { customers, createCustomer, updateCustomer } = useCustomers();
@@ -33,10 +34,24 @@ const CreativeDashboard = () => {
     setActiveTab('products');
   };
 
+  const handleGoToOrders = (statusFilter) => {
+    if (statusFilter) setInitialOrderStatusFilter(statusFilter);
+    setActiveTab('orders');
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard orders={orders} products={products} />;
+        return (
+          <Dashboard
+            orders={orders}
+            products={products}
+            onSelectOrder={handleSelectOrder}
+            onNavigateToProduct={handleNavigateToProduct}
+            onGoToOrders={handleGoToOrders}
+            onGoToProducts={() => setActiveTab('products')}
+          />
+        );
       case 'orders':
         return (
           <Orders
@@ -47,6 +62,8 @@ const CreativeDashboard = () => {
             onNavigateToProduct={handleNavigateToProduct}
             selectedOrderId={selectedOrderId}
             onClearSelectedOrder={() => setSelectedOrderId(null)}
+            initialStatusFilter={initialOrderStatusFilter}
+            onClearInitialStatusFilter={() => setInitialOrderStatusFilter(null)}
           />
         );
       case 'products':

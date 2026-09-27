@@ -1,18 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
 import { Card } from '../ui/Card';
-
-const getInitials = (name) =>
-  name.split(' ').map((w) => w[0]).filter(Boolean).join('').slice(0, 2).toUpperCase();
-
-const getBadges = (c) => {
-  const badges = [];
-  if (c.count >= 3 && c.total >= 50) badges.push({ icon: '👑', label: 'VIP' });
-  else if (c.total >= 50) badges.push({ icon: '💛', label: 'Généreux·se' });
-  else if (c.count >= 3) badges.push({ icon: '🔄', label: 'Fidèle' });
-  if (c.count >= 5) badges.push({ icon: '⭐', label: 'Super fan' });
-  return badges;
-};
+import { getInitials, getCustomerBadges } from '../../utils/customerBadges';
 
 const rankIcon = (i) => (i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : null);
 
@@ -59,7 +48,7 @@ export const CustomersTab = ({ stats }) => {
           {filtered.length === 0 && <p className="text-sm text-gray-500 text-center py-8">Aucun résultat.</p>}
           {filtered.map((c) => {
             const globalRank = stats.customers.indexOf(c);
-            const badges = getBadges(c);
+            const badges = getCustomerBadges(c);
             const rank = rankIcon(globalRank);
             return (
               <div key={c.name} className="flex items-center gap-4 py-4">

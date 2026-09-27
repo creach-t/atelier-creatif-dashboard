@@ -25,7 +25,17 @@ const matchesPeriod = (order, period) => {
   return orderDate >= cutoff;
 };
 
-export const Orders = ({ orders, products, createOrder, updateOrder, onNavigateToProduct, selectedOrderId, onClearSelectedOrder }) => {
+export const Orders = ({
+  orders,
+  products,
+  createOrder,
+  updateOrder,
+  onNavigateToProduct,
+  selectedOrderId,
+  onClearSelectedOrder,
+  initialStatusFilter,
+  onClearInitialStatusFilter,
+}) => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [channelFilter, setChannelFilter] = useState('all');
   const [period, setPeriod] = useState('all');
@@ -59,6 +69,14 @@ export const Orders = ({ orders, products, createOrder, updateOrder, onNavigateT
     const match = orders.find((o) => o.id === selectedOrderId);
     if (match) setDetailOrder(match);
   }, [selectedOrderId, orders]);
+
+  // Applique un filtre de statut demandé depuis une autre page (ex: Dashboard -> "Commandes en attente").
+  React.useEffect(() => {
+    if (!initialStatusFilter) return;
+    setStatusFilter(initialStatusFilter);
+    onClearInitialStatusFilter && onClearInitialStatusFilter();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialStatusFilter]);
 
   return (
     <div className="p-6 space-y-6">

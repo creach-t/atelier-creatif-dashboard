@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Plus, Search, Edit, ExternalLink } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
@@ -8,8 +9,22 @@ import { computeSoldByName } from '../../utils/computeSoldByName';
 
 const SORTS = {
   best_selling: { label: 'Plus vendus', fn: (a, b, sold) => (sold[b.name] || 0) - (sold[a.name] || 0) },
+  least_selling: { label: 'Moins vendus', fn: (a, b, sold) => (sold[a.name] || 0) - (sold[b.name] || 0) },
   name: { label: 'Nom (A-Z)', fn: (a, b) => a.name.localeCompare(b.name) },
   price_desc: { label: 'Prix décroissant', fn: (a, b) => Number(b.price) - Number(a.price) },
+  price_asc: { label: 'Prix croissant', fn: (a, b) => Number(a.price) - Number(b.price) },
+  newest: { label: 'Plus récents', fn: (a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0) },
+};
+
+const ChartTooltip = ({ active, payload }) => {
+  if (!active || !payload || !payload.length) return null;
+  const p = payload[0];
+  return (
+    <div className="rounded-xl px-4 py-3 shadow-lg text-sm border border-purple-100 bg-white max-w-[220px]">
+      <p className="text-xs font-semibold text-gray-500 truncate">{p.payload.name}</p>
+      <p className="font-bold text-purple-600">{p.value} vendu{p.value > 1 ? 's' : ''}</p>
+    </div>
+  );
 };
 
 export const Products = ({ products, orders, createProduct, updateProduct, selectedProductName, onClearSelectedProduct }) => {
@@ -32,6 +47,17 @@ export const Products = ({ products, orders, createProduct, updateProduct, selec
       })
       .sort((a, b) => SORTS[sortKey].fn(a, b, soldByName));
   }, [products, searchTerm, categoryFilter, sortKey, soldByName]);
+
+  const topProducts = useMemo(
+    () =>
+      [...products]
+        .map((p) => ({ name: p.name, sold: soldByName[p.name] || 0 }))
+        .filter((p) => p.sold > 0)
+        .sort((a, b) => b.sold - a.sold)
+        .slice(0, 5)
+        .reverse(),
+    [products, soldByName]
+  );
 
   const openCreate = () => {
     setEditingProduct(null);
@@ -73,6 +99,33 @@ export const Products = ({ products, orders, createProduct, updateProduct, selec
         </Button>
       </div>
 
+      {topProducts.length > 0 && (
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Top 5 des ventes</h3>
+          <ResponsiveContainer width="100%" height={Math.max(120, topProducts.length * 40)}>
+            <BarChart data={topProducts} layout="vertical" margin={{ top: 0, right: 24, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f3e8ff" horizontal={false} />
+              <XAxis type="number" tick={{ fill: '#9ca3af', fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+              <YAxis
+                type="category"
+                dataKey="name"
+                width={160}
+                tick={{ fill: '#4b5563', fontSize: 12 }}
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={(name) => (name.length > 22 ? `${name.slice(0, 22)}…` : name)}
+              />
+              <Tooltip content={<ChartTooltip />} cursor={{ fill: '#f3e8ff' }} />
+              <Bar dataKey="sold" radius={[0, 6, 6, 0]}>
+                {topProducts.map((_, i) => (
+                  <Cell key={i} fill={i === topProducts.length - 1 ? '#fbbf24' : '#c4b5fd'} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </Card>
+      )}
+
       <Card className="p-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
@@ -106,6 +159,11 @@ export const Products = ({ products, orders, createProduct, updateProduct, selec
           </select>
         </div>
       </Card>
+
+      <p className="text-sm text-gray-500">
+        <strong className="text-gray-900">{filteredProducts.length}</strong> produit{filteredProducts.length > 1 ? 's' : ''}
+        {categoryFilter !== 'all' || searchTerm ? ` sur ${products.length}` : ''}
+      </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {filteredProducts.map((product) => {
