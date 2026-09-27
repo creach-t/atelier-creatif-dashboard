@@ -87,7 +87,7 @@ const CreativeDashboard = () => {
         onCloseMobile={() => setMobileMenuOpen(false)}
       />
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-        <Header orders={orders} onSelectOrder={handleSelectOrder} onOpenMenu={() => setMobileMenuOpen(true)} />
+        <Header orders={orders} onSelectOrder={handleSelectOrder} onOpenMenu={() => setMobileMenuOpen(true)} activeTab={activeTab} />
         <main className="flex-1 overflow-auto">{renderContent()}</main>
       </div>
     </div>

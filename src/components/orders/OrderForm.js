@@ -136,38 +136,40 @@ export const OrderForm = ({ onCreate, onClose }) => {
             </div>
             <div className="space-y-2">
               {items.map((item, index) => (
-                <div key={index} className="flex gap-2 items-center">
+                <div key={index} className="flex flex-col sm:flex-row gap-2 p-2 sm:p-0 bg-gray-50 sm:bg-transparent rounded-lg">
                   <input
                     type="text"
                     placeholder="Nom de l'article"
                     value={item.name}
                     onChange={(e) => updateItem(index, 'name', e.target.value)}
-                    className="flex-1 px-3 py-2 border border-purple-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                    className="flex-1 min-w-0 px-3 py-2 border border-purple-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
                   />
-                  <input
-                    type="number"
-                    min="1"
-                    value={item.quantity}
-                    onChange={(e) => updateItem(index, 'quantity', e.target.value)}
-                    className="w-16 px-2 py-2 border border-purple-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
-                  />
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="Prix"
-                    value={item.price}
-                    onChange={(e) => updateItem(index, 'price', e.target.value)}
-                    className="w-20 px-2 py-2 border border-purple-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeItem(index)}
-                    disabled={items.length === 1}
-                    className="p-2 text-gray-400 hover:text-red-600 disabled:opacity-30"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="number"
+                      min="1"
+                      value={item.quantity}
+                      onChange={(e) => updateItem(index, 'quantity', e.target.value)}
+                      className="w-16 shrink-0 px-2 py-2 border border-purple-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                    />
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="Prix"
+                      value={item.price}
+                      onChange={(e) => updateItem(index, 'price', e.target.value)}
+                      className="flex-1 sm:flex-none sm:w-20 min-w-0 px-2 py-2 border border-purple-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeItem(index)}
+                      disabled={items.length === 1}
+                      className="p-2 text-gray-400 hover:text-red-600 disabled:opacity-30 shrink-0"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

@@ -83,7 +83,7 @@ export const Orders = ({ orders, products, createOrder, updateOrder, onNavigateT
             />
           </div>
           <select
-            className="px-4 py-3 border border-purple-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400"
+            className="w-full md:w-auto px-4 py-3 border border-purple-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400"
             value={channelFilter}
             onChange={(e) => setChannelFilter(e.target.value)}
           >
@@ -92,7 +92,7 @@ export const Orders = ({ orders, products, createOrder, updateOrder, onNavigateT
             <option value="reel">Reel</option>
           </select>
           <select
-            className="px-4 py-3 border border-purple-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400"
+            className="w-full md:w-auto px-4 py-3 border border-purple-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >

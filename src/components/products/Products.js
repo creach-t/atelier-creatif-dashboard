@@ -86,7 +86,7 @@ export const Products = ({ products, orders, createProduct, updateProduct, selec
             />
           </div>
           <select
-            className="px-4 py-3 border border-purple-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400"
+            className="w-full md:w-auto px-4 py-3 border border-purple-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400"
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
           >
@@ -96,7 +96,7 @@ export const Products = ({ products, orders, createProduct, updateProduct, selec
             ))}
           </select>
           <select
-            className="px-4 py-3 border border-purple-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400"
+            className="w-full md:w-auto px-4 py-3 border border-purple-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400"
             value={sortKey}
             onChange={(e) => setSortKey(e.target.value)}
           >

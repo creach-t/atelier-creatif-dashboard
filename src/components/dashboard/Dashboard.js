@@ -15,28 +15,40 @@ const channelBreakdown = (orders) => {
   });
 };
 
+const monthLabel = (() => {
+  const label = new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  return label.charAt(0).toUpperCase() + label.slice(1);
+})();
+
 export const Dashboard = ({ orders, products }) => {
-  const totalRevenue = orders.reduce((sum, order) => sum + Number(order.total || 0), 0);
+  const currentMonthKey = useMemo(() => new Date().toISOString().slice(0, 7), []);
+  const currentMonthOrders = useMemo(
+    () => orders.filter((order) => (order.order_date || '').startsWith(currentMonthKey)),
+    [orders, currentMonthKey]
+  );
+
+  const monthRevenue = currentMonthOrders.reduce((sum, order) => sum + Number(order.total || 0), 0);
   const pendingOrders = orders.filter((order) => order.status === 'pending').length;
   const shippedToday = orders.filter(
     (order) => order.status === 'shipped' && order.order_date === new Date().toISOString().split('T')[0]
   ).length;
 
-  const breakdown = channelBreakdown(orders);
+  const breakdown = channelBreakdown(currentMonthOrders);
   const maxRevenue = Math.max(1, ...breakdown.map((b) => b.revenue));
 
-  const soldByName = useMemo(() => computeSoldByName(orders), [orders]);
+  const soldByNameThisMonth = useMemo(() => computeSoldByName(currentMonthOrders), [currentMonthOrders]);
   const popularProducts = useMemo(
     () =>
       [...products]
-        .map((p) => ({ ...p, sold: soldByName[p.name] || 0 }))
+        .map((p) => ({ ...p, sold: soldByNameThisMonth[p.name] || 0 }))
+        .filter((p) => p.sold > 0)
         .sort((a, b) => b.sold - a.sold)
         .slice(0, 3),
-    [products, soldByName]
+    [products, soldByNameThisMonth]
   );
 
   const metrics = [
-    { title: 'Revenus Total', value: `${totalRevenue.toFixed(2)}€`, icon: DollarSign, color: 'from-green-400 to-emerald-400' },
+    { title: `Revenus (${monthLabel})`, value: `${monthRevenue.toFixed(2)}€`, icon: DollarSign, color: 'from-green-400 to-emerald-400' },
     { title: 'Commandes en Attente', value: pendingOrders, icon: Clock, color: 'from-yellow-400 to-orange-400' },
     { title: 'Produits Catalogués', value: products.length, icon: Palette, color: 'from-purple-400 to-pink-400' },
     { title: 'Expédiées Aujourd\'hui', value: shippedToday, icon: Truck, color: 'from-blue-400 to-purple-400' },
@@ -44,6 +56,11 @@ export const Dashboard = ({ orders, products }) => {
 
   return (
     <div className="p-6 space-y-6">
+      <div>
+        <h3 className="text-2xl font-bold text-gray-900">Vue d'ensemble</h3>
+        <p className="text-sm text-gray-500 mt-1">{monthLabel}</p>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {metrics.map((metric, index) => {
           const Icon = metric.icon;
@@ -64,7 +81,8 @@ export const Dashboard = ({ orders, products }) => {
       </div>
 
       <Card className="p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-6">Répartition par canal</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-1">Répartition par canal</h3>
+        <p className="text-sm text-gray-500 mb-6">{monthLabel}</p>
         <div className="space-y-4">
           {breakdown.map(({ channel, revenue, count }) => (
             <div key={channel}>
@@ -122,7 +140,8 @@ export const Dashboard = ({ orders, products }) => {
       </Card>
 
       <Card className="p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-6">Produits Populaires</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-1">Produits Populaires</h3>
+        <p className="text-sm text-gray-500 mb-6">{monthLabel}</p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {popularProducts.map((product) => (
             <div key={product.id} className="p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl">
@@ -136,7 +155,7 @@ export const Dashboard = ({ orders, products }) => {
             </div>
           ))}
           {popularProducts.length === 0 && (
-            <p className="text-sm text-gray-500 col-span-full text-center py-6">Aucun produit pour le moment.</p>
+            <p className="text-sm text-gray-500 col-span-full text-center py-6">Aucune vente ce mois-ci pour l'instant.</p>
           )}
         </div>
       </Card>
