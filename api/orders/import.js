@@ -1,5 +1,7 @@
 const { getSupabaseClient } = require('../lib/supabaseClient');
 const { requireUser } = require('../lib/auth');
+const { syncProductsFromItems } = require('../lib/productSync');
+const { syncCustomerFromOrder } = require('../lib/customerSync');
 
 // Rattrapage de l'historique Ko-fi (onboarding) : le front parse le CSV exporté depuis
 // Ko-fi (More > Transactions > Download CSV) et envoie un tableau de lignes déjà
@@ -21,22 +23,22 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const orders = rows
-    .filter((row) => row && row.transaction_id && !row.isOutgoing)
-    .map((row) => ({
-      user_id: user.id,
-      channel: 'kofi',
-      customer_name: row.customer_name || null,
-      customer_email: row.customer_email || null,
-      items: Array.isArray(row.items) && row.items.length > 0
-        ? row.items
-        : [{ name: row.type || 'Support Ko-fi', quantity: 1 }],
-      total: Number(row.amount) || 0,
-      status: 'delivered',
-      order_date: row.timestamp || new Date().toISOString().slice(0, 10),
-      kofi_transaction_id: row.transaction_id,
-      raw_payload: { imported_from_csv: true, ...row },
-    }));
+  const importable = rows.filter((row) => row && row.transaction_id && !row.isOutgoing);
+
+  const orders = importable.map((row) => ({
+    user_id: user.id,
+    channel: 'kofi',
+    customer_name: row.customer_name || null,
+    customer_email: row.customer_email || null,
+    items: Array.isArray(row.items) && row.items.length > 0
+      ? row.items
+      : [{ name: row.type || 'Support Ko-fi', quantity: 1 }],
+    total: Number(row.amount) || 0,
+    status: 'delivered',
+    order_date: row.timestamp || new Date().toISOString().slice(0, 10),
+    kofi_transaction_id: row.transaction_id,
+    raw_payload: { imported_from_csv: true, ...row },
+  }));
 
   const skipped = rows.length - orders.length;
 
@@ -54,6 +56,24 @@ module.exports = async (req, res) => {
   if (error) {
     res.status(500).json({ error: error.message });
     return;
+  }
+
+  // Enrichit le catalogue produits — uniquement pour de vraies commandes boutique. Le CSV
+  // Ko-fi ne donne pas de prix unitaire fiable (PricePerUnit vide dès qu'une commande a
+  // plusieurs articles), donc on laisse le prix à 0 — la créatrice le complète elle-même.
+  const shopOrders = importable.filter((row) => row.type === 'Shop Order');
+  for (const row of shopOrders) {
+    await syncProductsFromItems(supabase, user.id, row.items);
+  }
+
+  // Une seule tentative de sync par client distinct (un import a souvent des dizaines
+  // de lignes pour le même client, inutile de refaire le lookup à chaque fois).
+  const seenCustomers = new Set();
+  for (const row of importable) {
+    const name = row.customer_name && row.customer_name.trim();
+    if (!name || seenCustomers.has(name)) continue;
+    seenCustomers.add(name);
+    await syncCustomerFromOrder(supabase, user.id, { name, email: row.customer_email });
   }
 
   res.status(200).json({ imported: data.length, skipped, total_rows: rows.length });

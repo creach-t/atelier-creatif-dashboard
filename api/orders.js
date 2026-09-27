@@ -1,5 +1,6 @@
 const { getSupabaseClient } = require('./lib/supabaseClient');
 const { requireUser } = require('./lib/auth');
+const { syncCustomerFromOrder } = require('./lib/customerSync');
 
 const ALLOWED_CHANNELS = ['kofi', 'reel'];
 const ALLOWED_STATUSES = ['pending', 'shipped', 'delivered', 'cancelled'];
@@ -11,10 +12,14 @@ module.exports = async (req, res) => {
   const supabase = getSupabaseClient();
 
   if (req.method === 'GET') {
+    // Trié par date de la transaction (order_date), pas par date d'insertion en base :
+    // un import d'historique insère des centaines de commandes anciennes d'un coup,
+    // created_at ne reflèterait que l'ordre du batch d'import, pas la vraie chronologie.
     let query = supabase
       .from('orders')
       .select('*')
       .eq('user_id', user.id)
+      .order('order_date', { ascending: false })
       .order('created_at', { ascending: false });
 
     const { channel } = req.query;
@@ -64,6 +69,11 @@ module.exports = async (req, res) => {
       res.status(500).json({ error: error.message });
       return;
     }
+
+    if (order.customer_name) {
+      await syncCustomerFromOrder(supabase, user.id, { name: order.customer_name, email: order.customer_email });
+    }
+
     res.status(201).json(data);
     return;
   }

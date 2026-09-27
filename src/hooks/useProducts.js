@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { apiClient } from '../api/client';
 
+const POLL_INTERVAL_MS = 30000;
+
 export function useProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,7 +22,21 @@ export function useProducts() {
 
   useEffect(() => {
     refresh();
+    const interval = setInterval(refresh, POLL_INTERVAL_MS);
+    return () => clearInterval(interval);
   }, [refresh]);
 
-  return { products, loading, error, refresh };
+  const createProduct = useCallback(async (product) => {
+    const created = await apiClient.post('/products', product);
+    setProducts((prev) => [...prev, created]);
+    return created;
+  }, []);
+
+  const updateProduct = useCallback(async (id, updates) => {
+    const updated = await apiClient.patch(`/products/${id}`, updates);
+    setProducts((prev) => prev.map((p) => (p.id === id ? updated : p)));
+    return updated;
+  }, []);
+
+  return { products, loading, error, refresh, createProduct, updateProduct };
 }

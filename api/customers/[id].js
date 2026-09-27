@@ -1,7 +1,7 @@
 const { getSupabaseClient } = require('../lib/supabaseClient');
 const { requireUser } = require('../lib/auth');
 
-const PATCHABLE_FIELDS = ['name', 'category', 'price', 'image'];
+const PATCHABLE_FIELDS = ['name', 'email', 'notes'];
 
 module.exports = async (req, res) => {
   const user = await requireUser(req, res);
@@ -23,7 +23,7 @@ module.exports = async (req, res) => {
     }
 
     const { data, error } = await supabase
-      .from('products')
+      .from('customers')
       .update(updates)
       .eq('id', id)
       .eq('user_id', user.id)
@@ -40,7 +40,7 @@ module.exports = async (req, res) => {
 
   if (req.method === 'DELETE') {
     const { error } = await supabase
-      .from('products')
+      .from('customers')
       .delete()
       .eq('id', id)
       .eq('user_id', user.id);

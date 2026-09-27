@@ -1,4 +1,5 @@
 import React from 'react';
+import { AccountCard } from './AccountCard';
 import { KofiSourceCard } from './KofiSourceCard';
 import { ImportKofiHistory } from './ImportKofiHistory';
 import { Card } from '../ui/Card';
@@ -7,6 +8,8 @@ export const Settings = () => {
   return (
     <div className="p-6 space-y-6">
       <h3 className="text-2xl font-bold text-gray-900">Réglages</h3>
+
+      <AccountCard />
 
       <div>
         <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Sources</h4>

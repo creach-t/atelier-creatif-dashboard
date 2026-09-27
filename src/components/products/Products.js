@@ -1,25 +1,73 @@
-import React, { useState } from 'react';
-import { Plus, Search, Edit, Eye } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Plus, Search, Edit } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
+import { ProductForm } from './ProductForm';
+import { ProductThumbnail } from '../ui/ProductThumbnail';
+import { computeSoldByName } from '../../utils/computeSoldByName';
 
-export const Products = ({ products }) => {
+const SORTS = {
+  best_selling: { label: 'Plus vendus', fn: (a, b, sold) => (sold[b.name] || 0) - (sold[a.name] || 0) },
+  name: { label: 'Nom (A-Z)', fn: (a, b) => a.name.localeCompare(b.name) },
+  price_desc: { label: 'Prix décroissant', fn: (a, b) => Number(b.price) - Number(a.price) },
+};
+
+export const Products = ({ products, orders, createProduct, updateProduct, selectedProductName, onClearSelectedProduct }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [sortKey, setSortKey] = useState('best_selling');
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+
+  const soldByName = useMemo(() => computeSoldByName(orders), [orders]);
 
   const categories = [...new Set(products.map((p) => p.category))];
 
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = categoryFilter === 'all' || product.category === categoryFilter;
-    return matchesSearch && matchesCategory;
-  });
+  const filteredProducts = useMemo(() => {
+    return products
+      .filter((product) => {
+        const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesCategory = categoryFilter === 'all' || product.category === categoryFilter;
+        return matchesSearch && matchesCategory;
+      })
+      .sort((a, b) => SORTS[sortKey].fn(a, b, soldByName));
+  }, [products, searchTerm, categoryFilter, sortKey, soldByName]);
+
+  const openCreate = () => {
+    setEditingProduct(null);
+    setShowForm(true);
+  };
+
+  const openEdit = (product) => {
+    setEditingProduct(product);
+    setShowForm(true);
+  };
+
+  const handleSave = async (payload) => {
+    if (editingProduct) {
+      await updateProduct(editingProduct.id, payload);
+    } else {
+      await createProduct(payload);
+    }
+  };
+
+  // Ouvre automatiquement la fiche d'un produit sélectionné depuis le détail d'une commande.
+  useEffect(() => {
+    if (!selectedProductName) return;
+    const match = products.find((p) => p.name === selectedProductName);
+    if (match) {
+      setEditingProduct(match);
+      setShowForm(true);
+    }
+    onClearSelectedProduct && onClearSelectedProduct();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedProductName, products]);
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <h3 className="text-2xl font-bold text-gray-900">Catalogue Produits</h3>
-        <Button>
+        <Button onClick={openCreate} className="justify-center">
           <Plus size={16} />
           Nouveau Produit
         </Button>
@@ -47,43 +95,56 @@ export const Products = ({ products }) => {
               <option key={category} value={category}>{category}</option>
             ))}
           </select>
+          <select
+            className="px-4 py-3 border border-purple-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400"
+            value={sortKey}
+            onChange={(e) => setSortKey(e.target.value)}
+          >
+            {Object.entries(SORTS).map(([key, { label }]) => (
+              <option key={key} value={key}>Trier : {label}</option>
+            ))}
+          </select>
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filteredProducts.map((product) => (
-          <Card key={product.id} className="p-6" hover>
-            <div className="text-center">
-              <div className="text-4xl mb-4">{product.image}</div>
-              <h4 className="font-semibold text-gray-900 mb-2">{product.name}</h4>
-              <p className="text-sm text-gray-600 mb-3">{product.category}</p>
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-lg font-bold text-purple-600">{Number(product.price).toFixed(2)}€</span>
-                <span className={`text-sm px-2 py-1 rounded-full ${
-                  product.stock <= product.min_stock
-                    ? 'bg-red-100 text-red-800'
-                    : 'bg-green-100 text-green-800'
-                }`}>
-                  Stock: {product.stock}
-                </span>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="ghost" size="sm" className="flex-1">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {filteredProducts.map((product) => {
+          const sold = soldByName[product.name] || 0;
+          const hasPrice = Number(product.price) > 0;
+          return (
+            <Card key={product.id} className="p-6" hover>
+              <div className="text-center">
+                <ProductThumbnail image={product.image} className="mb-4" />
+                <h4 className="font-semibold text-gray-900 mb-2">{product.name}</h4>
+                <p className="text-sm text-gray-600 mb-3">{product.category}</p>
+                <div className="flex items-center justify-between mb-4 gap-2">
+                  {hasPrice ? (
+                    <span className="text-lg font-bold text-purple-600">{Number(product.price).toFixed(2)}€</span>
+                  ) : (
+                    <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
+                      Prix à définir
+                    </span>
+                  )}
+                  <span className="text-sm px-2 py-1 rounded-full bg-purple-50 text-purple-700 whitespace-nowrap">
+                    {sold} vendu{sold > 1 ? 's' : ''}
+                  </span>
+                </div>
+                <Button variant="ghost" size="sm" className="w-full" onClick={() => openEdit(product)}>
                   <Edit size={14} />
                   Modifier
                 </Button>
-                <Button variant="secondary" size="sm" className="flex-1">
-                  <Eye size={14} />
-                  Voir
-                </Button>
               </div>
-            </div>
-          </Card>
-        ))}
+            </Card>
+          );
+        })}
         {filteredProducts.length === 0 && (
           <p className="text-sm text-gray-500 col-span-full text-center py-6">Aucun produit trouvé.</p>
         )}
       </div>
+
+      {showForm && (
+        <ProductForm product={editingProduct} onSave={handleSave} onClose={() => setShowForm(false)} />
+      )}
     </div>
   );
 };

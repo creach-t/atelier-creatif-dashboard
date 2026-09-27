@@ -1,9 +1,11 @@
-import React from 'react';
-import { Eye, DollarSign, AlertCircle, Clock, Truck } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { Eye, DollarSign, Clock, Palette, Truck } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge, STATUS_LABELS } from '../ui/Badge';
 import { ChannelBadge, CHANNELS } from '../ui/ChannelBadge';
+import { ProductThumbnail } from '../ui/ProductThumbnail';
+import { computeSoldByName } from '../../utils/computeSoldByName';
 
 const channelBreakdown = (orders) => {
   return Object.keys(CHANNELS).map((channel) => {
@@ -16,7 +18,6 @@ const channelBreakdown = (orders) => {
 export const Dashboard = ({ orders, products }) => {
   const totalRevenue = orders.reduce((sum, order) => sum + Number(order.total || 0), 0);
   const pendingOrders = orders.filter((order) => order.status === 'pending').length;
-  const lowStockProducts = products.filter((product) => product.stock <= product.min_stock).length;
   const shippedToday = orders.filter(
     (order) => order.status === 'shipped' && order.order_date === new Date().toISOString().split('T')[0]
   ).length;
@@ -24,10 +25,20 @@ export const Dashboard = ({ orders, products }) => {
   const breakdown = channelBreakdown(orders);
   const maxRevenue = Math.max(1, ...breakdown.map((b) => b.revenue));
 
+  const soldByName = useMemo(() => computeSoldByName(orders), [orders]);
+  const popularProducts = useMemo(
+    () =>
+      [...products]
+        .map((p) => ({ ...p, sold: soldByName[p.name] || 0 }))
+        .sort((a, b) => b.sold - a.sold)
+        .slice(0, 3),
+    [products, soldByName]
+  );
+
   const metrics = [
     { title: 'Revenus Total', value: `${totalRevenue.toFixed(2)}€`, icon: DollarSign, color: 'from-green-400 to-emerald-400' },
     { title: 'Commandes en Attente', value: pendingOrders, icon: Clock, color: 'from-yellow-400 to-orange-400' },
-    { title: 'Stock Faible', value: lowStockProducts, icon: AlertCircle, color: 'from-red-400 to-pink-400' },
+    { title: 'Produits Catalogués', value: products.length, icon: Palette, color: 'from-purple-400 to-pink-400' },
     { title: 'Expédiées Aujourd\'hui', value: shippedToday, icon: Truck, color: 'from-blue-400 to-purple-400' },
   ];
 
@@ -113,17 +124,20 @@ export const Dashboard = ({ orders, products }) => {
       <Card className="p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-6">Produits Populaires</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {products.slice(0, 3).map((product) => (
+          {popularProducts.map((product) => (
             <div key={product.id} className="p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl">
-              <div className="text-3xl mb-3">{product.image}</div>
+              <ProductThumbnail image={product.image} size="text-3xl" className="mb-3" />
               <h4 className="font-medium text-gray-900 mb-1">{product.name}</h4>
               <p className="text-sm text-gray-600 mb-2">{product.category}</p>
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-purple-600">{Number(product.price).toFixed(2)}€</span>
-                <span className="text-sm text-gray-600">Stock: {product.stock}</span>
+                <span className="text-sm text-gray-600">{product.sold} vendu{product.sold > 1 ? 's' : ''}</span>
               </div>
             </div>
           ))}
+          {popularProducts.length === 0 && (
+            <p className="text-sm text-gray-500 col-span-full text-center py-6">Aucun produit pour le moment.</p>
+          )}
         </div>
       </Card>
     </div>

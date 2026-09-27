@@ -41,6 +41,8 @@ app.all('/api/orders', safe(require('./api/orders')));
 app.all('/api/orders/:id', safe(withIdParam(require('./api/orders/[id]'))));
 app.all('/api/products', safe(require('./api/products')));
 app.all('/api/products/:id', safe(withIdParam(require('./api/products/[id]'))));
+app.all('/api/customers', safe(require('./api/customers')));
+app.all('/api/customers/:id', safe(withIdParam(require('./api/customers/[id]'))));
 app.all('/api/profile', safe(require('./api/profile')));
 
 app.get('/health', (req, res) => res.status(200).send('ok'));

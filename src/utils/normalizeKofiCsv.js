@@ -43,6 +43,7 @@ export function normalizeKofiCsvRows(rawRows) {
         transaction_id: row['TransactionId'] || '',
         timestamp: parseKofiDate(row['DateTime (UTC)']),
         type: row['TransactionType'] || '',
+        shopOrderType: row['ShopOrderType'] || '', // "Digital" | "Physical" | "" (dons/abonnements)
         customer_name: row['From'] || '',
         customer_email: row['BuyerEmail'] || '',
         amount: received,

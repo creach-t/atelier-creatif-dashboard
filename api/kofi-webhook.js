@@ -1,5 +1,7 @@
 const { getSupabaseClient } = require('./lib/supabaseClient');
 const { mapKofiPayload } = require('./lib/kofiMapper');
+const { syncProductsFromItems } = require('./lib/productSync');
+const { syncCustomerFromOrder } = require('./lib/customerSync');
 
 // Ko-fi POST en application/x-www-form-urlencoded avec un champ `data`
 // contenant le JSON de l'événement. server.js monte express.urlencoded()
@@ -64,6 +66,16 @@ module.exports = async (req, res) => {
       console.error('Supabase insert error (kofi-webhook):', error);
       res.status(500).json({ error: 'Failed to store order' });
       return;
+    }
+
+    // Enrichit le catalogue produits — uniquement pour de vraies commandes boutique
+    // (shop_items présent), jamais pour un don/tip générique.
+    if (Array.isArray(payload.shop_items) && payload.shop_items.length > 0) {
+      await syncProductsFromItems(supabase, profile.id, order.items);
+    }
+
+    if (order.customer_name) {
+      await syncCustomerFromOrder(supabase, profile.id, { name: order.customer_name, email: order.customer_email });
     }
 
     res.status(200).json({ received: true });

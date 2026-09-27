@@ -25,6 +25,15 @@ create table if not exists products (
   created_at timestamptz not null default now()
 );
 
+create table if not exists customers (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete cascade,
+  name text not null,
+  email text,
+  notes text,
+  created_at timestamptz not null default now()
+);
+
 create table if not exists orders (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users(id) on delete cascade,
@@ -47,6 +56,8 @@ create index if not exists orders_channel_idx on orders (channel);
 create index if not exists orders_created_at_idx on orders (created_at desc);
 create index if not exists orders_user_id_idx on orders (user_id);
 create index if not exists products_user_id_idx on products (user_id);
+create index if not exists customers_user_id_idx on customers (user_id);
+create unique index if not exists customers_user_name_unique on customers (user_id, name);
 
 -- Crée automatiquement une ligne "profiles" à chaque inscription (Supabase Auth)
 create or replace function public.handle_new_user()
@@ -68,6 +79,7 @@ create trigger on_auth_user_created
 alter table profiles enable row level security;
 alter table orders enable row level security;
 alter table products enable row level security;
+alter table customers enable row level security;
 
 create policy "Users manage own profile" on profiles
   for all using (id = auth.uid()) with check (id = auth.uid());
@@ -76,4 +88,7 @@ create policy "Users manage own orders" on orders
   for all using (user_id = auth.uid()) with check (user_id = auth.uid());
 
 create policy "Users manage own products" on products
+  for all using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+create policy "Users manage own customers" on customers
   for all using (user_id = auth.uid()) with check (user_id = auth.uid());

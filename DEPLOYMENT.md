@@ -38,6 +38,15 @@ Ces étapes supposent que Traefik (réseau Docker `traefik-public`) et le tunnel
    Cashly étant multi-utilisateur, il n'y a plus de token Ko-fi ni de clé d'accès globale : chaque utilisateur connecte son propre Ko-fi via l'onboarding, et l'authentification passe par Supabase Auth. Seules les credentials Supabase restent nécessaires au runtime.
 4. **Vérifier que le réseau Docker `traefik-public` existe** : `docker network ls | grep traefik-public` (sinon `docker network create traefik-public`).
 
+## 🗃️ Migrations Supabase
+
+Le déploiement (build + déploiement de l'image) ne touche jamais à la base — les migrations SQL dans [`supabase/migrations/`](supabase/migrations) s'exécutent **à la main**, dans l'éditeur SQL Supabase, **avant** de pousser une version de code qui en dépend. À chaque fois qu'un fichier apparaît dans ce dossier, exécute-le une fois sur ta base de prod avant (ou juste après) le déploiement correspondant :
+
+| Migration | Ajoute |
+|---|---|
+| `0002_multi_tenant.sql` | Comptes utilisateurs, isolation des données (`user_id`, RLS) |
+| `0003_customers.sql` | Table `customers` (fiches clients persistées) + rattrapage des clients déjà présents dans les commandes existantes |
+
 ## 🔄 Déploiement continu (GitHub Actions)
 
 Le workflow [`.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml) fait, à chaque push sur `main` :
@@ -110,7 +119,7 @@ Reproduit le build en local pour voir l'erreur exacte (souvent : dépendance man
 
 **Les commandes Ko-fi n'arrivent pas pour un utilisateur :**
 - Vérifie l'URL du webhook côté Ko-fi (`https://cashly.creachtheo.fr/api/kofi-webhook`, identique pour tous les comptes)
-- Vérifie que le verification token collé dans l'onboarding (table `profiles.kofi_verification_token`) correspond exactement à celui affiché sur Ko-fi
+- Vérifie que le verification token collé dans Réglages (table `profiles.kofi_verification_token`) correspond exactement à celui affiché sur Ko-fi
 - `docker logs cashly` sur le VPS pour voir l'erreur exacte (401 "Unknown verification token" = pas de profil trouvé avec ce token)
 
 **Le container redémarre en boucle (`docker ps` montre `Restarting`) :**
