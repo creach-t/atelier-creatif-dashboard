@@ -22,6 +22,7 @@ create table if not exists products (
   stock integer not null default 0,
   min_stock integer not null default 1,
   image text default '🎨',
+  kofi_url text,
   created_at timestamptz not null default now()
 );
 

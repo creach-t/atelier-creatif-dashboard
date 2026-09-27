@@ -4,7 +4,7 @@ import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { ProductThumbnail } from '../ui/ProductThumbnail';
 
-const emptyProduct = { name: '', category: '', price: '', image: '🎁' };
+const emptyProduct = { name: '', category: '', price: '', image: '🎁', kofi_url: '' };
 
 export const ProductForm = ({ product, onSave, onClose }) => {
   const isEditing = Boolean(product);
@@ -15,6 +15,7 @@ export const ProductForm = ({ product, onSave, onClose }) => {
           category: product.category || '',
           price: String(product.price ?? ''),
           image: product.image || '🎁',
+          kofi_url: product.kofi_url || '',
         }
       : emptyProduct
   );
@@ -37,6 +38,7 @@ export const ProductForm = ({ product, onSave, onClose }) => {
       category: form.category.trim(),
       price: Number(form.price) || 0,
       image: form.image.trim() || '🎁',
+      kofi_url: form.kofi_url.trim() || null,
     };
 
     setSaving(true);
@@ -120,6 +122,18 @@ export const ProductForm = ({ product, onSave, onClose }) => {
               onChange={set('price')}
               className="w-full px-3 py-2 border border-purple-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Lien Ko-fi (optionnel)</label>
+            <input
+              type="url"
+              value={form.kofi_url}
+              onChange={set('kofi_url')}
+              placeholder="https://ko-fi.com/s/..."
+              className="w-full px-4 py-2 border border-purple-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400"
+            />
+            <p className="text-xs text-gray-500 mt-1">Laisse vide si le produit n'est plus en vente sur Ko-fi.</p>
           </div>
 
           {error && <p className="text-sm text-red-600">{error}</p>}

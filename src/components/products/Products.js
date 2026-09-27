@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Plus, Search, Edit } from 'lucide-react';
+import { Plus, Search, Edit, ExternalLink } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { ProductForm } from './ProductForm';
@@ -129,6 +129,17 @@ export const Products = ({ products, orders, createProduct, updateProduct, selec
                     {sold} vendu{sold > 1 ? 's' : ''}
                   </span>
                 </div>
+                {product.kofi_url && (
+                  <a
+                    href={product.kofi_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-1 text-xs text-purple-600 hover:underline mb-2"
+                  >
+                    <ExternalLink size={12} />
+                    Voir sur Ko-fi
+                  </a>
+                )}
                 <Button variant="ghost" size="sm" className="w-full" onClick={() => openEdit(product)}>
                   <Edit size={14} />
                   Modifier

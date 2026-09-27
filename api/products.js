@@ -41,6 +41,7 @@ module.exports = async (req, res) => {
       category: body.category,
       price: body.price,
       image: body.image || '🎨',
+      kofi_url: body.kofi_url || null,
     };
 
     const { data, error } = await supabase.from('products').insert(product).select().single();

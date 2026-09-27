@@ -1,7 +1,7 @@
 const { getSupabaseClient } = require('../lib/supabaseClient');
 const { requireUser } = require('../lib/auth');
 
-const PATCHABLE_FIELDS = ['name', 'category', 'price', 'image'];
+const PATCHABLE_FIELDS = ['name', 'category', 'price', 'image', 'kofi_url'];
 
 module.exports = async (req, res) => {
   const user = await requireUser(req, res);
