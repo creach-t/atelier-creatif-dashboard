@@ -35,8 +35,6 @@ export const Products = ({
   updateProduct,
   selectedProductName,
   onClearSelectedProduct,
-  draftProductName,
-  onClearDraftProductName,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -44,7 +42,6 @@ export const Products = ({
   const [editingProduct, setEditingProduct] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [viewingProduct, setViewingProduct] = useState(null);
-  const [createInitialName, setCreateInitialName] = useState('');
 
   const soldByName = useMemo(() => computeSoldByName(orders), [orders]);
 
@@ -73,7 +70,6 @@ export const Products = ({
 
   const openCreate = () => {
     setEditingProduct(null);
-    setCreateInitialName('');
     setShowForm(true);
   };
 
@@ -100,16 +96,6 @@ export const Products = ({
     onClearSelectedProduct && onClearSelectedProduct();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedProductName, products]);
-
-  // Ouvre directement la création avec le nom déjà saisi, demandée depuis le formulaire de commande.
-  useEffect(() => {
-    if (!draftProductName) return;
-    setEditingProduct(null);
-    setCreateInitialName(draftProductName);
-    setShowForm(true);
-    onClearDraftProductName && onClearDraftProductName();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draftProductName]);
 
   return (
     <div className="p-6 space-y-6">
@@ -245,7 +231,6 @@ export const Products = ({
       {showForm && (
         <ProductForm
           product={editingProduct}
-          initialName={createInitialName}
           onSave={handleSave}
           onClose={() => setShowForm(false)}
         />

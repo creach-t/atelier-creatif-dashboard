@@ -20,7 +20,6 @@ const CreativeDashboard = () => {
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [selectedProductName, setSelectedProductName] = useState(null);
   const [initialOrderStatusFilter, setInitialOrderStatusFilter] = useState(null);
-  const [draftProductName, setDraftProductName] = useState(null);
   const { orders, createOrder, updateOrder } = useOrders();
   const { products, createProduct, updateProduct } = useProducts();
   const { customers, createCustomer, updateCustomer } = useCustomers();
@@ -38,11 +37,6 @@ const CreativeDashboard = () => {
   const handleGoToOrders = (statusFilter) => {
     if (statusFilter) setInitialOrderStatusFilter(statusFilter);
     setActiveTab('orders');
-  };
-
-  const handleRequestCreateProduct = (name) => {
-    setDraftProductName(name);
-    setActiveTab('products');
   };
 
   const renderContent = () => {
@@ -65,8 +59,8 @@ const CreativeDashboard = () => {
             products={products}
             createOrder={createOrder}
             updateOrder={updateOrder}
+            createProduct={createProduct}
             onNavigateToProduct={handleNavigateToProduct}
-            onRequestCreateProduct={handleRequestCreateProduct}
             selectedOrderId={selectedOrderId}
             onClearSelectedOrder={() => setSelectedOrderId(null)}
             initialStatusFilter={initialOrderStatusFilter}
@@ -82,8 +76,6 @@ const CreativeDashboard = () => {
             updateProduct={updateProduct}
             selectedProductName={selectedProductName}
             onClearSelectedProduct={() => setSelectedProductName(null)}
-            draftProductName={draftProductName}
-            onClearDraftProductName={() => setDraftProductName(null)}
           />
         );
       case 'customers':

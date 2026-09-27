@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { Plus, Trash2, X, Search, Library } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus, Trash2, X, Sparkles } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 
@@ -7,7 +7,9 @@ const emptyItem = () => ({ name: '', quantity: 1, price: 0 });
 
 const defaultStatusFor = (channel) => (channel === 'reel' ? 'delivered' : 'pending');
 
-export const OrderForm = ({ products, onCreate, onRequestCreateProduct, onClose }) => {
+const MAX_SUGGESTIONS = 8;
+
+export const OrderForm = ({ products, createProduct, onCreate, onClose }) => {
   const [channel, setChannel] = useState('reel');
   const [customerName, setCustomerName] = useState('');
   const [shopName, setShopName] = useState('');
@@ -16,27 +18,14 @@ export const OrderForm = ({ products, onCreate, onRequestCreateProduct, onClose 
   const [items, setItems] = useState([emptyItem()]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
-  const [showCatalogPicker, setShowCatalogPicker] = useState(false);
-  const [catalogSearch, setCatalogSearch] = useState('');
+  const [activeSuggestIndex, setActiveSuggestIndex] = useState(null);
 
   const total = items.reduce((sum, item) => sum + (Number(item.quantity) || 0) * (Number(item.price) || 0), 0);
 
-  const filteredCatalog = useMemo(
-    () => (products || []).filter((p) => p.name.toLowerCase().includes(catalogSearch.toLowerCase())),
-    [products, catalogSearch]
-  );
-
-  const addFromCatalog = (product) => {
-    setItems((prev) => {
-      const isOnlyEmptyRow = prev.length === 1 && !prev[0].name.trim();
-      const newItem = { name: product.name, quantity: 1, price: Number(product.price) || 0 };
-      return isOnlyEmptyRow ? [newItem] : [...prev, newItem];
-    });
-    setCatalogSearch('');
-  };
-
-  const handleCreateProduct = () => {
-    onRequestCreateProduct && onRequestCreateProduct(catalogSearch.trim());
+  const suggestionsFor = (name) => {
+    const q = name.trim().toLowerCase();
+    if (!q) return [];
+    return (products || []).filter((p) => p.name.toLowerCase().includes(q)).slice(0, MAX_SUGGESTIONS);
   };
 
   const handleChannelChange = (value) => {
@@ -47,6 +36,13 @@ export const OrderForm = ({ products, onCreate, onRequestCreateProduct, onClose 
 
   const updateItem = (index, field, value) => {
     setItems((prev) => prev.map((item, i) => (i === index ? { ...item, [field]: value } : item)));
+  };
+
+  const selectSuggestion = (index, product) => {
+    setItems((prev) =>
+      prev.map((item, i) => (i === index ? { name: product.name, quantity: item.quantity || 1, price: Number(product.price) || 0 } : item))
+    );
+    setActiveSuggestIndex(null);
   };
 
   const addItem = () => setItems((prev) => [...prev, emptyItem()]);
@@ -71,6 +67,19 @@ export const OrderForm = ({ products, onCreate, onRequestCreateProduct, onClose 
 
     setSubmitting(true);
     try {
+      // Un article sans correspondance dans le catalogue devient un nouveau produit
+      // (catégorie à préciser plus tard), plutôt que de rester une simple ligne de commande.
+      const existingNames = new Set((products || []).map((p) => p.name.toLowerCase()));
+      const newProductNames = [...new Set(cleanItems.filter((i) => !existingNames.has(i.name.toLowerCase())).map((i) => i.name))];
+      if (newProductNames.length > 0 && createProduct) {
+        await Promise.all(
+          newProductNames.map((name) => {
+            const item = cleanItems.find((i) => i.name === name);
+            return createProduct({ name, category: 'Sans catégorie', price: item.price, image: '🎁' }).catch(() => {});
+          })
+        );
+      }
+
       await onCreate({
         channel,
         customer_name: customerName.trim() || null,
@@ -148,110 +157,83 @@ export const OrderForm = ({ products, onCreate, onRequestCreateProduct, onClose 
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+            <div className="flex items-center justify-between mb-2">
               <label className="block text-sm font-medium text-gray-700">Articles</label>
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => setShowCatalogPicker((v) => !v)}
-                  className="text-sm text-purple-600 font-medium flex items-center gap-1"
-                >
-                  <Library size={14} /> Depuis le catalogue
-                </button>
-                <button type="button" onClick={addItem} className="text-sm text-purple-600 font-medium flex items-center gap-1">
-                  <Plus size={14} /> Article libre
-                </button>
-              </div>
+              <button type="button" onClick={addItem} className="text-sm text-purple-600 font-medium flex items-center gap-1">
+                <Plus size={14} /> Ajouter
+              </button>
             </div>
-
-            {showCatalogPicker && (
-              <div className="mb-3 p-3 border border-purple-200 rounded-xl bg-purple-25 space-y-2">
-                <div className="relative">
-                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="text"
-                    autoFocus
-                    value={catalogSearch}
-                    onChange={(e) => setCatalogSearch(e.target.value)}
-                    placeholder="Rechercher un produit du catalogue..."
-                    className="w-full pl-9 pr-3 py-2 border border-purple-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
-                  />
-                </div>
-                {filteredCatalog.length > 0 && (
-                  <p className="text-[11px] text-gray-400 px-1">
-                    {filteredCatalog.length} produit{filteredCatalog.length > 1 ? 's' : ''}
-                  </p>
-                )}
-                <div className="max-h-60 overflow-y-auto space-y-1">
-                  {filteredCatalog.map((p) => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => addFromCatalog(p)}
-                      className="w-full flex items-center justify-between px-3 py-2 text-sm bg-white hover:bg-purple-50 rounded-lg border border-purple-100 text-left"
-                    >
-                      <span className="truncate">{p.name}</span>
-                      <span className="text-gray-500 shrink-0 ml-2">{Number(p.price).toFixed(2)}€</span>
-                    </button>
-                  ))}
-                  {filteredCatalog.length === 0 && (
-                    <div className="text-center py-2">
-                      <p className="text-xs text-gray-500 mb-2">
-                        Aucun produit ne correspond{catalogSearch.trim() ? ` à « ${catalogSearch.trim()} »` : ''}.
-                      </p>
-                      {catalogSearch.trim() && onRequestCreateProduct && (
-                        <button
-                          type="button"
-                          onClick={handleCreateProduct}
-                          className="text-xs font-semibold text-purple-600 hover:underline"
-                        >
-                          Créer « {catalogSearch.trim()} » comme nouveau produit
-                        </button>
+            <div className="space-y-2">
+              {items.map((item, index) => {
+                const suggestions = suggestionsFor(item.name);
+                const showDropdown = activeSuggestIndex === index && item.name.trim();
+                return (
+                  <div key={index} className="flex flex-col sm:flex-row gap-2 p-2 sm:p-0 bg-gray-50 sm:bg-transparent rounded-lg">
+                    <div className="relative flex-1 min-w-0">
+                      <input
+                        type="text"
+                        placeholder="Nom de l'article (recherche le catalogue)"
+                        value={item.name}
+                        onChange={(e) => updateItem(index, 'name', e.target.value)}
+                        onFocus={() => setActiveSuggestIndex(index)}
+                        onBlur={() => setTimeout(() => setActiveSuggestIndex((v) => (v === index ? null : v)), 150)}
+                        className="w-full px-3 py-2 border border-purple-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                      />
+                      {showDropdown && (
+                        <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-white border border-purple-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                          {suggestions.length > 0 ? (
+                            suggestions.map((p) => (
+                              <button
+                                key={p.id}
+                                type="button"
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  selectSuggestion(index, p);
+                                }}
+                                className="w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-purple-50 text-left"
+                              >
+                                <span className="truncate">{p.name}</span>
+                                <span className="text-gray-500 shrink-0 ml-2">{Number(p.price).toFixed(2)}€</span>
+                              </button>
+                            ))
+                          ) : (
+                            <p className="flex items-center gap-1.5 px-3 py-2 text-xs text-purple-600">
+                              <Sparkles size={12} />
+                              Nouveau produit — sera ajouté au catalogue
+                            </p>
+                          )}
+                        </div>
                       )}
                     </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              {items.map((item, index) => (
-                <div key={index} className="flex flex-col sm:flex-row gap-2 p-2 sm:p-0 bg-gray-50 sm:bg-transparent rounded-lg">
-                  <input
-                    type="text"
-                    placeholder="Nom de l'article"
-                    value={item.name}
-                    onChange={(e) => updateItem(index, 'name', e.target.value)}
-                    className="flex-1 min-w-0 px-3 py-2 border border-purple-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
-                  />
-                  <div className="flex gap-2 items-center">
-                    <input
-                      type="number"
-                      min="1"
-                      value={item.quantity}
-                      onChange={(e) => updateItem(index, 'quantity', e.target.value)}
-                      className="w-16 shrink-0 px-2 py-2 border border-purple-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
-                    />
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="Prix"
-                      value={item.price}
-                      onChange={(e) => updateItem(index, 'price', e.target.value)}
-                      className="flex-1 sm:flex-none sm:w-20 min-w-0 px-2 py-2 border border-purple-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeItem(index)}
-                      disabled={items.length === 1}
-                      className="p-2 text-gray-400 hover:text-red-600 disabled:opacity-30 shrink-0"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="number"
+                        min="1"
+                        value={item.quantity}
+                        onChange={(e) => updateItem(index, 'quantity', e.target.value)}
+                        className="w-16 shrink-0 px-2 py-2 border border-purple-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                      />
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="Prix"
+                        value={item.price}
+                        onChange={(e) => updateItem(index, 'price', e.target.value)}
+                        className="flex-1 sm:flex-none sm:w-20 min-w-0 px-2 py-2 border border-purple-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeItem(index)}
+                        disabled={items.length === 1}
+                        className="p-2 text-gray-400 hover:text-red-600 disabled:opacity-30 shrink-0"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 

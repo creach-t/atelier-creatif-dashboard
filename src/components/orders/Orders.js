@@ -30,8 +30,8 @@ export const Orders = ({
   products,
   createOrder,
   updateOrder,
+  createProduct,
   onNavigateToProduct,
-  onRequestCreateProduct,
   selectedOrderId,
   onClearSelectedOrder,
   initialStatusFilter,
@@ -225,8 +225,8 @@ export const Orders = ({
       {showForm && (
         <OrderForm
           products={products}
+          createProduct={createProduct}
           onCreate={createOrder}
-          onRequestCreateProduct={onRequestCreateProduct}
           onClose={() => setShowForm(false)}
         />
       )}
