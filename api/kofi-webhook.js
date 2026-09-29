@@ -12,6 +12,8 @@ const { syncCustomerFromOrder } = require('./lib/customerSync');
 // via l'onboarding) — c'est ce qui permet de retrouver le bon compte sans connaître
 // à l'avance qui possède quel token.
 module.exports = async (req, res) => {
+  console.log(`Ko-fi webhook: requête reçue (${req.method})`);
+
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
@@ -19,6 +21,7 @@ module.exports = async (req, res) => {
 
   const rawData = req.body && req.body.data;
   if (!rawData) {
+    console.warn('Ko-fi webhook: missing data field. Body reçu:', JSON.stringify(req.body));
     res.status(400).json({ error: 'Missing data field' });
     return;
   }
@@ -27,11 +30,13 @@ module.exports = async (req, res) => {
   try {
     payload = JSON.parse(rawData);
   } catch (err) {
+    console.warn('Ko-fi webhook: invalid JSON payload:', rawData);
     res.status(400).json({ error: 'Invalid JSON payload' });
     return;
   }
 
   if (!payload.verification_token) {
+    console.warn('Ko-fi webhook: verification_token absent du payload', payload);
     res.status(401).json({ error: 'Missing verification token' });
     return;
   }
@@ -52,6 +57,9 @@ module.exports = async (req, res) => {
     }
 
     if (!profile) {
+      console.warn(
+        `Ko-fi webhook: aucun profil ne correspond au verification_token reçu ("${payload.verification_token}")`
+      );
       res.status(401).json({ error: 'Unknown verification token' });
       return;
     }
@@ -78,6 +86,7 @@ module.exports = async (req, res) => {
       await syncCustomerFromOrder(supabase, profile.id, { name: order.customer_name, email: order.customer_email });
     }
 
+    console.log(`Ko-fi webhook: commande enregistrée pour user ${profile.id} (type: ${payload.type})`);
     res.status(200).json({ received: true });
   } catch (err) {
     console.error('Ko-fi webhook error:', err);
