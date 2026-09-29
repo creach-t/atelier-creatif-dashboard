@@ -30,7 +30,7 @@ export const ProductsReportTab = ({ products, orders, onSelectProduct }) => {
 
   if (ranked.length === 0) {
     return (
-      <Card className="p-12 text-center">
+      <Card className="p-4 sm:p-6 sm:p-12 text-center">
         <Package size={32} className="mx-auto mb-3 text-gray-300" />
         <p className="font-semibold text-gray-600">Aucun produit vendu pour le moment.</p>
       </Card>
@@ -38,7 +38,7 @@ export const ProductsReportTab = ({ products, orders, onSelectProduct }) => {
   }
 
   return (
-    <Card className="p-6">
+    <Card className="p-4 sm:p-6">
       <div className="relative mb-4">
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
         <input
@@ -54,7 +54,7 @@ export const ProductsReportTab = ({ products, orders, onSelectProduct }) => {
         <strong className="text-gray-900">{totalUnits}</strong> unité{totalUnits > 1 ? 's' : ''} vendue{totalUnits > 1 ? 's' : ''}
       </p>
 
-      <div className="max-h-[540px] overflow-y-auto divide-y divide-gray-100">
+      <div className="sm:max-h-[540px] sm:overflow-y-auto divide-y divide-gray-100">
         {filtered.map((p) => {
           const Wrapper = p.hasProduct ? 'button' : 'div';
           return (
@@ -62,14 +62,14 @@ export const ProductsReportTab = ({ products, orders, onSelectProduct }) => {
               key={p.id}
               type={p.hasProduct ? 'button' : undefined}
               onClick={p.hasProduct ? () => onSelectProduct && onSelectProduct(p.name) : undefined}
-              className={`w-full py-4 flex items-center gap-4 text-left ${
+              className={`w-full py-4 flex items-center gap-3 sm:gap-4 text-left ${
                 p.hasProduct ? 'hover:bg-purple-25 transition-colors -mx-2 px-2 rounded-lg' : ''
               }`}
             >
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700">{p.category}</span>
-                  <span className="text-sm font-semibold text-gray-900 truncate">{p.name}</span>
+                <div className="flex items-center gap-x-2 gap-y-1 flex-wrap mb-1.5">
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 whitespace-nowrap">{p.category}</span>
+                  <span className="text-sm font-semibold text-gray-900 break-words min-w-0">{p.name}</span>
                 </div>
                 <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden max-w-xs">
                   <div className="h-full rounded-full bg-gradient-to-r from-purple-400 to-pink-400" style={{ width: `${(p.sold / maxUnits) * 100}%` }} />

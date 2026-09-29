@@ -49,7 +49,7 @@ export const Sidebar = ({ activeTab, setActiveTab, mobileOpen, onCloseMobile }) 
         fixed md:relative top-0 left-0 z-40 transition-transform duration-200
         ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
       >
-        <div className="p-6 flex items-center justify-between">
+        <div className="p-4 sm:p-6 flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
               Cashly

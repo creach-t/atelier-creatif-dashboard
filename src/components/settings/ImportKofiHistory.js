@@ -59,7 +59,7 @@ export const ImportKofiHistory = () => {
   };
 
   return (
-    <Card className="p-6">
+    <Card className="p-4 sm:p-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-2">Importer l'historique Ko-fi</h3>
       <p className="text-sm text-gray-600 mb-4">
         Sur Ko-fi : More → Transactions → Download CSV. Le webhook ne rattrape pas les ventes
@@ -67,7 +67,7 @@ export const ImportKofiHistory = () => {
         importées au lieu d'en créer des doublons.
       </p>
 
-      <input type="file" accept=".csv" onChange={handleFile} className="mb-4 text-sm" />
+      <input type="file" accept=".csv" onChange={handleFile} className="mb-4 text-sm block w-full max-w-full min-w-0" />
 
       {fileName && rows && !result && (
         <p className="text-sm text-gray-700 mb-4">

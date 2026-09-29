@@ -43,7 +43,7 @@ export const TopProducts = ({ items, totalRevenue, onView }) => {
             <button
               type="button"
               onClick={() => onView(t.group.variants[0].product.name)}
-              className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-purple-25 transition-colors"
+              className="w-full flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-2 text-left hover:bg-purple-25 transition-colors"
             >
               <span className={`w-5 h-5 shrink-0 rounded-full flex items-center justify-center text-[11px] font-bold ${RANK_COLORS[i].dot}`}>
                 {i + 1}
@@ -52,14 +52,14 @@ export const TopProducts = ({ items, totalRevenue, onView }) => {
                 <ProductCover image={t.group.image} rounded="rounded-lg" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-gray-900 truncate">{t.group.name}</p>
+                <p className="text-sm font-medium text-gray-900 break-words">{t.group.name}</p>
                 <div className="h-1 bg-purple-50 rounded-full mt-1.5 overflow-hidden">
                   <div className={`h-full rounded-full ${RANK_COLORS[i].bar}`} style={{ width: `${(t.revenue / max) * 100}%` }} />
                 </div>
               </div>
               <div className="text-right shrink-0">
-                <p className="text-sm font-bold text-gray-900">{money(t.revenue)}</p>
-                <p className="text-[11px] text-gray-400">{t.sold} vendu{t.sold > 1 ? 's' : ''}</p>
+                <p className="text-sm font-bold text-gray-900 whitespace-nowrap">{money(t.revenue)}</p>
+                <p className="text-[11px] text-gray-400 whitespace-nowrap">{t.sold} vendu{t.sold > 1 ? 's' : ''}</p>
               </div>
             </button>
           </li>

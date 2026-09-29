@@ -199,6 +199,17 @@ const OrdersHeatmap = ({ orders, selectedDay, onSelectDay }) => {
   );
 };
 
+const NetAmount = ({ order }) => (
+  <>
+    <p className="font-bold text-gray-900 whitespace-nowrap">{money(netOf(order))}</p>
+    {commissionRateOf(order) > 0 && (
+      <p className="text-[10px] text-gray-400 leading-tight whitespace-nowrap" title="Net après commission de la boutique">
+        −{commissionRateOf(order)} %<span className="hidden sm:inline"> commission</span>
+      </p>
+    )}
+  </>
+);
+
 export const Orders = ({
   orders,
   products,
@@ -248,8 +259,7 @@ export const Orders = ({
 
   return (
     <div className="p-4 sm:p-6 space-y-5 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between gap-3">
-        <h3 className="text-xl font-bold text-gray-900">Commandes</h3>
+      <div className="flex justify-end">
         <Button onClick={() => setShowForm(true)} className="justify-center">
           <Plus size={16} />
           <span className="hidden sm:inline">Nouvelle commande</span>
@@ -264,21 +274,21 @@ export const Orders = ({
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Rechercher un client ou un numéro..."
+            placeholder="Client ou n° de commande..."
             className="w-full pl-10 pr-4 py-2.5 bg-white border border-purple-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-          <div className="flex gap-1.5 overflow-x-auto">
+          <div className="flex flex-wrap gap-1.5">
             {CHANNEL_FILTERS.map((c) => (
               <Chip key={c.id} active={channelFilter === c.id} onClick={() => setChannelFilter(c.id)}>
                 {c.logo && <ChannelLogo channel={c.id} size={12} className="inline mr-1.5 -mt-0.5" />}{c.label}
               </Chip>
             ))}
           </div>
-          <div className="flex gap-1.5 overflow-x-auto">
+          <div className="flex flex-wrap gap-1.5">
             {PERIODS.map((p) => (
               <Chip key={p.id} active={period === p.id} onClick={() => setPeriod(p.id)}>{p.label}</Chip>
             ))}
@@ -307,19 +317,21 @@ export const Orders = ({
         <Card className="overflow-hidden">
           <div className="flex items-center gap-3 sm:gap-4 px-4 py-2.5 bg-purple-50/60 border-b border-purple-100">
             <span className="w-9 shrink-0" />
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 flex items-center gap-4">
               <SortHeader label="Client" sortKey="client" sort={sort} onSort={toggleSort} />
+              {/* Étroit : la date se trie depuis ici, sa colonne dédiée n'existe qu'à partir de sm */}
+              <span className="sm:hidden"><SortHeader label="Date" sortKey="date" firstDir="desc" sort={sort} onSort={toggleSort} /></span>
             </div>
-            <div className="w-16 sm:w-28 shrink-0">
+            <div className="hidden sm:block w-28 shrink-0">
               <SortHeader label="Date" sortKey="date" firstDir="desc" sort={sort} onSort={toggleSort} />
             </div>
             <div className="hidden sm:block w-36 shrink-0">
               <SortHeader label="Canal" sortKey="channel" sort={sort} onSort={toggleSort} />
             </div>
-            <div className="w-20 sm:w-24 shrink-0 flex justify-end">
+            <div className="sm:w-24 shrink-0 flex justify-end">
               <SortHeader label="Total" sortKey="total" firstDir="desc" align="right" sort={sort} onSort={toggleSort} />
             </div>
-            <span className="w-4 shrink-0" />
+            <span className="hidden sm:block w-4 shrink-0" />
           </div>
           <div className="divide-y divide-purple-50">
             {filteredOrders.map((order) => (
@@ -331,30 +343,25 @@ export const Orders = ({
               >
                 <Avatar name={order.customer_name} />
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-gray-900 truncate">{order.customer_name || 'Anonyme'}</p>
-                  <p className="text-xs text-gray-500 truncate">
+                  <p className="font-medium text-gray-900 break-words">{order.customer_name || 'Anonyme'}</p>
+                  <p className="text-xs text-gray-500">
+                    <span className="sm:hidden">{formatDateShort(order.order_date)} · </span>
                     <OrderNumber order={order} /> · {countOrderItems(order)} article{countOrderItems(order) > 1 ? 's' : ''}
                   </p>
-                  <div className="mt-1.5 sm:hidden">
+                  {/* Étroit : canal et montant sous le nom, qui garde ainsi toute la largeur */}
+                  <div className="mt-1.5 flex items-end justify-between gap-2 sm:hidden">
                     <ChannelBadge channel={order.channel} />
+                    <div className="text-right"><NetAmount order={order} /></div>
                   </div>
                 </div>
-                <p className="w-16 sm:w-28 shrink-0 text-xs sm:text-sm text-gray-500">
-                  <span className="sm:hidden">{formatDateShort(order.order_date)}</span>
-                  <span className="hidden sm:inline">{formatDate(order.order_date)}</span>
-                </p>
+                <p className="hidden sm:block w-28 shrink-0 text-sm text-gray-500">{formatDate(order.order_date)}</p>
                 <div className="hidden sm:block w-36 shrink-0">
                   <ChannelBadge channel={order.channel} />
                 </div>
-                <div className="shrink-0 w-20 sm:w-24 text-right">
-                  <p className="font-bold text-gray-900">{money(netOf(order))}</p>
-                  {commissionRateOf(order) > 0 && (
-                    <p className="text-[10px] text-gray-400 leading-tight" title="Net après commission de la boutique">
-                      −{commissionRateOf(order)} % commission
-                    </p>
-                  )}
+                <div className="hidden sm:block shrink-0 w-24 text-right">
+                  <NetAmount order={order} />
                 </div>
-                <ChevronRight size={16} className="text-gray-300 shrink-0" />
+                <ChevronRight size={16} className="hidden sm:block text-gray-300 shrink-0" />
               </button>
             ))}
           </div>
@@ -362,7 +369,7 @@ export const Orders = ({
       )}
 
       {filteredOrders.length === 0 && (
-        <Card className="p-8 text-center">
+        <Card className="p-5 sm:p-8 text-center">
           <p className="text-sm text-gray-500">Aucune commande ne correspond à ces filtres.</p>
           {filtersActive && (
             <button onClick={resetFilters} className="mt-2 text-sm font-semibold text-purple-600 hover:underline">

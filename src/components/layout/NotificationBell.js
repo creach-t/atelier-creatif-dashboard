@@ -36,7 +36,7 @@ export const NotificationBell = ({ orders, onSelectOrder }) => {
             onClick={() => setOpen(false)}
             aria-label="Fermer les notifications"
           />
-          <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl border border-purple-100 shadow-lg z-20 overflow-hidden">
+          <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] max-w-xs sm:w-80 bg-white rounded-xl border border-purple-100 shadow-lg z-20 overflow-hidden">
             <div className="px-4 py-3 border-b border-purple-100">
               <p className="font-semibold text-gray-900 text-sm">Activité récente</p>
             </div>

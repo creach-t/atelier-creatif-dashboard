@@ -69,9 +69,9 @@ export const ProductDetailModal = ({ group, soldByName = {}, revenueByName = {},
 
   return (
     <Modal title="Détail du produit" onClose={onClose} maxWidth="max-w-md">
-      <div className="p-6 space-y-5">
+      <div className="p-4 sm:p-6 space-y-5">
         <div className="text-center">
-          <ProductCover image={group.image} rounded="rounded-2xl" className="max-w-[16rem] mx-auto shadow-sm" />
+          <ProductCover image={group.image} rounded="rounded-2xl" className="max-w-[10rem] sm:max-w-[16rem] mx-auto shadow-sm" />
           <h4 className="text-lg font-semibold text-gray-900 mt-4">{group.name}</h4>
           <p className="text-sm text-gray-500 mt-1">
             {group.category}

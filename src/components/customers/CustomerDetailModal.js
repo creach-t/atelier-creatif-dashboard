@@ -13,14 +13,14 @@ export const CustomerDetailModal = ({ customer, orders, onSelectOrder, onEdit, o
   return (
     <div className="fixed inset-0 bg-black/30 flex items-center justify-center p-4 z-50">
       <Card className="w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-purple-100">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-purple-100">
           <h3 className="text-lg font-semibold text-gray-900">Fiche client</h3>
           <button onClick={onClose} className="p-2 text-gray-500 hover:bg-gray-50 rounded-lg">
             <X size={18} />
           </button>
         </div>
 
-        <div className="p-6 space-y-5">
+        <div className="p-4 sm:p-6 space-y-5">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 flex items-center justify-center text-white font-bold text-lg shrink-0">
               {getInitials(customer.name)}

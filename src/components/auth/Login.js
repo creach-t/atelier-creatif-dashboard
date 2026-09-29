@@ -52,7 +52,7 @@ export const Login = () => {
 
   return (
     <div className="flex h-screen items-center justify-center bg-gradient-to-br from-purple-25 via-pink-25 to-blue-25 p-4">
-      <Card className="p-8 w-full max-w-sm">
+      <Card className="p-5 sm:p-8 w-full max-w-sm">
         <div className="flex flex-col items-center text-center mb-6">
           <div className="w-14 h-14 bg-gradient-to-r from-purple-400 to-pink-400 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-purple-200">
             <Sparkles size={26} className="text-white" />

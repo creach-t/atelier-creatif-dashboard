@@ -18,22 +18,22 @@ export const CustomersTab = ({ stats, firstOrderByName, onSelectCustomer }) => {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-3 gap-3">
-        <Card className="p-4 text-center">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <Card className="p-3 sm:p-4 text-center">
           <p className="text-2xl font-bold text-purple-600">{stats.uniqueCustomers}</p>
           <p className="text-xs text-gray-500 mt-1">Clients uniques</p>
         </Card>
-        <Card className="p-4 text-center">
+        <Card className="p-3 sm:p-4 text-center">
           <p className="text-2xl font-bold text-pink-500">{stats.customers.filter((c) => c.count >= 2).length}</p>
           <p className="text-xs text-gray-500 mt-1">Revenu(e)s (2+ fois)</p>
         </Card>
-        <Card className="p-4 text-center">
+        <Card className="p-3 sm:p-4 text-center">
           <p className="text-2xl font-bold text-amber-500">{stats.customers.filter((c) => c.total >= 50).length}</p>
           <p className="text-xs text-gray-500 mt-1">Généreux·ses (50€+)</p>
         </Card>
       </div>
 
-      <Card className="p-6">
+      <Card className="p-4 sm:p-6">
         <div className="relative mb-4">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -44,7 +44,7 @@ export const CustomersTab = ({ stats, firstOrderByName, onSelectCustomer }) => {
           />
         </div>
 
-        <div className="max-h-[520px] overflow-y-auto divide-y divide-gray-100">
+        <div className="sm:max-h-[520px] sm:overflow-y-auto divide-y divide-gray-100">
           {filtered.length === 0 && <p className="text-sm text-gray-500 text-center py-8">Aucun résultat.</p>}
           {filtered.map((c) => {
             const globalRank = stats.customers.indexOf(c);
@@ -55,17 +55,17 @@ export const CustomersTab = ({ stats, firstOrderByName, onSelectCustomer }) => {
                 key={c.name}
                 type="button"
                 onClick={() => onSelectCustomer && onSelectCustomer(c.name)}
-                className="w-full flex items-center gap-4 py-4 text-left hover:bg-purple-25 transition-colors -mx-2 px-2 rounded-lg"
+                className="w-full flex items-center gap-2.5 sm:gap-4 py-4 text-left hover:bg-purple-25 transition-colors rounded-lg"
               >
-                <div className="w-8 text-center shrink-0">
+                <div className="w-6 sm:w-8 text-center shrink-0">
                   {rank ? <span className="text-lg">{rank}</span> : <span className="text-sm font-bold text-gray-400">#{globalRank + 1}</span>}
                 </div>
-                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 flex items-center justify-center text-white text-sm font-bold shrink-0">
+                <div className="hidden min-[400px]:flex w-10 h-10 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 items-center justify-center text-white text-sm font-bold shrink-0">
                   {getInitials(c.name)}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className="text-sm font-bold text-gray-900 truncate">{c.name}</span>
+                    <span className="text-sm font-bold text-gray-900 break-words min-w-0">{c.name}</span>
                     {badges.map((b) => (
                       <span key={b.label} className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-purple-50 text-purple-700">
                         {b.icon} {b.label}
@@ -80,8 +80,8 @@ export const CustomersTab = ({ stats, firstOrderByName, onSelectCustomer }) => {
                   </div>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="text-base font-bold text-gray-900">{c.total.toFixed(2)}€</p>
-                  {c.count > 1 && <p className="text-xs text-gray-500">moy. {(c.total / c.count).toFixed(2)}€</p>}
+                  <p className="text-base font-bold text-gray-900 whitespace-nowrap">{c.total.toFixed(2)}€</p>
+                  {c.count > 1 && <p className="text-xs text-gray-500 whitespace-nowrap">moy. {(c.total / c.count).toFixed(2)}€</p>}
                 </div>
               </button>
             );

@@ -126,9 +126,8 @@ export const Products = ({
   }, [editProductName, products]);
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <h3 className="text-2xl font-bold text-gray-900">Catalogue Produits</h3>
+    <div className="p-4 sm:p-6 space-y-6">
+      <div className="flex justify-end">
         <Button onClick={openCreate} className="justify-center">
           <Plus size={16} />
           Nouveau Produit
@@ -137,15 +136,15 @@ export const Products = ({
 
       {topProducts.length > 0 && (
         <section>
-          <div className="flex items-baseline justify-between gap-3 mb-3">
+          <div className="mb-3">
             <h3 className="text-lg font-semibold text-gray-900">Top 5 des produits les plus rentables</h3>
-            <span className="text-sm text-gray-500">depuis le début</span>
+            <p className="text-sm text-gray-500">Depuis le début</p>
           </div>
           <TopProducts items={topProducts} totalRevenue={totalProductRevenue} onView={onViewProduct} />
         </section>
       )}
 
-      <Card className="p-6">
+      <Card className="p-4 sm:p-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
             <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -173,7 +172,7 @@ export const Products = ({
               value={kindFilter}
               onChange={(e) => setKindFilter(e.target.value)}
             >
-              <option value="all">Physiques et numériques</option>
+              <option value="all">Tous les types</option>
               <option value="physical">Physiques</option>
               <option value="digital">Numériques</option>
             </select>
@@ -239,7 +238,7 @@ export const Products = ({
       {view === 'list' && (
         <Card className="overflow-hidden">
           <div className="overflow-x-auto scroll-soft">
-            <table className="w-full min-w-[32rem]">
+            <table className="w-full">
               <thead className="bg-purple-50/60">
                 <tr>
                   <th className="text-left px-4 py-2.5"><SortHeader label="Produit" sortKey="name" sort={sort} onSort={toggleSort} /></th>
@@ -262,7 +261,7 @@ export const Products = ({
                         <div className="flex items-center gap-3 min-w-0">
                           <div className="w-10 shrink-0"><ProductCover image={group.image} rounded="rounded-lg" /></div>
                           <div className="min-w-0">
-                            <span className="block font-medium text-gray-900 truncate max-w-[16rem]">{group.name}</span>
+                            <span className="block font-medium text-gray-900 break-words max-w-[16rem]">{group.name}</span>
                             {group.isFamily && <span className="text-xs text-purple-600">{group.variants.length} variantes</span>}
                           </div>
                         </div>

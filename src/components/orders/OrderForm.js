@@ -7,6 +7,7 @@ import { ChannelLogo } from '../ui/ChannelBadge';
 import { describeOrder } from '../../utils/computeProductRevenue';
 import { catalogPrices, estimatedNames } from '../../utils/estimatePrices';
 import { extrasSum } from '../../utils/orderAmounts';
+import { todayLocal } from '../../utils/dates';
 
 const emptyItem = () => ({ name: '', quantity: 1, price: 0 });
 const emptyExtra = () => ({ label: '', amount: '' });
@@ -38,7 +39,7 @@ export const OrderForm = ({ order, products, customers, createProduct, onCreate,
   const [channel, setChannel] = useState(order ? order.channel : 'reel');
   const [customerName, setCustomerName] = useState(order ? order.customer_name || '' : '');
   const [customerEmail, setCustomerEmail] = useState(order ? order.customer_email || '' : '');
-  const [orderDate, setOrderDate] = useState(order ? order.order_date : new Date().toISOString().slice(0, 10));
+  const [orderDate, setOrderDate] = useState(order ? order.order_date : todayLocal());
   const [status, setStatus] = useState(order ? order.status : defaultStatusFor('reel'));
   // En modification, chaque article reprend son prix (saisi, catalogue, ou déduit du total). Ce qui reste
   // pour retomber sur le total enregistré (don / prix libre, remise, ou montant jamais détaillé) est conservé
@@ -219,7 +220,7 @@ export const OrderForm = ({ order, products, customers, createProduct, onCreate,
 
   return (
     <Modal title={isEditing ? 'Modifier la commande' : 'Nouvelle commande'} onClose={onClose} dismissOnBackdrop={false}>
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Canal</label>
             <div className="flex gap-2">
@@ -299,7 +300,7 @@ export const OrderForm = ({ order, products, customers, createProduct, onCreate,
                       </>
                     )}
                     newLabel="Nouveau produit — sera ajouté au catalogue"
-                    placeholder="Nom de l'article (recherche le catalogue)"
+                    placeholder="Nom de l'article"
                     inputClassName={ITEM_FIELD_CLASS}
                   />
                   <div className="flex gap-2 items-center">

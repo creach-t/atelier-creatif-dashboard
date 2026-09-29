@@ -5,7 +5,8 @@ import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { CustomerForm } from './CustomerForm';
 import { CustomerDetailModal } from './CustomerDetailModal';
-import { getCustomerBadges } from '../../utils/customerBadges';
+import { getCustomerBadges, getInitials } from '../../utils/customerBadges';
+import { useIsNarrow } from '../../hooks/useIsNarrow';
 import { useSort, sortRows } from '../../hooks/useSort';
 import { SortHeader } from '../ui/SortHeader';
 
@@ -43,6 +44,7 @@ export const Customers = ({
   selectedCustomerName,
   onClearSelectedCustomer,
 }) => {
+  const narrow = useIsNarrow();
   const [searchTerm, setSearchTerm] = useState('');
   const [sort, toggleSort] = useSort('total', 'desc');
   const [showForm, setShowForm] = useState(false);
@@ -108,9 +110,8 @@ export const Customers = ({
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <h3 className="text-2xl font-bold text-gray-900">Clients</h3>
+    <div className="p-4 sm:p-6 space-y-6">
+      <div className="flex justify-end">
         <Button onClick={openCreate} className="justify-center">
           <Plus size={16} />
           Nouveau Client
@@ -118,20 +119,20 @@ export const Customers = ({
       </div>
 
       {topSpenders.length > 0 && (
-        <Card className="p-6">
+        <Card className="p-4 sm:p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Top 5 des client·es</h3>
           <ResponsiveContainer width="100%" height={Math.max(120, topSpenders.length * 40)}>
-            <BarChart data={topSpenders} layout="vertical" margin={{ top: 0, right: 24, left: 0, bottom: 0 }}>
+            <BarChart data={topSpenders} layout="vertical" margin={{ top: 0, right: narrow ? 8 : 24, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f3e8ff" horizontal={false} />
-              <XAxis type="number" tick={{ fill: '#9ca3af', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}€`} />
+              <XAxis type="number" tick={{ fill: '#9ca3af', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}€`} tickCount={narrow ? 3 : 5} />
               <YAxis
                 type="category"
                 dataKey="name"
-                width={160}
+                width={narrow ? 84 : 160}
                 tick={{ fill: '#4b5563', fontSize: 12 }}
                 axisLine={false}
                 tickLine={false}
-                tickFormatter={(name) => (name.length > 22 ? `${name.slice(0, 22)}…` : name)}
+                tickFormatter={(name) => { const max = narrow ? 11 : 22; return name.length > max ? `${name.slice(0, max)}…` : name; }}
               />
               <Tooltip content={<ChartTooltip />} cursor={{ fill: '#f3e8ff' }} />
               <Bar dataKey="total" radius={[0, 6, 6, 0]}>
@@ -144,7 +145,7 @@ export const Customers = ({
         </Card>
       )}
 
-      <Card className="p-6">
+      <Card className="p-4 sm:p-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -164,69 +165,68 @@ export const Customers = ({
         {searchTerm ? ` sur ${rows.length}` : ''}
       </p>
 
-      <Card>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-purple-50">
-              <tr>
-                <th className="text-left p-4"><SortHeader label="Client" sortKey="name" sort={sort} onSort={toggleSort} /></th>
-                <th className="text-left p-4 hidden md:table-cell"><SortHeader label="Commandes" sortKey="count" firstDir="desc" sort={sort} onSort={toggleSort} /></th>
-                <th className="text-left p-4"><SortHeader label="Total dépensé" sortKey="total" firstDir="desc" sort={sort} onSort={toggleSort} /></th>
-                <th className="text-left p-4 hidden lg:table-cell"><SortHeader label="Dernière commande" sortKey="last" firstDir="desc" sort={sort} onSort={toggleSort} /></th>
-                <th className="text-left p-4 font-semibold text-gray-700"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((c) => {
-                const badges = getCustomerBadges(c);
-                return (
-                  <tr
-                    key={c.id}
-                    onClick={() => setViewingCustomer(c)}
-                    className="border-b border-purple-100 hover:bg-purple-25 cursor-pointer"
-                  >
-                    <td className="p-4">
-                      <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <p className="font-medium text-gray-900">{c.name}</p>
-                        {badges.map((b) => (
-                          <span key={b.label} className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-purple-50 text-purple-700 whitespace-nowrap">
-                            {b.icon} {b.label}
-                          </span>
-                        ))}
-                      </div>
-                      {c.email && (
-                        <p className="text-sm text-gray-500 flex items-center gap-1">
-                          <Mail size={12} />
-                          {c.email}
-                        </p>
-                      )}
-                    </td>
-                    <td className="p-4 hidden md:table-cell text-sm text-gray-700">{c.count || 0}</td>
-                    <td className="p-4 font-semibold text-gray-900">{Number(c.total || 0).toFixed(2)}€</td>
-                    <td className="p-4 hidden lg:table-cell text-sm text-gray-500">{c.last || '—'}</td>
-                    <td className="p-4">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openEdit(c);
-                        }}
-                        className="p-2 text-gray-600 hover:bg-purple-50 rounded-lg"
-                      >
-                        <Edit size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="p-6 text-center text-sm text-gray-500">
-                    Aucun client trouvé.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+      {/* Une liste (et non un tableau) : à 320 px un tableau force un défilement horizontal qui cache le total. */}
+      <Card className="overflow-hidden">
+        <div className="flex items-center gap-3 sm:gap-4 px-4 py-2.5 bg-purple-50/60 border-b border-purple-100">
+          <span className="w-9 shrink-0" />
+          <div className="flex-1 min-w-0"><SortHeader label="Client" sortKey="name" sort={sort} onSort={toggleSort} /></div>
+          <div className="hidden md:block w-24 shrink-0"><SortHeader label="Commandes" sortKey="count" firstDir="desc" sort={sort} onSort={toggleSort} /></div>
+          <div className="sm:w-28 shrink-0 flex justify-end sm:justify-start"><SortHeader label="Total" sortKey="total" firstDir="desc" sort={sort} onSort={toggleSort} /></div>
+          <div className="hidden lg:block w-36 shrink-0"><SortHeader label="Dernière commande" sortKey="last" firstDir="desc" sort={sort} onSort={toggleSort} /></div>
+          <span className="w-8 shrink-0" />
+        </div>
+        <div className="divide-y divide-purple-50">
+          {filtered.map((c) => {
+            const badges = getCustomerBadges(c);
+            return (
+              <div
+                key={c.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => setViewingCustomer(c)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setViewingCustomer(c); } }}
+                className="flex items-center gap-3 sm:gap-4 px-4 py-3.5 hover:bg-purple-25 cursor-pointer transition-colors"
+              >
+                <div className="w-9 h-9 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                  {getInitials(c.name)}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-gray-900 break-words">{c.name}</p>
+                  <p className="sm:hidden text-sm font-semibold text-gray-900 mt-0.5">{Number(c.total || 0).toFixed(2)}€ <span className="text-xs font-normal text-gray-400">· {c.count || 0} commande{(c.count || 0) > 1 ? 's' : ''}</span></p>
+                  {badges.length > 0 && (
+                    <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                      {badges.map((b) => (
+                        <span key={b.label} className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-purple-50 text-purple-700 whitespace-nowrap">
+                          {b.icon} {b.label}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {c.email && (
+                    <p className="text-xs text-gray-500 flex items-start gap-1 mt-1 min-w-0">
+                      <Mail size={12} className="shrink-0 mt-0.5" />
+                      <span className="break-all">{c.email}</span>
+                    </p>
+                  )}
+                  <p className="hidden sm:block text-xs text-gray-400 mt-1 md:hidden">{c.count || 0} commande{(c.count || 0) > 1 ? 's' : ''}</p>
+                </div>
+                <p className="hidden md:block w-24 shrink-0 text-sm text-gray-700">{c.count || 0}</p>
+                <p className="hidden sm:block sm:w-28 shrink-0 font-semibold text-gray-900 whitespace-nowrap">{Number(c.total || 0).toFixed(2)}€</p>
+                <p className="hidden lg:block w-36 shrink-0 text-sm text-gray-500">{c.last || '—'}</p>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openEdit(c);
+                  }}
+                  aria-label={`Modifier ${c.name}`}
+                  className="p-2 -mr-2 text-gray-600 hover:bg-purple-50 rounded-lg shrink-0"
+                >
+                  <Edit size={16} />
+                </button>
+              </div>
+            );
+          })}
+          {filtered.length === 0 && <p className="p-6 text-center text-sm text-gray-500">Aucun client trouvé.</p>}
         </div>
       </Card>
 

@@ -141,9 +141,8 @@ export const Dashboard = ({ orders, products, onSelectOrder, onNavigateToProduct
   }, [currentMonthOrders, products]);
 
   return (
-    <div className="p-6 space-y-6 max-w-6xl mx-auto">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-xl font-bold text-gray-900">Vue d'ensemble</h2>
+    <div className="p-4 sm:p-6 space-y-6 max-w-6xl mx-auto">
+      <div className="flex justify-end">
         <div className="flex items-center gap-1 bg-white border border-purple-100 rounded-xl p-1">
           <button onClick={() => shiftMonth(-1)} className="p-1.5 text-gray-500 hover:bg-purple-50 rounded-lg" aria-label="Mois précédent">
             <ChevronLeft size={18} />
@@ -161,10 +160,10 @@ export const Dashboard = ({ orders, products, onSelectOrder, onNavigateToProduct
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="p-6 lg:col-span-2">
+        <Card className="p-4 sm:p-6 lg:col-span-2">
           <p className="text-sm font-medium text-gray-500">Revenus · {monthLabel}</p>
           <div className="flex flex-wrap items-center gap-3 mt-1 mb-4">
-            <p className="text-4xl font-bold text-gray-900">{money(monthRevenue)}</p>
+            <p className="text-3xl sm:text-4xl font-bold text-gray-900">{money(monthRevenue)}</p>
             <Variation value={variation(monthRevenue, prevRevenue)} />
           </div>
           {trendData.length === 0 ? (
@@ -188,7 +187,7 @@ export const Dashboard = ({ orders, products, onSelectOrder, onNavigateToProduct
           )}
         </Card>
 
-        <Card className="p-6 divide-y divide-purple-50 flex flex-col justify-center">
+        <Card className="p-4 sm:p-6 divide-y divide-purple-50 flex flex-col justify-center">
           <StatRow
             icon={ShoppingBag}
             label="Commandes"
@@ -214,16 +213,16 @@ export const Dashboard = ({ orders, products, onSelectOrder, onNavigateToProduct
 
       <section>
         <div className="flex items-center justify-between gap-3 mb-3">
-          <div>
+          <div className="min-w-0">
             <h3 className="text-base font-semibold text-gray-900">Produits les plus rentables</h3>
             <p className="text-sm text-gray-500">Par revenu généré · {monthLabel}</p>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => onGoToProducts && onGoToProducts()}>
+          <Button variant="ghost" size="sm" className="shrink-0" onClick={() => onGoToProducts && onGoToProducts()}>
             Catalogue
           </Button>
         </div>
         {topProducts.length === 0 ? (
-          <Card className="p-8 text-center">
+          <Card className="p-5 sm:p-8 text-center">
             <p className="text-sm text-gray-500">Aucune vente ce mois-ci pour l'instant.</p>
           </Card>
         ) : (
@@ -233,7 +232,7 @@ export const Dashboard = ({ orders, products, onSelectOrder, onNavigateToProduct
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <div className="lg:col-span-2">
-        <Card className="p-6 h-full">
+        <Card className="p-4 sm:p-6 h-full">
           <h3 className="text-base font-semibold text-gray-900">Répartition par canal</h3>
           <p className="text-sm text-gray-500 mb-4">{monthLabel}</p>
           {breakdownWithSales.length === 0 ? (
@@ -268,10 +267,10 @@ export const Dashboard = ({ orders, products, onSelectOrder, onNavigateToProduct
         </Card>
         </div>
         <div className="lg:col-span-3">
-      <Card className="p-6 h-full">
-        <div className="flex items-center justify-between mb-4">
+      <Card className="p-4 sm:p-6 h-full">
+        <div className="flex items-center justify-between gap-2 mb-4">
           <h3 className="text-base font-semibold text-gray-900">Commandes récentes</h3>
-          <Button variant="ghost" size="sm" onClick={() => onGoToOrders && onGoToOrders()}>
+          <Button variant="ghost" size="sm" className="shrink-0 whitespace-nowrap" onClick={() => onGoToOrders && onGoToOrders()}>
             <Eye size={16} />
             Voir tout
           </Button>
@@ -281,19 +280,18 @@ export const Dashboard = ({ orders, products, onSelectOrder, onNavigateToProduct
             <button
               key={order.id}
               onClick={() => onSelectOrder && onSelectOrder(order)}
-              className="w-full flex items-center justify-between py-3 hover:bg-purple-25 transition-colors text-left"
+              className="w-full flex items-center gap-3 py-3 hover:bg-purple-25 transition-colors text-left"
             >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-white font-bold shrink-0">
-                  {(order.customer_name || '?').charAt(0)}
-                </div>
-                <div className="min-w-0">
-                  <p className="font-medium text-gray-900 truncate">{order.customer_name || 'Client anonyme'}</p>
-                  <p className="text-xs text-gray-500">{order.order_date}</p>
-                </div>
+              <div className="w-9 h-9 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-white font-bold shrink-0">
+                {(order.customer_name || '?').charAt(0)}
               </div>
-              <div className="flex items-center gap-3 shrink-0">
-                <p className="font-semibold text-gray-900">{money(netOf(order))}</p>
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-gray-900 break-words">{order.customer_name || 'Client anonyme'}</p>
+                <p className="text-xs text-gray-500 whitespace-nowrap">{order.order_date}</p>
+              </div>
+              {/* Étroit : montant au-dessus du statut ; large : tout sur une ligne */}
+              <div className="flex flex-col items-end gap-1 shrink-0 sm:flex-row sm:items-center sm:gap-3">
+                <p className="font-semibold text-gray-900 whitespace-nowrap">{money(netOf(order))}</p>
                 <span className="hidden sm:inline"><ChannelBadge channel={order.channel} /></span>
                 <Badge variant={order.status}>{STATUS_LABELS[order.status] || order.status}</Badge>
               </div>

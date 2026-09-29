@@ -56,9 +56,8 @@ export const Reports = ({ orders, products, customers, onViewOrder, onViewProduc
 
   if (orders.length === 0) {
     return (
-      <div className="p-6">
-        <h3 className="text-2xl font-bold text-gray-900 mb-6">Rapports et Analyses</h3>
-        <Card className="p-12 text-center">
+      <div className="p-4 sm:p-6">
+        <Card className="p-4 sm:p-6 sm:p-12 text-center">
           <Layers size={40} className="mx-auto text-purple-300 mb-4" />
           <p className="text-gray-600">Pas encore de commandes à analyser.</p>
         </Card>
@@ -80,10 +79,9 @@ export const Reports = ({ orders, products, customers, onViewOrder, onViewProduc
   ];
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <h3 className="text-2xl font-bold text-gray-900">Rapports et Analyses</h3>
-        {years.length > 1 && (
+    <div className="p-4 sm:p-6 space-y-6">
+      {years.length > 1 && (
+        <div className="flex justify-end">
           <div className="flex gap-1.5 flex-wrap">
             {['all', ...years].map((y) => (
               <button
@@ -97,8 +95,8 @@ export const Reports = ({ orders, products, customers, onViewOrder, onViewProduc
               </button>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {summaryItems.map((item) => (
@@ -110,7 +108,7 @@ export const Reports = ({ orders, products, customers, onViewOrder, onViewProduc
         ))}
       </div>
 
-      <div className="flex gap-2 border-b border-purple-100 overflow-x-auto">
+      <div className="flex gap-1 sm:gap-2 border-b border-purple-100 overflow-x-auto no-scrollbar">
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const active = activeTab === tab.id;
@@ -118,7 +116,7 @@ export const Reports = ({ orders, products, customers, onViewOrder, onViewProduc
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 whitespace-nowrap transition-all ${
+              className={`flex flex-1 sm:flex-none items-center justify-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2.5 text-sm font-semibold border-b-2 whitespace-nowrap transition-all ${
                 active ? 'border-purple-500 text-purple-700' : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >

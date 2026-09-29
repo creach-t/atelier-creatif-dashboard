@@ -50,7 +50,7 @@ export const ProductCard = ({ group, sold, revenue, onClick, rank, emphasis = 's
         )}
       </div>
       <div className="p-3 space-y-1.5">
-        <h4 className="text-sm font-semibold text-gray-900 leading-snug line-clamp-2 min-h-[2.5rem]">{group.name}</h4>
+        <h4 className="text-sm font-semibold text-gray-900 leading-snug line-clamp-3 sm:line-clamp-2 min-h-[2.5rem]">{group.name}</h4>
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <GroupPrice group={group} compact />
         </div>

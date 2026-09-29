@@ -80,7 +80,7 @@ export const KofiSourceCard = () => {
   };
 
   return (
-    <Card className="p-6">
+    <Card className="p-4 sm:p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
           <ChannelLogo channel="kofi" size={20} className="text-purple-600" /> Ko-fi
@@ -111,9 +111,9 @@ export const KofiSourceCard = () => {
               <input
                 readOnly
                 value={WEBHOOK_URL}
-                className="flex-1 px-3 py-2 border border-purple-200 rounded-lg text-sm bg-gray-50"
+                className="flex-1 min-w-0 px-3 py-2 border border-purple-200 rounded-lg text-sm bg-gray-50"
               />
-              <Button variant="secondary" size="sm" onClick={handleCopy}>
+              <Button variant="secondary" size="sm" className="shrink-0" onClick={handleCopy}>
                 {copied ? 'Copié !' : 'Copier'}
               </Button>
             </div>
@@ -127,12 +127,12 @@ export const KofiSourceCard = () => {
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
                 placeholder="Colle ton token ici"
-                className="flex-1 px-4 py-2 border border-purple-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400"
+                className="flex-1 min-w-0 px-4 py-2 border border-purple-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400"
               />
               <button
                 type="button"
                 onClick={() => setShowToken((v) => !v)}
-                className="p-2 text-gray-500 hover:bg-gray-50 rounded-lg"
+                className="p-2 text-gray-500 hover:bg-gray-50 rounded-lg shrink-0"
                 title={showToken ? 'Masquer' : 'Afficher'}
               >
                 {showToken ? <EyeOff size={18} /> : <Eye size={18} />}

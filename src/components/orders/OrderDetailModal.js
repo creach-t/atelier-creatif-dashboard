@@ -71,7 +71,7 @@ export const OrderDetailModal = ({ order, products, onDelete, onEdit, onNavigate
       subtitle={order.order_date}
       onClose={onClose}
     >
-      <div className="p-6 space-y-5">
+      <div className="p-4 sm:p-6 space-y-5">
         <div className="flex items-center gap-2 flex-wrap">
           <ChannelBadge channel={order.channel} />
           {order.channel === 'reel' && order.shop_name && (

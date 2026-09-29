@@ -67,7 +67,7 @@ export const ProductForm = ({ product, onSave, onClose, supportsFlags = true }) 
   return (
     <div className="fixed inset-0 bg-black/30 flex items-center justify-center p-4 z-50">
       <Card className="w-full max-w-md">
-        <div className="flex items-center justify-between p-6 border-b border-purple-100">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-purple-100">
           <h3 className="text-lg font-semibold text-gray-900">
             {isEditing ? 'Modifier le produit' : 'Nouveau produit'}
           </h3>
@@ -76,7 +76,7 @@ export const ProductForm = ({ product, onSave, onClose, supportsFlags = true }) 
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
           <div className="flex gap-3">
             <div className="w-20 shrink-0">
               <label className="block text-sm font-medium text-gray-700 mb-1">Icône</label>

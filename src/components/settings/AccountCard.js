@@ -42,7 +42,7 @@ export const AccountCard = () => {
   };
 
   return (
-    <Card className="p-6">
+    <Card className="p-4 sm:p-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">Mon compte</h3>
 
       {loading ? (

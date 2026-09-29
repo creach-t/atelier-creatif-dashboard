@@ -30,6 +30,7 @@
 /* Scrollbar personnalisée */
 ::-webkit-scrollbar {
   width: 6px;
+  height: 6px; /* barres horizontales (calendrier, onglets) : sans ça, épaisseur système */
 }
 
 ::-webkit-scrollbar-track {
@@ -97,3 +98,10 @@ code {
   background-clip: content-box;
 }
 .scroll-soft::-webkit-scrollbar-thumb:hover { background: #b794f6; background-clip: content-box; }
+
+/* Barre de défilement horizontale masquée (rangées d'onglets/filtres qui défilent au doigt) */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* 100vh dépasse la zone visible sur mobile (barre d'adresse) : le bas de l'app était rogné. */
+.h-screen { height: 100vh; height: 100dvh; }
