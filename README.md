@@ -2,7 +2,7 @@
 
 > **Dashboard de gestion de ventes multi-canal pour créatifs indépendants**
 
-Une solution complète pour gérer efficacement vos commandes Ko-fi, vos ventes en boutique partenaire (Reel), vos produits et vos expéditions, le tout dans une interface moderne aux couleurs pastels.
+Une solution complète pour gérer efficacement vos commandes Ko-fi, vos ventes en boutique partenaire (Reel), vos produits, vos clients et vos expéditions, le tout dans une interface moderne aux couleurs pastels.
 
 ![Dashboard Preview](https://img.shields.io/badge/Version-1.0.0-purple)
 ![React](https://img.shields.io/badge/React-18.2.0-blue)
@@ -17,7 +17,7 @@ Une solution complète pour gérer efficacement vos commandes Ko-fi, vos ventes 
 
 ### 🌐 **Multi-canal**
 - **Ko-fi** : commandes/paiements synchronisés automatiquement via webhook (identifié par compte via le verification token), enrichit aussi le catalogue produits et les fiches clients automatiquement
-- **Reel** : ventes physiques/personnalisées saisies manuellement, avec suivi de la boutique partenaire
+- **Reel** : ventes physiques/personnalisées saisies manuellement
 - D'autres canaux pourront être ajoutés par la suite (le canal est une donnée, pas du code en dur)
 
 ### ⚙️ **Réglages**
@@ -25,29 +25,34 @@ Une solution complète pour gérer efficacement vos commandes Ko-fi, vos ventes 
 - Import de l'historique Ko-fi (CSV) réutilisable — corrige aussi les données déjà importées en cas de bug
 - Édition du nom affiché
 
-### 📊 **Dashboard Principal**
-- Revenus total, commandes en attente, produits catalogués, expédiées aujourd'hui
-- Répartition des revenus par canal, commandes récentes, produits populaires (triés par ventes réelles)
+### 📊 **Dashboard Principal ("Vue d'ensemble")**
+- Mois navigable (chevrons précédent/suivant) plutôt que figé sur le mois courant
+- Revenus du mois, commandes en attente, produits catalogués, expédiées aujourd'hui — chaque carte cliquable renvoie vers la page concernée (filtrée quand ça a du sens)
+- Graphiques Recharts : évolution des revenus sur 6 mois, répartition par canal (donut)
+- Commandes récentes et produits populaires cliquables → ouvrent leur détail en popup, sans changer d'onglet
 - Notifications (activité récente) accessibles depuis la cloche du header
 
 ### 🛒 **Gestion des Commandes**
-- Ligne de commande cliquable → détail complet (articles, statut, n° de suivi)
-- Depuis le détail, cliquer un article ouvre sa fiche produit
+- Client **obligatoire**, saisi via une recherche dans le carnet existant (auto-complétion) — un nom sans correspondance devient un nouveau client (créé automatiquement, [`api/lib/customerSync.js`](api/lib/customerSync.js))
+- Articles ajoutés de la même façon : recherche dans le catalogue produits, ou nouvel article → nouveau produit créé automatiquement (catégorie "Sans catégorie" à préciser ensuite)
+- Note libre optionnelle par commande
+- Ligne de commande cliquable → détail complet en popup (articles, statut, n° de suivi, note), sans jamais changer d'onglet — pareil pour un article cliqué depuis ce détail (ouvre la fiche produit en popup)
 - Filtrage par canal, statut, période (7j/30j/année/tout) et recherche
 
 ### 🎯 **Catalogue Produits**
-- Enrichi automatiquement à partir des ventes Ko-fi (nom, et photo quand disponible dans la boutique)
+- Enrichi automatiquement à partir des ventes Ko-fi (nom, photo et lien Ko-fi direct quand disponibles dans la boutique)
 - Pas de gestion de stock — la métrique qui compte est la **quantité vendue**, calculée depuis les commandes
-- Tri (plus vendus / nom / prix), recherche, édition (nom, catégorie, prix, icône/photo)
+- Fiche produit en deux étapes : cliquer une carte ouvre une vue (photo, prix, ventes, lien Ko-fi), "Modifier" seulement ensuite pour éditer
+- Tri (plus/moins vendus, nom, prix croissant/décroissant, plus récents), recherche, mini-classement "Top 5 des ventes" en graphique
 
 ### 🧑‍🤝‍🧑 **Clients**
 - Fiche client persistée en base (nom, email, notes), créée automatiquement à chaque nouvelle commande
-- Total dépensé et nombre de commandes calculés depuis l'historique
+- Fiche détaillée en popup : email, notes, badges (VIP/Fidèle/Généreux·se/Super fan), et tout l'historique de ses commandes — chacune cliquable pour ouvrir son détail
+- Tri (total dépensé, nom, nombre de commandes, dernière commande), "Top 5 des client·es" en graphique
 
 ### 📈 **Rapports et Analyses**
 - Évolution mensuelle des revenus (graphique), répartition par canal, revenus par jour de la semaine
-- Classement des clients (avec badges VIP/Fidèle/Généreux·se/Super fan)
-- Classement des produits par quantité vendue
+- Classement des clients (avec badges VIP/Fidèle/Généreux·se/Super fan) et des produits par quantité vendue — chaque ligne cliquable ouvre la vraie fiche (client/produit) en popup, sans quitter Rapports
 - Filtre par année
 
 ### 📦 **Modules Futurs**
@@ -79,7 +84,7 @@ Cashly est multi-utilisateur : l'authentification (**Supabase Auth**) isole les 
 
 1. **Créer le projet Supabase**
    - Sur [app.supabase.com](https://app.supabase.com), crée un nouveau projet.
-   - Dans l'éditeur SQL du projet, exécute le contenu de [`supabase/schema.sql`](supabase/schema.sql) (installation neuve) — ça crée les tables `profiles`, `orders`, `products`, `customers`, le trigger qui crée un profil à chaque inscription, et les policies RLS. Pour une base existante, applique dans l'ordre les migrations de [`supabase/migrations/`](supabase/migrations) (`0002_multi_tenant.sql` puis `0003_customers.sql`).
+   - Dans l'éditeur SQL du projet, exécute le contenu de [`supabase/schema.sql`](supabase/schema.sql) (installation neuve) — ça crée les tables `profiles`, `orders`, `products`, `customers`, le trigger qui crée un profil à chaque inscription, et les policies RLS. Pour une base existante, applique dans l'ordre les migrations de [`supabase/migrations/`](supabase/migrations) (`0002_multi_tenant.sql`, `0003_customers.sql`, `0004_products_kofi_link.sql`, `0005_orders_notes.sql`).
    - Dans *Project Settings → API Keys*, récupère l'**URL du projet**, la **clé secrète** (`sb_secret_...`, ou `service_role` si l'ancien système) — jamais exposée au navigateur — et la **clé publishable** (`sb_publishable_...`, ou `anon`) — celle-là est safe à exposer au front, elle sert à l'authentification.
 
 2. **Variables d'environnement**
@@ -145,7 +150,7 @@ api/                         # Routes API (montées par server.js)
 │   └── customerSync.js       # Auto-création de fiches clients à partir des commandes
 ├── kofi-webhook.js         # Réception des webhooks Ko-fi (résout le compte via profiles.kofi_verification_token)
 ├── orders.js                # GET (liste triée par order_date, filtre ?channel=) / POST — filtré par user_id
-├── orders/[id].js           # PATCH (statut, tracking)
+├── orders/[id].js           # PATCH (statut, tracking, notes)
 ├── orders/import.js          # POST — import/réimport de l'historique Ko-fi (CSV)
 ├── products.js               # GET / POST — filtré par user_id
 ├── products/[id].js          # PATCH / DELETE
@@ -158,10 +163,10 @@ docker-compose.prod.yml      # Service Docker + labels Traefik (cashly.creachthe
 
 supabase/
 ├── schema.sql              # Schéma complet (installation neuve, multi-utilisateur)
-└── migrations/              # 0002_multi_tenant.sql, 0003_customers.sql — migrations additives
+└── migrations/              # 0002 à 0005 — migrations additives (multi-tenant, clients, lien Ko-fi produit, notes commande)
 
 src/
-├── App.js                  # Routage (login → dashboard), navigation croisée commande↔produit
+├── App.js                  # Routage (login → dashboard), popups globaux commande/produit (jamais de changement d'onglet)
 ├── api/
 │   ├── client.js            # Wrapper fetch (JWT Supabase, gestion des erreurs)
 │   └── supabaseClient.js    # Client Supabase côté navigateur (clé publishable, auth uniquement)
@@ -223,9 +228,11 @@ npm run eject      # Éjection Create React App (⚠️ irréversible)
 - [x] Intégration webhook Ko-fi + import CSV réutilisable
 - [x] Catalogue produits enrichi automatiquement (nom, photo quand disponible)
 - [x] Page Clients avec fiches persistées
-- [x] Rapports et analyses avec graphiques (Recharts)
+- [x] Rapports et analyses avec graphiques (Recharts), liés aux vraies fiches client/produit
 - [x] Notifications (activité récente)
 - [x] Responsive mobile (sidebar en menu coulissant)
+- [x] Dashboard cliquable avec graphiques et mois navigable
+- [x] Recherche/auto-complétion clients et produits dans le formulaire de commande, avec création automatique
 
 ### À venir
 - [ ] Export des données (CSV/PDF)

@@ -46,6 +46,8 @@ Le déploiement (build + déploiement de l'image) ne touche jamais à la base �
 |---|---|
 | `0002_multi_tenant.sql` | Comptes utilisateurs, isolation des données (`user_id`, RLS) |
 | `0003_customers.sql` | Table `customers` (fiches clients persistées) + rattrapage des clients déjà présents dans les commandes existantes |
+| `0004_products_kofi_link.sql` | Colonne `products.kofi_url` (lien direct vers le produit sur Ko-fi) |
+| `0005_orders_notes.sql` | Colonne `orders.notes` (note libre optionnelle par commande) |
 
 ## 🔄 Déploiement continu (GitHub Actions)
 
