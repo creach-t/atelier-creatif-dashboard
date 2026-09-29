@@ -62,12 +62,40 @@ module.exports = async (req, res) => {
       tracking: body.tracking || null,
       shipping: body.shipping || null,
       shop_name: body.channel === 'reel' ? body.shop_name || null : null,
-      notes: body.notes || null,
     };
+    // Colonne ajoutée par la migration 0005 : on ne l'envoie que si une note est saisie, pour que
+    // créer une commande fonctionne même si la migration n'est pas encore passée.
+    if (body.notes) order.notes = body.notes;
+
+    // Divers (frais, dons, remises) : lignes { label, amount } qui ne sont pas des articles.
+    if (body.extras !== undefined) {
+      const extras = Array.isArray(body.extras) ? body.extras : null;
+      const valid = extras && extras.every((e) => e && typeof e.label === 'string' && e.label.trim() && typeof e.amount === 'number' && Number.isFinite(e.amount));
+      if (!valid) {
+        res.status(400).json({ error: 'extras must be a list of { label, amount }' });
+        return;
+      }
+      if (extras.length > 0) order.extras = extras.map((e) => ({ label: e.label.trim(), amount: e.amount }));
+    }
+
+    // Commission de la boutique en % (0-100), pour les ventes en point de vente.
+    if (body.commission_rate !== undefined && body.commission_rate !== null) {
+      const rate = body.commission_rate;
+      if (typeof rate !== 'number' || !(rate >= 0 && rate <= 100)) {
+        res.status(400).json({ error: 'commission_rate must be a number between 0 and 100' });
+        return;
+      }
+      if (rate > 0) order.commission_rate = rate;
+    }
 
     const { data, error } = await supabase.from('orders').insert(order).select().single();
     if (error) {
-      res.status(500).json({ error: error.message });
+      const missing = ['notes', 'extras', 'commission_rate'].find((c) => error.message.includes(c));
+      res.status(500).json({
+        error: missing
+          ? `La colonne « ${missing} » n'existe pas encore : exécute les migrations 0005 et 0008 dans Supabase.`
+          : error.message,
+      });
       return;
     }
 

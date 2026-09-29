@@ -1,5 +1,5 @@
 // Crée automatiquement une fiche client quand une commande arrive pour un nom encore
-// inconnu (webhook Ko-fi, import CSV, saisie manuelle Reel). N'écrase jamais un nom/email
+// inconnu (webhook Ko-fi, import CSV, saisie manuelle point de vente). N'écrase jamais un nom/email
 // déjà enregistré — seule exception : complète l'email si la fiche existante n'en a pas.
 async function syncCustomerFromOrder(supabase, userId, { name, email }) {
   const cleanName = name && name.trim();

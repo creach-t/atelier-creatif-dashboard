@@ -44,7 +44,20 @@ module.exports = async (req, res) => {
       kofi_url: body.kofi_url || null,
     };
 
-    const { data, error } = await supabase.from('products').insert(product).select().single();
+    const KINDS = ['physical', 'digital', 'both'];
+    if (body.kind !== undefined && body.kind !== null && !KINDS.includes(body.kind)) {
+      res.status(400).json({ error: `kind must be one of: ${KINDS.join(', ')}` });
+      return;
+    }
+    const optional = {};
+    if (body.is_free !== undefined) optional.is_free = Boolean(body.is_free);
+    if (body.kind !== undefined) optional.kind = body.kind;
+
+    // Colonnes des migrations 0006/0007 : si elles n'existent pas encore, on crée sans elles.
+    let { data, error } = await supabase.from('products').insert({ ...product, ...optional }).select().single();
+    if (error && Object.keys(optional).some((c) => error.message.includes(c))) {
+      ({ data, error } = await supabase.from('products').insert(product).select().single());
+    }
     if (error) {
       res.status(500).json({ error: error.message });
       return;
