@@ -54,7 +54,7 @@ create table if not exists orders (
   commission_rate numeric(5,2),
   extras jsonb not null default '[]'::jsonb,
   notes text,
-  kofi_transaction_id text unique,
+  kofi_transaction_id text,
   raw_payload jsonb,
   created_at timestamptz not null default now()
 );
@@ -65,6 +65,7 @@ create index if not exists orders_user_id_idx on orders (user_id);
 create index if not exists products_user_id_idx on products (user_id);
 create index if not exists customers_user_id_idx on customers (user_id);
 create unique index if not exists customers_user_name_unique on customers (user_id, name);
+create unique index if not exists orders_user_kofi_transaction_unique on orders (user_id, kofi_transaction_id);
 
 -- Crée automatiquement une ligne "profiles" à chaque inscription (Supabase Auth)
 create or replace function public.handle_new_user()

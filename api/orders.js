@@ -1,9 +1,11 @@
 const { getSupabaseClient } = require('./lib/supabaseClient');
 const { requireUser } = require('./lib/auth');
 const { syncCustomerFromOrder } = require('./lib/customerSync');
+const { todayInParis } = require('./lib/dates');
+const { serverError } = require('./lib/errors');
+const { validateOrderFields } = require('./lib/validate');
 
 const ALLOWED_CHANNELS = ['kofi', 'reel'];
-const ALLOWED_STATUSES = ['pending', 'shipped', 'delivered', 'cancelled'];
 
 module.exports = async (req, res) => {
   const user = await requireUser(req, res);
@@ -28,10 +30,7 @@ module.exports = async (req, res) => {
     }
 
     const { data, error } = await query;
-    if (error) {
-      res.status(500).json({ error: error.message });
-      return;
-    }
+    if (error) return serverError(res, error, 'GET /orders');
     res.status(200).json(data);
     return;
   }
@@ -43,22 +42,27 @@ module.exports = async (req, res) => {
       res.status(400).json({ error: `channel must be one of: ${ALLOWED_CHANNELS.join(', ')}` });
       return;
     }
-    if (typeof body.total !== 'number' || Number.isNaN(body.total)) {
-      res.status(400).json({ error: 'total must be a number' });
+    if (body.total === undefined) {
+      res.status(400).json({ error: 'total is required' });
+      return;
+    }
+    const invalid = validateOrderFields(body);
+    if (invalid) {
+      res.status(400).json({ error: invalid });
       return;
     }
 
-    const status = ALLOWED_STATUSES.includes(body.status) ? body.status : 'pending';
+    const status = body.status || 'pending';
 
     const order = {
       user_id: user.id,
       channel: body.channel,
-      customer_name: body.customer_name || null,
+      customer_name: (body.customer_name && body.customer_name.trim()) || null,
       customer_email: body.customer_email || null,
       items: Array.isArray(body.items) ? body.items : [],
       total: body.total,
       status,
-      order_date: body.order_date || new Date().toISOString().slice(0, 10),
+      order_date: body.order_date || todayInParis(),
       tracking: body.tracking || null,
       shipping: body.shipping || null,
       shop_name: body.channel === 'reel' ? body.shop_name || null : null,
@@ -68,34 +72,18 @@ module.exports = async (req, res) => {
     if (body.notes) order.notes = body.notes;
 
     // Divers (frais, dons, remises) : lignes { label, amount } qui ne sont pas des articles.
-    if (body.extras !== undefined) {
-      const extras = Array.isArray(body.extras) ? body.extras : null;
-      const valid = extras && extras.every((e) => e && typeof e.label === 'string' && e.label.trim() && typeof e.amount === 'number' && Number.isFinite(e.amount));
-      if (!valid) {
-        res.status(400).json({ error: 'extras must be a list of { label, amount }' });
-        return;
-      }
-      if (extras.length > 0) order.extras = extras.map((e) => ({ label: e.label.trim(), amount: e.amount }));
+    if (Array.isArray(body.extras) && body.extras.length > 0) {
+      order.extras = body.extras.map((e) => ({ label: e.label.trim(), amount: e.amount }));
     }
 
     // Commission de la boutique en % (0-100), pour les ventes en point de vente.
-    if (body.commission_rate !== undefined && body.commission_rate !== null) {
-      const rate = body.commission_rate;
-      if (typeof rate !== 'number' || !(rate >= 0 && rate <= 100)) {
-        res.status(400).json({ error: 'commission_rate must be a number between 0 and 100' });
-        return;
-      }
-      if (rate > 0) order.commission_rate = rate;
-    }
+    if (body.commission_rate > 0) order.commission_rate = body.commission_rate;
 
     const { data, error } = await supabase.from('orders').insert(order).select().single();
     if (error) {
       const missing = ['notes', 'extras', 'commission_rate'].find((c) => error.message.includes(c));
-      res.status(500).json({
-        error: missing
-          ? `La colonne « ${missing} » n'existe pas encore : exécute les migrations 0005 et 0008 dans Supabase.`
-          : error.message,
-      });
+      if (!missing) return serverError(res, error, 'POST /orders');
+      res.status(500).json({ error: `La colonne « ${missing} » n'existe pas encore : exécute les migrations 0005 et 0008 dans Supabase.` });
       return;
     }
 

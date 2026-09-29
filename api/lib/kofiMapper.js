@@ -1,6 +1,8 @@
 // Traduit un payload webhook Ko-fi (https://ko-fi.com/manage/webhooks) en ligne "orders".
 // Pure function (pas d'appel réseau/DB) pour rester facilement testable.
 
+const { todayInParis, dayInParisFromTimestamp } = require('./dates');
+
 const KOFI_TYPE_LABELS = {
   Donation: 'Don Ko-fi',
   Subscription: 'Abonnement Ko-fi',
@@ -37,7 +39,7 @@ function mapKofiPayload(payload) {
   }
 
   const timestamp = typeof payload.timestamp === 'string' ? payload.timestamp : null;
-  const orderDate = (timestamp && timestamp.slice(0, 10)) || new Date().toISOString().slice(0, 10);
+  const orderDate = (timestamp && dayInParisFromTimestamp(timestamp)) || todayInParis();
 
   return {
     channel: 'kofi',

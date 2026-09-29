@@ -12,8 +12,6 @@ const { syncCustomerFromOrder } = require('./lib/customerSync');
 // via l'onboarding) — c'est ce qui permet de retrouver le bon compte sans connaître
 // à l'avance qui possède quel token.
 module.exports = async (req, res) => {
-  console.log(`Ko-fi webhook: requête reçue (${req.method})`);
-
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
@@ -21,7 +19,7 @@ module.exports = async (req, res) => {
 
   const rawData = req.body && req.body.data;
   if (!rawData) {
-    console.warn('Ko-fi webhook: missing data field. Body reçu:', JSON.stringify(req.body));
+    console.warn('Ko-fi webhook: missing data field');
     res.status(400).json({ error: 'Missing data field' });
     return;
   }
@@ -30,13 +28,13 @@ module.exports = async (req, res) => {
   try {
     payload = JSON.parse(rawData);
   } catch (err) {
-    console.warn('Ko-fi webhook: invalid JSON payload:', rawData);
+    console.warn('Ko-fi webhook: invalid JSON payload');
     res.status(400).json({ error: 'Invalid JSON payload' });
     return;
   }
 
   if (!payload.verification_token) {
-    console.warn('Ko-fi webhook: verification_token absent du payload', payload);
+    console.warn('Ko-fi webhook: verification_token absent du payload');
     res.status(401).json({ error: 'Missing verification token' });
     return;
   }
@@ -57,9 +55,8 @@ module.exports = async (req, res) => {
     }
 
     if (!profile) {
-      console.warn(
-        `Ko-fi webhook: aucun profil ne correspond au verification_token reçu ("${payload.verification_token}")`
-      );
+      // Ni le token ni le payload ne sont loggés : secret d'un utilisateur / données personnelles.
+      console.warn('Ko-fi webhook: aucun profil ne correspond au verification_token reçu');
       res.status(401).json({ error: 'Unknown verification token' });
       return;
     }
@@ -68,7 +65,7 @@ module.exports = async (req, res) => {
 
     const { error } = await supabase
       .from('orders')
-      .upsert(order, { onConflict: 'kofi_transaction_id', ignoreDuplicates: true });
+      .upsert(order, { onConflict: 'user_id,kofi_transaction_id', ignoreDuplicates: true });
 
     if (error) {
       console.error('Supabase insert error (kofi-webhook):', error);

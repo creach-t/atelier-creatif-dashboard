@@ -5,6 +5,15 @@ services:
     expose:
       - "3000"
     restart: unless-stopped
+    # Node en PID 1 ignore SIGTERM sans init : docker stop attendait 10 s puis SIGKILL.
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     env_file:
       - .env
     healthcheck:

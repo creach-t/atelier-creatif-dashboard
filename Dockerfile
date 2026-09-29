@@ -17,6 +17,8 @@ ARG REACT_APP_SUPABASE_ANON_KEY
 ENV REACT_APP_SUPABASE_URL=$REACT_APP_SUPABASE_URL
 ENV REACT_APP_SUPABASE_ANON_KEY=$REACT_APP_SUPABASE_ANON_KEY
 
+# Pas de script inline dans index.html : permet une CSP stricte (script-src 'self').
+ENV INLINE_RUNTIME_CHUNK=false
 RUN npm run build
 
 # ─────────────────────────────────────────────
@@ -29,6 +31,8 @@ WORKDIR /app
 RUN apk add --no-cache curl
 
 COPY package*.json ./
+# Seules les dépendances serveur (express, dotenv, supabase-js) sont en `dependencies` : tout le
+# tooling front (react-scripts, tailwind, tests) est en devDependencies et reste dans le builder.
 RUN npm ci --omit=dev
 
 COPY --from=builder /app/build ./build
@@ -37,6 +41,8 @@ COPY server.js ./
 
 ENV NODE_ENV=production
 ENV PORT=3000
+# Ne tourne plus en root.
+USER node
 EXPOSE 3000
 
 HEALTHCHECK --interval=15s --timeout=5s --start-period=15s --retries=3 \

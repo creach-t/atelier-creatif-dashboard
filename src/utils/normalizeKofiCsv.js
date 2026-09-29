@@ -1,13 +1,17 @@
 // Colonnes réelles du CSV Ko-fi (More > Transactions > Download CSV), vérifiées sur un
 // vrai export le 2026-09-27 — ne pas re-deviner par alias, ces noms sont ceux de Ko-fi.
+import { dayInParis, todayLocal } from './dates';
+
 const PRODUCT_LINE = /^Product:\s*(\d+)\s*x\s*(.+)$/i;
 
-// "09/08/2024 15:22" (MM/DD/YYYY HH:MM) -> "2024-09-08"
+// "09/08/2024 15:22" (MM/DD/YYYY HH:MM, en UTC) -> jour calendaire à Paris ("2024-09-08"),
+// comme le webhook, pour qu'un même achat ait la même date quelle que soit sa source.
 function parseKofiDate(value) {
-  const [datePart] = (value || '').split(' ');
+  const [datePart, timePart = '00:00'] = (value || '').trim().split(/\s+/);
   const [mm, dd, yyyy] = (datePart || '').split('/');
-  if (!mm || !dd || !yyyy) return new Date().toISOString().slice(0, 10);
-  return `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
+  const [hh = '0', min = '0'] = timePart.split(':');
+  const utc = new Date(Date.UTC(Number(yyyy), Number(mm) - 1, Number(dd), Number(hh), Number(min)));
+  return mm && dd && yyyy && !Number.isNaN(utc.getTime()) ? dayInParis(utc) : todayLocal();
 }
 
 // "Product: 1 x Fond d'écran | Product: 2 x Sticker | " -> [{name, quantity}, ...]

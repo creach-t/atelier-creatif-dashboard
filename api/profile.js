@@ -1,5 +1,7 @@
 const { getSupabaseClient } = require('./lib/supabaseClient');
 const { requireUser } = require('./lib/auth');
+const { serverError, isUniqueViolation } = require('./lib/errors');
+const { optionalString } = require('./lib/validate');
 
 const PATCHABLE_FIELDS = ['display_name', 'kofi_verification_token', 'onboarding_completed'];
 
@@ -16,10 +18,7 @@ module.exports = async (req, res) => {
       .eq('id', user.id)
       .maybeSingle();
 
-    if (error) {
-      res.status(500).json({ error: error.message });
-      return;
-    }
+    if (error) return serverError(res, error, 'GET /profile');
     res.status(200).json(data);
     return;
   }
@@ -29,6 +28,23 @@ module.exports = async (req, res) => {
     const updates = {};
     for (const field of PATCHABLE_FIELDS) {
       if (body[field] !== undefined) updates[field] = body[field];
+    }
+
+    if (!optionalString(updates.display_name, 100)) {
+      res.status(400).json({ error: 'display_name must be a string (100 chars max)' });
+      return;
+    }
+    if (updates.kofi_verification_token !== undefined && updates.kofi_verification_token !== null) {
+      const token = updates.kofi_verification_token;
+      if (typeof token !== 'string' || !token.trim() || token.length > 200) {
+        res.status(400).json({ error: 'kofi_verification_token must be a non-empty string (200 chars max) or null' });
+        return;
+      }
+      updates.kofi_verification_token = token.trim();
+    }
+    if (updates.onboarding_completed !== undefined && typeof updates.onboarding_completed !== 'boolean') {
+      res.status(400).json({ error: 'onboarding_completed must be a boolean' });
+      return;
     }
 
     if (Object.keys(updates).length === 0) {
@@ -45,8 +61,13 @@ module.exports = async (req, res) => {
       .single();
 
     if (error) {
-      res.status(500).json({ error: error.message });
-      return;
+      // Un token Ko-fi ne peut appartenir qu'à un compte : message volontairement vague, pour ne pas
+      // confirmer à un tiers qu'un token donné existe déjà.
+      if (isUniqueViolation(error)) {
+        res.status(409).json({ error: 'Ce token ne peut pas être utilisé.' });
+        return;
+      }
+      return serverError(res, error, 'PATCH /profile');
     }
     res.status(200).json(data);
     return;

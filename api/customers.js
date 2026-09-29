@@ -1,5 +1,7 @@
 const { getSupabaseClient } = require('./lib/supabaseClient');
 const { requireUser } = require('./lib/auth');
+const { serverError, isUniqueViolation } = require('./lib/errors');
+const { optionalString } = require('./lib/validate');
 
 module.exports = async (req, res) => {
   const user = await requireUser(req, res);
@@ -13,10 +15,7 @@ module.exports = async (req, res) => {
       .select('*')
       .eq('user_id', user.id)
       .order('name');
-    if (error) {
-      res.status(500).json({ error: error.message });
-      return;
-    }
+    if (error) return serverError(res, error, 'GET /customers');
     res.status(200).json(data);
     return;
   }
@@ -24,8 +23,12 @@ module.exports = async (req, res) => {
   if (req.method === 'POST') {
     const body = req.body || {};
 
-    if (!body.name || !body.name.trim()) {
+    if (typeof body.name !== 'string' || !body.name.trim()) {
       res.status(400).json({ error: 'name is required' });
+      return;
+    }
+    if (body.name.length > 200 || !optionalString(body.email, 254) || !optionalString(body.notes, 5000)) {
+      res.status(400).json({ error: 'name, email or notes too long' });
       return;
     }
 
@@ -38,8 +41,11 @@ module.exports = async (req, res) => {
 
     const { data, error } = await supabase.from('customers').insert(customer).select().single();
     if (error) {
-      res.status(500).json({ error: error.message });
-      return;
+      if (isUniqueViolation(error)) {
+        res.status(409).json({ error: 'Un client porte déjà ce nom.' });
+        return;
+      }
+      return serverError(res, error, 'POST /customers');
     }
     res.status(201).json(data);
     return;
