@@ -5,6 +5,7 @@ import {
 } from 'recharts';
 import { Card } from '../ui/Card';
 import { CHANNELS } from '../ui/ChannelBadge';
+import { netOf } from '../../utils/orderAmounts';
 
 const PALETTE = ['#a78bfa', '#f472b6', '#fbbf24', '#34d399'];
 
@@ -25,7 +26,7 @@ const ChartTooltip = ({ active, payload, label }) => {
 export const OverviewTab = ({ stats, orders }) => {
   const channelData = Object.keys(CHANNELS).map((channel, i) => {
     const channelOrders = orders.filter((o) => o.channel === channel);
-    const value = channelOrders.reduce((s, o) => s + Number(o.total || 0), 0);
+    const value = channelOrders.reduce((s, o) => s + netOf(o), 0);
     return { name: CHANNELS[channel].label, value: Math.round(value * 100) / 100, color: PALETTE[i % PALETTE.length] };
   }).filter((c) => c.value > 0);
 

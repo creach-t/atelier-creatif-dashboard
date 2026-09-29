@@ -48,6 +48,11 @@ Le déploiement (build + déploiement de l'image) ne touche jamais à la base �
 | `0003_customers.sql` | Table `customers` (fiches clients persistées) + rattrapage des clients déjà présents dans les commandes existantes |
 | `0004_products_kofi_link.sql` | Colonne `products.kofi_url` (lien direct vers le produit sur Ko-fi) |
 | `0005_orders_notes.sql` | Colonne `orders.notes` (note libre optionnelle par commande) |
+| `0006_products_price_estimated.sql` | Colonne `products.price_estimated` (prix calculé par estimation globale, à distinguer d'un prix saisi) |
+| `0007_products_free_kind.sql` | Colonnes `products.is_free` (gratuit voulu) et `products.kind` (`physical` / `digital` / `both`) |
+| `0008_orders_commission_extras.sql` | Colonnes `orders.commission_rate` (% de la boutique) et `orders.extras` (lignes « divers » JSON) |
+
+L'API tolère l'absence de ces colonnes tant que la fonctionnalité n'est pas utilisée ; l'utiliser sans la migration renvoie un message clair (« la colonne … n'existe pas encore »).
 
 ## 🔄 Déploiement continu (GitHub Actions)
 
@@ -123,6 +128,9 @@ Reproduit le build en local pour voir l'erreur exacte (souvent : dépendance man
 - Vérifie l'URL du webhook côté Ko-fi (`https://cashly.creachtheo.fr/api/kofi-webhook`, identique pour tous les comptes)
 - Vérifie que le verification token collé dans Réglages (table `profiles.kofi_verification_token`) correspond exactement à celui affiché sur Ko-fi
 - `docker logs cashly` sur le VPS pour voir l'erreur exacte (401 "Unknown verification token" = pas de profil trouvé avec ce token)
+
+**Une modification ne marche pas en local (« Method not allowed », champs ignorés) :**
+- `node server.js` (l'API sur :4000) garde le code en mémoire : après une modification d'un fichier de `api/`, il faut le relancer (`Ctrl+C` puis `npm run dev`). Compare l'heure de démarrage du processus à la date du fichier avant de chercher un bug
 
 **Le container redémarre en boucle (`docker ps` montre `Restarting`) :**
 - `docker logs cashly` — le cas le plus probable est `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` absents ou faux dans le `.env` du VPS

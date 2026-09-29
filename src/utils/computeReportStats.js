@@ -1,3 +1,4 @@
+import { netOf } from './orderAmounts';
 // Statistiques dérivées des commandes pour l'onglet Rapports — inspiré de kofi-visualizer,
 // adapté aux commandes multi-canal de Cashly (pas seulement Ko-fi) au lieu d'un CSV séparé.
 const MONTH_FR = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
@@ -5,7 +6,7 @@ const DAYS_FR = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
 
 export function computeReportStats(orders) {
   const list = orders || [];
-  const total = list.reduce((s, o) => s + Number(o.total || 0), 0);
+  const total = list.reduce((s, o) => s + netOf(o), 0); // revenus = net après commission
 
   // Mensuel + cumul
   const monthMap = {};
@@ -14,7 +15,7 @@ export function computeReportStats(orders) {
     if (!y || !mo) return;
     const key = `${y}-${mo}`;
     if (!monthMap[key]) monthMap[key] = { key, year: y, month: mo, total: 0 };
-    monthMap[key].total += Number(o.total || 0);
+    monthMap[key].total += netOf(o);
   });
   const months = Object.values(monthMap).sort((a, b) => a.key.localeCompare(b.key));
   let running = 0;
@@ -37,7 +38,7 @@ export function computeReportStats(orders) {
   list.forEach((o) => {
     if (!o.order_date) return;
     const day = new Date(o.order_date).getDay();
-    dayTotals[day] += Number(o.total || 0);
+    dayTotals[day] += netOf(o);
   });
   const dayData = DAYS_FR.map((name, i) => ({ name, montant: Math.round(dayTotals[i] * 100) / 100 }));
 

@@ -22,3 +22,20 @@ export const STATUS_LABELS = {
   delivered: 'Livrée',
   cancelled: 'Annulée',
 };
+
+// Le statut n'est plus un badge dans les fiches de commande : c'est une couleur d'accent sur le numéro.
+export const STATUS_ACCENT = {
+  pending: 'text-amber-500',
+  shipped: 'text-blue-500',
+  delivered: 'text-emerald-500',
+  cancelled: 'text-rose-400 line-through',
+};
+
+export const OrderNumber = ({ order, className = '' }) => (
+  <span
+    className={`font-bold ${STATUS_ACCENT[order.status] || 'text-gray-500'} ${className}`}
+    title={STATUS_LABELS[order.status] || order.status}
+  >
+    #{order.id.slice(0, 6)}
+  </span>
+);

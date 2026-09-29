@@ -6,13 +6,8 @@ import { Button } from '../ui/Button';
 import { CustomerForm } from './CustomerForm';
 import { CustomerDetailModal } from './CustomerDetailModal';
 import { getCustomerBadges } from '../../utils/customerBadges';
-
-const SORTS = {
-  total_desc: { label: 'Total dépensé', fn: (a, b) => (b.total || 0) - (a.total || 0) },
-  name: { label: 'Nom (A-Z)', fn: (a, b) => a.name.localeCompare(b.name) },
-  count_desc: { label: 'Plus de commandes', fn: (a, b) => (b.count || 0) - (a.count || 0) },
-  last_desc: { label: 'Dernière commande', fn: (a, b) => (b.last || '').localeCompare(a.last || '') },
-};
+import { useSort, sortRows } from '../../hooks/useSort';
+import { SortHeader } from '../ui/SortHeader';
 
 const computeStatsByName = (orders) => {
   const map = {};
@@ -49,7 +44,7 @@ export const Customers = ({
   onClearSelectedCustomer,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortKey, setSortKey] = useState('total_desc');
+  const [sort, toggleSort] = useSort('total', 'desc');
   const [showForm, setShowForm] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [viewingCustomer, setViewingCustomer] = useState(null);
@@ -62,14 +57,16 @@ export const Customers = ({
   );
 
   const filtered = useMemo(() => {
-    return rows
-      .filter(
+    return sortRows(
+      rows.filter(
         (c) =>
           c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           (c.email || '').toLowerCase().includes(searchTerm.toLowerCase())
-      )
-      .sort(SORTS[sortKey].fn);
-  }, [rows, searchTerm, sortKey]);
+      ),
+      sort,
+      { name: (c) => c.name, count: (c) => c.count || 0, total: (c) => c.total || 0, last: (c) => c.last }
+    );
+  }, [rows, searchTerm, sort]);
 
   const topSpenders = useMemo(
     () =>
@@ -159,15 +156,6 @@ export const Customers = ({
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <select
-            className="w-full md:w-auto px-4 py-3 border border-purple-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400"
-            value={sortKey}
-            onChange={(e) => setSortKey(e.target.value)}
-          >
-            {Object.entries(SORTS).map(([key, { label }]) => (
-              <option key={key} value={key}>Trier : {label}</option>
-            ))}
-          </select>
         </div>
       </Card>
 
@@ -181,10 +169,10 @@ export const Customers = ({
           <table className="w-full">
             <thead className="bg-purple-50">
               <tr>
-                <th className="text-left p-4 font-semibold text-gray-700">Client</th>
-                <th className="text-left p-4 font-semibold text-gray-700 hidden md:table-cell">Commandes</th>
-                <th className="text-left p-4 font-semibold text-gray-700">Total dépensé</th>
-                <th className="text-left p-4 font-semibold text-gray-700 hidden lg:table-cell">Dernière commande</th>
+                <th className="text-left p-4"><SortHeader label="Client" sortKey="name" sort={sort} onSort={toggleSort} /></th>
+                <th className="text-left p-4 hidden md:table-cell"><SortHeader label="Commandes" sortKey="count" firstDir="desc" sort={sort} onSort={toggleSort} /></th>
+                <th className="text-left p-4"><SortHeader label="Total dépensé" sortKey="total" firstDir="desc" sort={sort} onSort={toggleSort} /></th>
+                <th className="text-left p-4 hidden lg:table-cell"><SortHeader label="Dernière commande" sortKey="last" firstDir="desc" sort={sort} onSort={toggleSort} /></th>
                 <th className="text-left p-4 font-semibold text-gray-700"></th>
               </tr>
             </thead>

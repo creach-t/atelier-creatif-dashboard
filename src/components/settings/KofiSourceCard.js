@@ -3,6 +3,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { apiClient } from '../../api/client';
+import { ChannelLogo } from '../ui/ChannelBadge';
 
 const WEBHOOK_URL = `${window.location.origin}/api/kofi-webhook`;
 
@@ -82,7 +83,7 @@ export const KofiSourceCard = () => {
     <Card className="p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-          💜 Ko-fi
+          <ChannelLogo channel="kofi" size={20} className="text-purple-600" /> Ko-fi
         </h3>
         {!loading && (
           <span

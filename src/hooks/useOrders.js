@@ -38,5 +38,10 @@ export function useOrders() {
     return updated;
   }, []);
 
-  return { orders, loading, error, refresh, createOrder, updateOrder };
+  const deleteOrder = useCallback(async (id) => {
+    await apiClient.delete(`/orders/${id}`);
+    setOrders((prev) => prev.filter((order) => order.id !== id));
+  }, []);
+
+  return { orders, loading, error, refresh, createOrder, updateOrder, deleteOrder };
 }

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
 import { Dashboard } from './components/dashboard/Dashboard';
@@ -9,16 +9,26 @@ import { Reports } from './components/reports/Reports';
 import { Settings } from './components/settings/Settings';
 import { Login } from './components/auth/Login';
 import { OrderDetailModal } from './components/orders/OrderDetailModal';
+import { OrderForm } from './components/orders/OrderForm';
 import { ProductDetailModal } from './components/products/ProductDetailModal';
 import { useOrders } from './hooks/useOrders';
 import { useProducts } from './hooks/useProducts';
 import { useCustomers } from './hooks/useCustomers';
+import { useEstimatedPrices } from './hooks/useEstimatedPrices';
+import { estimatePrices, resolveProducts, catalogPrices } from './utils/estimatePrices';
+import { groupProducts, findGroup } from './utils/productVariants';
+import { computeProductRevenue } from './utils/computeProductRevenue';
 import { computeSoldByName } from './utils/computeSoldByName';
 import { onUnauthorized } from './api/client';
 import { supabase } from './api/supabaseClient';
 
 const CreativeDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const mainRef = useRef(null);
+  // Le conteneur scrollable est <main> et il survit au changement d'onglet : sans ça, on arrive au milieu de la page suivante.
+  useEffect(() => {
+    if (mainRef.current) mainRef.current.scrollTop = 0;
+  }, [activeTab]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [selectedCustomerName, setSelectedCustomerName] = useState(null);
   const [editProductName, setEditProductName] = useState(null);
@@ -26,13 +36,24 @@ const CreativeDashboard = () => {
   // Popups globaux : ouvrir une commande ou un produit ne doit jamais changer d'onglet,
   // où qu'on clique depuis (Dashboard, notifications, fiche client, rapports...).
   const [viewingOrder, setViewingOrder] = useState(null);
+  const [editingOrder, setEditingOrder] = useState(null);
   const [viewingProductName, setViewingProductName] = useState(null);
-  const { orders, createOrder, updateOrder } = useOrders();
-  const { products, createProduct, updateProduct } = useProducts();
+  const { orders, createOrder, updateOrder, deleteOrder } = useOrders();
+  const { products: rawProducts, createProduct, updateProduct, deleteProduct } = useProducts();
   const { customers, createCustomer, updateCustomer } = useCustomers();
+  // Prix estimés à partir de toutes les commandes : appliqués tout de suite à l'affichage (products)
+  // et écrits en base en tâche de fond quand ils sont quasi sûrs.
+  const priceEstimates = useMemo(() => estimatePrices(orders, rawProducts), [orders, rawProducts]);
+  const products = useMemo(() => resolveProducts(rawProducts, priceEstimates), [rawProducts, priceEstimates]);
+  useEstimatedPrices(rawProducts, priceEstimates, updateProduct);
 
   const soldByName = useMemo(() => computeSoldByName(orders), [orders]);
-  const viewingProduct = viewingProductName ? products.find((p) => p.name === viewingProductName) : null;
+  const productGroups = useMemo(() => groupProducts(products), [products]);
+  const viewingGroup = viewingProductName ? findGroup(productGroups, viewingProductName) : null;
+  const revenueByName = useMemo(
+    () => Object.fromEntries(computeProductRevenue(orders, catalogPrices(products)).map((r) => [r.name, r.revenue])),
+    [orders, products]
+  );
 
   const handleViewOrder = (order) => setViewingOrder(order);
   const handleViewProduct = (name) => setViewingProductName(name);
@@ -134,14 +155,18 @@ const CreativeDashboard = () => {
       />
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <Header orders={orders} onSelectOrder={handleViewOrder} onOpenMenu={() => setMobileMenuOpen(true)} activeTab={activeTab} />
-        <main className="flex-1 overflow-auto">{renderContent()}</main>
+        <main ref={mainRef} className="flex-1 overflow-auto">{renderContent()}</main>
       </div>
 
       {viewingOrder && (
         <OrderDetailModal
           order={viewingOrder}
           products={products}
-          onUpdate={updateOrder}
+          onDelete={deleteOrder}
+          onEdit={() => {
+            setEditingOrder(viewingOrder);
+            setViewingOrder(null);
+          }}
           onNavigateToProduct={(name) => {
             setViewingOrder(null);
             handleViewProduct(name);
@@ -150,11 +175,30 @@ const CreativeDashboard = () => {
         />
       )}
 
-      {viewingProduct && (
+      {editingOrder && (
+        <OrderForm
+          order={editingOrder}
+          products={products}
+          customers={customers}
+          createProduct={createProduct}
+          onUpdate={updateOrder}
+          onClose={() => setEditingOrder(null)}
+        />
+      )}
+
+      {viewingGroup && (
         <ProductDetailModal
-          product={viewingProduct}
-          sold={soldByName[viewingProduct.name] || 0}
-          onEdit={() => handleEditProduct(viewingProduct.name)}
+          group={viewingGroup}
+          soldByName={soldByName}
+          revenueByName={revenueByName}
+          onConfirmPrice={async (p, price) => { await updateProduct(p.id, { price }); }}
+          onEdit={(name) => handleEditProduct(name)}
+          onDelete={async (product) => {
+            await deleteProduct(product.id);
+            // Une variante supprimée : la fiche reste ouverte sur une variante voisine ; sinon elle se ferme.
+            const sibling = viewingGroup.variants.find((v) => v.product.id !== product.id);
+            setViewingProductName(sibling ? sibling.product.name : null);
+          }}
           onClose={() => setViewingProductName(null)}
         />
       )}

@@ -3,6 +3,7 @@ import { AccountCard } from './AccountCard';
 import { KofiSourceCard } from './KofiSourceCard';
 import { ImportKofiHistory } from './ImportKofiHistory';
 import { Card } from '../ui/Card';
+import { ChannelLogo } from '../ui/ChannelBadge';
 
 export const Settings = () => {
   return (
@@ -17,7 +18,9 @@ export const Settings = () => {
           <KofiSourceCard />
           <Card className="p-6">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">🏪 Reel</h3>
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <ChannelLogo channel="reel" size={20} className="text-pink-600" /> Point de vente
+              </h3>
               <span className="text-xs px-3 py-1 rounded-full font-medium bg-green-100 text-green-800">
                 Toujours disponible
               </span>

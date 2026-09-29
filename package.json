@@ -1,7 +1,7 @@
 {
   "name": "cashly",
   "version": "1.0.0",
-  "description": "Cashly - Dashboard de gestion de ventes multi-canal (Ko-fi, Reel) pour créatifs indépendants",
+  "description": "Cashly - Dashboard de gestion de ventes multi-canal (Ko-fi, point de vente) pour créatifs indépendants",
   "keywords": [
     "react",
     "dashboard",

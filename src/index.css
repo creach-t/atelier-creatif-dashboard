@@ -82,3 +82,18 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+/* Défilement discret dans les fenêtres modales et listes internes */
+.scroll-soft {
+  scrollbar-width: thin;
+  scrollbar-color: #d4ccff transparent;
+  overscroll-behavior: contain;
+}
+.scroll-soft::-webkit-scrollbar { width: 8px; }
+.scroll-soft::-webkit-scrollbar-track { background: transparent; }
+.scroll-soft::-webkit-scrollbar-thumb {
+  background: #d4ccff;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.scroll-soft::-webkit-scrollbar-thumb:hover { background: #b794f6; background-clip: content-box; }

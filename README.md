@@ -2,7 +2,7 @@
 
 > **Dashboard de gestion de ventes multi-canal pour créatifs indépendants**
 
-Une solution complète pour gérer efficacement vos commandes Ko-fi, vos ventes en boutique partenaire (Reel), vos produits, vos clients et vos expéditions, le tout dans une interface moderne aux couleurs pastels.
+Une solution complète pour gérer efficacement vos commandes Ko-fi, vos ventes en point de vente (boutique partenaire), vos produits, vos clients et vos expéditions, le tout dans une interface moderne aux couleurs pastels.
 
 ![Dashboard Preview](https://img.shields.io/badge/Version-1.0.0-purple)
 ![React](https://img.shields.io/badge/React-18.2.0-blue)
@@ -17,7 +17,7 @@ Une solution complète pour gérer efficacement vos commandes Ko-fi, vos ventes 
 
 ### 🌐 **Multi-canal**
 - **Ko-fi** : commandes/paiements synchronisés automatiquement via webhook (identifié par compte via le verification token), enrichit aussi le catalogue produits et les fiches clients automatiquement
-- **Reel** : ventes physiques/personnalisées saisies manuellement
+- **Point de vente** : ventes physiques/personnalisées saisies manuellement
 - D'autres canaux pourront être ajoutés par la suite (le canal est une donnée, pas du code en dur)
 
 ### ⚙️ **Réglages**
@@ -27,33 +27,45 @@ Une solution complète pour gérer efficacement vos commandes Ko-fi, vos ventes 
 
 ### 📊 **Dashboard Principal ("Vue d'ensemble")**
 - Mois navigable (chevrons précédent/suivant) plutôt que figé sur le mois courant
-- Revenus du mois, commandes en attente, produits catalogués, expédiées aujourd'hui — chaque carte cliquable renvoie vers la page concernée (filtrée quand ça a du sens)
-- Graphiques Recharts : évolution des revenus sur 6 mois, répartition par canal (donut)
-- Commandes récentes et produits populaires cliquables → ouvrent leur détail en popup, sans changer d'onglet
+- **Revenus du mois en héros**, avec la variation vs le mois précédent et l'évolution sur 6 mois ; à côté : commandes, panier moyen et nouveaux clients (chacun avec sa variation). Les revenus sont comptés **en net** (après commission de la boutique)
+- **Top 3 des produits les plus rentables du mois** : podium compact (rang, miniature, barre proportionnelle, revenu) précédé d'une frise « ces produits = X % du revenu »
+- Répartition par canal (donut) et commandes récentes cliquables → ouvrent leur détail en popup, sans changer d'onglet
 - Notifications (activité récente) accessibles depuis la cloche du header
 
 ### 🛒 **Gestion des Commandes**
-- Client **obligatoire**, saisi via une recherche dans le carnet existant (auto-complétion) — un nom sans correspondance devient un nouveau client (créé automatiquement, [`api/lib/customerSync.js`](api/lib/customerSync.js))
-- Articles ajoutés de la même façon : recherche dans le catalogue produits, ou nouvel article → nouveau produit créé automatiquement (catégorie "Sans catégorie" à préciser ensuite)
-- Note libre optionnelle par commande
-- Ligne de commande cliquable → détail complet en popup (articles, statut, n° de suivi, note), sans jamais changer d'onglet — pareil pour un article cliqué depuis ce détail (ouvre la fiche produit en popup)
-- Filtrage par canal, statut, période (7j/30j/année/tout) et recherche
+- **Calendrier d'activité** (26 semaines, une case par jour, un seul violet qui fonce avec le nombre de commandes) ; un clic sur un jour filtre la liste
+- Liste unique (une ligne par commande, à toutes les tailles d'écran) **triable en cliquant les en-têtes** de colonnes (client, date, canal, total) ; le statut n'est qu'une couleur d'accent sur le numéro de commande
+- Filtrage par canal (logos Ko-fi / point de vente), période (7j/30j/année/tout) et recherche
+- **Fiche en lecture seule** : rien ne se modifie avant de cliquer sur « Modifier la commande » (client, email, articles, divers, date, statut, suivi, notes, commission) ; seuls les champs réellement changés sont envoyés. Suppression possible après **double confirmation**
+- Client **obligatoire**, saisi via une recherche dans le carnet existant — un nom sans correspondance devient un nouveau client ([`api/lib/customerSync.js`](api/lib/customerSync.js)) ; même principe pour les articles (un nouvel article crée un produit « Sans catégorie »)
+- **Lignes « divers »** (frais de port, emballage, don, remise en montant négatif) : comptent dans le total mais ne créent aucun article ni produit, et ne sont jamais prises pour un don
+- **Commission de la boutique** (point de vente), en % par commande, préremplie avec la dernière utilisée : le net perçu est calculé automatiquement
+- Le **total est toujours calculé** (articles + divers), jamais saisi ; un écart d'une commande existante (don, prix libre, montant jamais détaillé) est conservé à part et retirable
 
 ### 🎯 **Catalogue Produits**
 - Enrichi automatiquement à partir des ventes Ko-fi (nom, photo et lien Ko-fi direct quand disponibles dans la boutique)
 - Pas de gestion de stock — la métrique qui compte est la **quantité vendue**, calculée depuis les commandes
-- Fiche produit en deux étapes : cliquer une carte ouvre une vue (photo, prix, ventes, lien Ko-fi), "Modifier" seulement ensuite pour éditer
-- Tri (plus/moins vendus, nom, prix croissant/décroissant, plus récents), recherche, mini-classement "Top 5 des ventes" en graphique
+- **Top 5 des produits les plus rentables depuis le début** en tête de page (même podium que la vue d'ensemble)
+- Cartes façon boutique Ko-fi (grande photo, placeholder sans photo) ou vue **Liste** ; tri par clic sur les en-têtes (liste) ou pastilles (grille), recherche, filtres catégorie et type
+- **Variantes regroupées** : `Produit - Variant: X` (ou `(variant : X)`) forme une seule carte ; les ventes restent détaillées par variante dans la fiche (aucune fusion en base)
+- **Physique / numérique** et **gratuit** explicites (0 € voulu ≠ prix manquant), modifiables dans le formulaire
+- Fiche produit en deux étapes : une vue (photo, prix, ventes par variante), puis « Modifier » ; suppression après **double confirmation**
 
 ### 🧑‍🤝‍🧑 **Clients**
 - Fiche client persistée en base (nom, email, notes), créée automatiquement à chaque nouvelle commande
 - Fiche détaillée en popup : email, notes, badges (VIP/Fidèle/Généreux·se/Super fan), et tout l'historique de ses commandes — chacune cliquable pour ouvrir son détail
-- Tri (total dépensé, nom, nombre de commandes, dernière commande), "Top 5 des client·es" en graphique
+- Tri par clic sur les en-têtes (client, commandes, total dépensé, dernière commande), "Top 5 des client·es" en graphique
 
 ### 📈 **Rapports et Analyses**
 - Évolution mensuelle des revenus (graphique), répartition par canal, revenus par jour de la semaine
 - Classement des clients (avec badges VIP/Fidèle/Généreux·se/Super fan) et des produits par quantité vendue — chaque ligne cliquable ouvre la vraie fiche (client/produit) en popup, sans quitter Rapports
 - Filtre par année
+
+### 💰 **Prix, gratuité et revenus**
+- **Un prix connu prime toujours** : prix inscrit sur la ligne de commande, sinon prix du catalogue ; jamais écrasé par une déduction
+- Un produit sans prix reçoit un **prix estimé** résolu sur *toutes* les commandes à la fois (moindres carrés robustes + vote de consensus, [`src/utils/estimatePrices.js`](src/utils/estimatePrices.js)) — prix libre, remises et paniers atypiques sont traités comme du bruit ; uniquement écrit en base quand il est « quasi sûr » (plusieurs commandes concordantes), et **toujours affiché différemment** (pastille en pointillés `≈`) d'un prix saisi, avec un bouton « Confirmer »
+- **Revenus = net** : la commission de la boutique est déduite ; le « Total dépensé » d'un client reste en brut
+- Le surplus au-delà des prix connus est un **don / prix libre** affiché à part, jamais réparti sur les produits
 
 ### 📦 **Modules Futurs**
 - Intégration expéditions La Poste
@@ -84,7 +96,7 @@ Cashly est multi-utilisateur : l'authentification (**Supabase Auth**) isole les 
 
 1. **Créer le projet Supabase**
    - Sur [app.supabase.com](https://app.supabase.com), crée un nouveau projet.
-   - Dans l'éditeur SQL du projet, exécute le contenu de [`supabase/schema.sql`](supabase/schema.sql) (installation neuve) — ça crée les tables `profiles`, `orders`, `products`, `customers`, le trigger qui crée un profil à chaque inscription, et les policies RLS. Pour une base existante, applique dans l'ordre les migrations de [`supabase/migrations/`](supabase/migrations) (`0002_multi_tenant.sql`, `0003_customers.sql`, `0004_products_kofi_link.sql`, `0005_orders_notes.sql`).
+   - Dans l'éditeur SQL du projet, exécute le contenu de [`supabase/schema.sql`](supabase/schema.sql) (installation neuve) — ça crée les tables `profiles`, `orders`, `products`, `customers`, le trigger qui crée un profil à chaque inscription, et les policies RLS. Pour une base existante, applique dans l'ordre les migrations de [`supabase/migrations/`](supabase/migrations) (`0002_multi_tenant.sql`, `0003_customers.sql`, `0004_products_kofi_link.sql`, `0005_orders_notes.sql`, `0006_products_price_estimated.sql`, `0007_products_free_kind.sql`, `0008_orders_commission_extras.sql`).
    - Dans *Project Settings → API Keys*, récupère l'**URL du projet**, la **clé secrète** (`sb_secret_...`, ou `service_role` si l'ancien système) — jamais exposée au navigateur — et la **clé publishable** (`sb_publishable_...`, ou `anon`) — celle-là est safe à exposer au front, elle sert à l'authentification.
 
 2. **Variables d'environnement**
@@ -150,9 +162,9 @@ api/                         # Routes API (montées par server.js)
 │   └── customerSync.js       # Auto-création de fiches clients à partir des commandes
 ├── kofi-webhook.js         # Réception des webhooks Ko-fi (résout le compte via profiles.kofi_verification_token)
 ├── orders.js                # GET (liste triée par order_date, filtre ?channel=) / POST — filtré par user_id
-├── orders/[id].js           # PATCH (statut, tracking, notes)
+├── orders/[id].js           # PATCH (tous les champs, validés) / DELETE
 ├── orders/import.js          # POST — import/réimport de l'historique Ko-fi (CSV)
-├── products.js               # GET / POST — filtré par user_id
+├── products.js               # GET / POST (dont is_free, kind) — filtré par user_id
 ├── products/[id].js          # PATCH / DELETE
 ├── customers.js               # GET / POST — filtré par user_id
 ├── customers/[id].js          # PATCH / DELETE
@@ -163,25 +175,25 @@ docker-compose.prod.yml      # Service Docker + labels Traefik (cashly.creachthe
 
 supabase/
 ├── schema.sql              # Schéma complet (installation neuve, multi-utilisateur)
-└── migrations/              # 0002 à 0005 — migrations additives (multi-tenant, clients, lien Ko-fi produit, notes commande)
+└── migrations/              # 0002 à 0008 — migrations additives (multi-tenant, clients, lien Ko-fi, notes, prix estimé, gratuit/type, commission/divers)
 
 src/
 ├── App.js                  # Routage (login → dashboard), popups globaux commande/produit (jamais de changement d'onglet)
 ├── api/
 │   ├── client.js            # Wrapper fetch (JWT Supabase, gestion des erreurs)
 │   └── supabaseClient.js    # Client Supabase côté navigateur (clé publishable, auth uniquement)
-├── hooks/                  # useOrders, useProducts, useCustomers (fetch + mutations)
+├── hooks/                  # useOrders, useProducts, useCustomers (fetch + mutations), useSort (tri par en-têtes), useEstimatedPrices (écriture des prix estimés)
 ├── components/
-│   ├── ui/                 # Card, Button, Badge, ChannelBadge, ProductThumbnail
+│   ├── ui/                 # Card, Button, Badge, ChannelBadge (vrais logos), ProductThumbnail/Cover, Modal, PriceTag, SortHeader
 │   ├── layout/              # Sidebar (menu mobile + menu utilisateur), Header, NotificationBell
 │   ├── auth/Login.js        # Écran de connexion / inscription (Supabase Auth)
 │   ├── settings/             # Réglages : compte, source Ko-fi, import d'historique
 │   ├── dashboard/           # Dashboard + répartition par canal
 │   ├── orders/               # Liste des commandes, formulaire de saisie, détail cliquable
-│   ├── products/             # Catalogue produits (tri, édition)
+│   ├── products/             # Catalogue (cartes, liste, variantes), ProductCard, TopProducts, fiche, formulaire
 │   ├── customers/            # Page Clients (liste, édition)
 │   └── reports/               # Rapports : aperçu, classement clients, classement produits
-├── utils/                    # parseCsv, normalizeKofiCsv, computeReportStats, computeSoldByName
+├── utils/                    # parseCsv, normalizeKofiCsv, computeReportStats, computeSoldByName, estimatePrices, computeProductRevenue, productVariants, orderAmounts (net/commission/divers)
 ├── index.js                 # Point d'entrée React
 └── index.css                 # Styles Tailwind + custom
 
@@ -233,6 +245,9 @@ npm run eject      # Éjection Create React App (⚠️ irréversible)
 - [x] Responsive mobile (sidebar en menu coulissant)
 - [x] Dashboard cliquable avec graphiques et mois navigable
 - [x] Recherche/auto-complétion clients et produits dans le formulaire de commande, avec création automatique
+- [x] Refonte de l'interface : podium des produits rentables, calendrier d'activité, cartes produit, tri par en-têtes, fiches en lecture seule, suppression avec double confirmation
+- [x] Prix estimés par résolution globale des commandes, produits gratuits, physique/numérique, variantes regroupées
+- [x] Commission de la boutique (revenus en net), lignes « divers », modification complète des commandes
 
 ### À venir
 - [ ] Export des données (CSV/PDF)

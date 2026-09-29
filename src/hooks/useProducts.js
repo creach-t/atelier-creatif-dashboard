@@ -38,5 +38,10 @@ export function useProducts() {
     return updated;
   }, []);
 
-  return { products, loading, error, refresh, createProduct, updateProduct };
+  const deleteProduct = useCallback(async (id) => {
+    await apiClient.delete(`/products/${id}`);
+    setProducts((prev) => prev.filter((p) => p.id !== id));
+  }, []);
+
+  return { products, loading, error, refresh, createProduct, updateProduct, deleteProduct };
 }

@@ -4,9 +4,15 @@ import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { ProductThumbnail } from '../ui/ProductThumbnail';
 
-const emptyProduct = { name: '', category: '', price: '', image: '🎁', kofi_url: '' };
+const emptyProduct = { name: '', category: '', price: '', image: '🎁', kofi_url: '', is_free: false, kind: '' };
 
-export const ProductForm = ({ product, onSave, onClose }) => {
+const KIND_OPTIONS = [
+  { id: '', label: 'Non précisé' },
+  { id: 'physical', label: 'Physique' },
+  { id: 'digital', label: 'Numérique' },
+];
+
+export const ProductForm = ({ product, onSave, onClose, supportsFlags = true }) => {
   const isEditing = Boolean(product);
   const [form, setForm] = useState(
     product
@@ -16,6 +22,8 @@ export const ProductForm = ({ product, onSave, onClose }) => {
           price: String(product.price ?? ''),
           image: product.image || '🎁',
           kofi_url: product.kofi_url || '',
+          is_free: Boolean(product.is_free),
+          kind: product.kind || '',
         }
       : emptyProduct
   );
@@ -36,10 +44,14 @@ export const ProductForm = ({ product, onSave, onClose }) => {
     const payload = {
       name: form.name.trim(),
       category: form.category.trim(),
-      price: Number(form.price) || 0,
+      price: form.is_free ? 0 : Number(form.price) || 0,
       image: form.image.trim() || '🎁',
       kofi_url: form.kofi_url.trim() || null,
     };
+    if (supportsFlags) {
+      payload.is_free = form.is_free;
+      payload.kind = form.kind || null;
+    }
 
     setSaving(true);
     try {
@@ -118,10 +130,47 @@ export const ProductForm = ({ product, onSave, onClose }) => {
               type="number"
               min="0"
               step="0.01"
-              value={form.price}
+              value={form.is_free ? '0' : form.price}
               onChange={set('price')}
-              className="w-full px-3 py-2 border border-purple-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400"
+              disabled={form.is_free}
+              className="w-full px-3 py-2 border border-purple-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 disabled:bg-gray-50 disabled:text-gray-400"
             />
+            {supportsFlags && (
+              <label className="flex items-center gap-2 mt-2 text-sm text-gray-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.is_free}
+                  onChange={(e) => setForm((f) => ({ ...f, is_free: e.target.checked }))}
+                  className="rounded border-purple-300 text-purple-600 focus:ring-purple-400"
+                />
+                Produit gratuit (0 € voulu, pas un prix manquant)
+              </label>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+            {supportsFlags ? (
+              <div className="grid grid-cols-3 gap-1 p-1 rounded-xl border border-purple-200 bg-white">
+                {KIND_OPTIONS.map((o) => (
+                  <button
+                    key={o.id || 'none'}
+                    type="button"
+                    onClick={() => setForm((f) => ({ ...f, kind: o.id }))}
+                    aria-pressed={form.kind === o.id}
+                    className={`px-1 py-2 text-xs font-medium rounded-lg transition-colors ${
+                      form.kind === o.id ? 'bg-purple-100 text-purple-700' : 'text-gray-500 hover:text-purple-600'
+                    }`}
+                  >
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
+                Le type (physique / numérique) et « gratuit » demandent la migration 0007 dans Supabase.
+              </p>
+            )}
           </div>
 
           <div>
