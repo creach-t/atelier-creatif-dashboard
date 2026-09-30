@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useMemo } from 'react';
 import { dayKey } from '../../core/metrics/periods';
 import { formatDate, plural } from '../../core/metrics/format';
 
@@ -6,8 +6,8 @@ const MONTHS_FR = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Se
 
 // Couleur continue selon le nb de commandes du jour : un seul violet, vif dès la 1re commande,
 // qui fonce jusqu'au record de la période. Jours vides = lavande très claire (pas de gris).
-const CELL = 16;
-const GAP = 4;
+export const GAP = 4;
+const DEFAULT_CELL = 16;
 export const heatColor = (count, max) => {
   if (count === 0) return 'hsl(265, 70%, 97%)';
   const t = max <= 1 ? 1 : (count - 1) / (max - 1);
@@ -15,8 +15,10 @@ export const heatColor = (count, max) => {
 };
 
 // Calendrier de chaleur : `weeksCount` semaines (lundi -> dimanche), une case par jour.
-export const OrdersHeatmap = ({ orders, weeksCount = 26, selectedDay, onSelectDay }) => {
-  const scrollRef = useRef(null);
+// `cell` = côté d'une case en px (calculé par le widget selon sa taille) ; `showStats` / `showLegend` se retirent
+// quand le widget est court.
+export const OrdersHeatmap = ({ orders, weeksCount = 26, selectedDay, onSelectDay, cell = DEFAULT_CELL, showStats = true, showLegend = true }) => {
+  const CELL = cell;
 
   const { weeks, monthLabels, max, total, activeDays, best } = useMemo(() => {
     const counts = {};
@@ -53,13 +55,9 @@ export const OrdersHeatmap = ({ orders, weeksCount = 26, selectedDay, onSelectDa
     return { weeks: weekList, monthLabels: labels, max: maxCount, total: sum, activeDays: active, best: bestDay };
   }, [orders, weeksCount]);
 
-  // Le plus récent est à droite : on ouvre le calendrier calé à droite sur mobile.
-  useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
-  }, [weeksCount]);
-
   return (
     <div>
+      {showStats && (
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2 mb-3">
         <p className="text-xs text-gray-500">Plus la case est foncée, plus il y a eu de commandes ce jour-là</p>
         <div className="flex gap-5">
@@ -79,8 +77,9 @@ export const OrdersHeatmap = ({ orders, weeksCount = 26, selectedDay, onSelectDa
           )}
         </div>
       </div>
+      )}
 
-      <div ref={scrollRef} className="overflow-x-auto pb-2">
+      <div className="pb-1 pr-6">
         <div className="inline-flex" style={{ gap: GAP }}>
           <div className="flex flex-col mr-1 pt-[18px] text-[10px] text-gray-400" style={{ gap: GAP }}>
             {['Lun', '', 'Mer', '', 'Ven', '', ''].map((l, i) => (
@@ -89,7 +88,7 @@ export const OrdersHeatmap = ({ orders, weeksCount = 26, selectedDay, onSelectDa
           </div>
           {weeks.map((days, w) => (
             <div key={w} className="flex flex-col" style={{ gap: GAP }}>
-              <span className="h-[14px] text-[10px] leading-[14px] text-gray-400 whitespace-nowrap">{monthLabels[w]}</span>
+              <span className="h-[14px] text-[10px] leading-[14px] text-gray-400 whitespace-nowrap">{weeksCount - w > Math.ceil(26 / (CELL + GAP)) ? monthLabels[w] : ''}</span>
               {days.map((day) => {
                 const isBest = day.count > 0 && day.count === max && max > 1;
                 return (
@@ -116,11 +115,13 @@ export const OrdersHeatmap = ({ orders, weeksCount = 26, selectedDay, onSelectDa
         </div>
       </div>
 
+      {showLegend && (
       <div className="flex items-center justify-end gap-2 mt-1 text-[10px] text-gray-400">
         1
         <span className="h-[10px] w-24 rounded-full" style={{ background: `linear-gradient(to right, ${heatColor(1, 2)}, ${heatColor(2, 2)})` }} />
         {max > 1 ? max : 'plus'}
       </div>
+      )}
     </div>
   );
 };

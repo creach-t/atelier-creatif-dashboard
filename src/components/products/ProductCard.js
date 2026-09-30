@@ -15,6 +15,9 @@ const KindBadge = ({ kind }) => (
   </span>
 );
 
+// Hauteur du bloc texte (la pagination de la grille en déduit la hauteur d'une carte : image carrée + ce bloc).
+export const PRODUCT_CARD_INFO_H = 120;
+
 // Carte produit unique de l'app (catalogue, Top 5, vue d'ensemble) : photo carrée en haut, puis nom,
 // prix et ventes. rank = médaille de classement ; emphasis="revenue" met le revenu en avant.
 export const ProductCard = ({ group, sold, revenue, onClick, rank, emphasis = 'sold' }) => {
@@ -49,7 +52,7 @@ export const ProductCard = ({ group, sold, revenue, onClick, rank, emphasis = 's
           </div>
         )}
       </div>
-      <div className="p-3 space-y-1.5">
+      <div className="p-3 space-y-1.5 overflow-hidden" style={{ height: PRODUCT_CARD_INFO_H }}>
         <h4 className="text-sm font-semibold text-gray-900 leading-snug line-clamp-3 @md:line-clamp-2 min-h-[2.5rem]">{group.name}</h4>
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <GroupPrice group={group} compact />

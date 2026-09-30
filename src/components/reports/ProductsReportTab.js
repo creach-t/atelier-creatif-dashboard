@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Search, Package } from 'lucide-react';
 import { Card } from '../ui/Card';
+import { Paged } from '../../core/widgets/Fit';
 import { computeSoldByName } from '../../utils/computeSoldByName';
 
 export const ProductsReportTab = ({ products, orders, onSelectProduct }) => {
@@ -54,8 +55,12 @@ export const ProductsReportTab = ({ products, orders, onSelectProduct }) => {
         <strong className="text-gray-900">{totalUnits}</strong> unité{totalUnits > 1 ? 's' : ''} vendue{totalUnits > 1 ? 's' : ''}
       </p>
 
-      <div className="@md:max-h-[540px] @md:overflow-y-auto divide-y divide-gray-100">
-        {filtered.map((p) => {
+      <Paged
+        items={filtered}
+        pageSize={6}
+        resetKey={search}
+        className="divide-y divide-gray-100"
+        renderItem={(p) => {
           const Wrapper = p.hasProduct ? 'button' : 'div';
           return (
             <Wrapper
@@ -81,8 +86,8 @@ export const ProductsReportTab = ({ products, orders, onSelectProduct }) => {
               </div>
             </Wrapper>
           );
-        })}
-      </div>
+        }}
+      />
     </Card>
   );
 };

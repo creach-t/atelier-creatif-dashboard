@@ -7,9 +7,9 @@ import { useData } from '../core/data/DataProvider';
 import { useOverlays } from '../core/overlays/OverlayProvider';
 import { rankProducts } from '../utils/productRanking';
 import { TopProducts } from '../components/products/TopProducts';
-import { EmptyState, ScrollArea } from '../core/widgets/parts';
+import { EmptyState } from '../core/widgets/parts';
 
-const TopProductsView = ({ config }) => {
+const TopProductsView = ({ config, size }) => {
   const { orders, period } = useWidgetOrders(config.period);
   const { products } = useData();
   const { openProduct } = useOverlays();
@@ -19,11 +19,9 @@ const TopProductsView = ({ config }) => {
     [orders, products, config.count, config.by]
   );
 
-  if (items.length === 0) return <EmptyState icon={Trophy}>Aucune vente de produit sur {period.short}.</EmptyState>;
+  if (items.length === 0) return <EmptyState emoji="🏆">Pas encore de podium sur {period.short} : votre prochain best-seller est peut-être en route !</EmptyState>;
   return (
-    <ScrollArea>
-      <TopProducts items={items} totalRevenue={totalRevenue} by={config.by} bare onView={openProduct} />
-    </ScrollArea>
+    <TopProducts items={items} totalRevenue={totalRevenue} by={config.by} onView={openProduct} width={size.width} height={size.height} />
   );
 };
 

@@ -10,8 +10,8 @@ import { ChartBox, ChartTooltip, EmptyState } from '../core/widgets/parts';
 
 const DAYS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
-const WeekdaysView = ({ config }) => {
-  const { orders, allOrders, period } = useWidgetOrders(config.period);
+const WeekdaysView = ({ config, size }) => {
+  const { orders, allOrders } = useWidgetOrders(config.period);
   const metric = getMetric(config.metric);
 
   const data = useMemo(() => {
@@ -24,7 +24,7 @@ const WeekdaysView = ({ config }) => {
   }, [orders, allOrders, metric]);
 
   const best = data.reduce((m, d) => (d.value > m.value ? d : m), data[0]);
-  if (orders.length === 0) return <EmptyState icon={CalendarRange}>Aucune vente sur {period.short}.</EmptyState>;
+  if (orders.length === 0) return <EmptyState emoji="📅">Vos jours forts se révéleront avec les premières ventes.</EmptyState>;
 
   return (
     <ChartBox>
@@ -32,7 +32,7 @@ const WeekdaysView = ({ config }) => {
         <BarChart data={data} margin={{ top: 5, right: 4, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#f3e8ff" vertical={false} />
           <XAxis dataKey="name" tick={{ fill: '#9ca3af', fontSize: 11 }} axisLine={false} tickLine={false} />
-          <YAxis tick={{ fill: '#9ca3af', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => formatValue(v, metric.format, true)} width={40} />
+          {!(size.measured && size.width < 260) && <YAxis tick={{ fill: '#9ca3af', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => formatValue(v, metric.format, true)} width={40} />}
           <Tooltip content={<ChartTooltip format={(n) => formatValue(n, metric.format)} />} cursor={{ fill: '#f3e8ff55' }} />
           <Bar dataKey="value" name={metric.short} radius={[6, 6, 0, 0]} maxBarSize={40}>
             {data.map((d) => <Cell key={d.name} fill={d.name === best.name && d.value > 0 ? '#f472b6' : '#c4b5fd'} />)}

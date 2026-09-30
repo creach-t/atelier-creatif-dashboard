@@ -11,9 +11,9 @@ export const defaultPages = () => [
       { type: 'metric', config: { metric: 'orders', tint: 'purple' }, x: 8, y: 0, w: 4, h: 3 },
       { type: 'metric', config: { metric: 'basket', tint: 'pink' }, x: 8, y: 3, w: 4, h: 3 },
       { type: 'metric', config: { metric: 'newCustomers', tint: 'emerald' }, x: 8, y: 6, w: 4, h: 3 },
-      { type: 'top-products', config: { count: 3, by: 'revenue', period: 'page' }, x: 0, y: 9, w: 12, h: 8 },
-      { type: 'channels', config: { metric: 'revenue', style: 'donut', period: 'page' }, x: 0, y: 17, w: 5, h: 9 },
-      { type: 'recent-orders', config: { count: 5, status: 'all', channel: 'all', period: 'all' }, x: 5, y: 17, w: 7, h: 9 },
+      { type: 'top-products', config: { count: 3, by: 'revenue', period: 'page' }, x: 0, y: 9, w: 12, h: 11 },
+      { type: 'channels', config: { metric: 'revenue', style: 'donut', period: 'page' }, x: 0, y: 20, w: 5, h: 9 },
+      { type: 'recent-orders', config: { count: 5, status: 'all', channel: 'all', period: 'all' }, x: 5, y: 20, w: 7, h: 9 },
     ],
   }),
   createPage({

@@ -1,15 +1,14 @@
 import React, { useMemo } from 'react';
-import { motion } from 'framer-motion';
 import { ShoppingCart } from 'lucide-react';
 import { defineWidget } from '../core/widgets/registry';
 import { countField, periodField, CHANNEL_OPTIONS, STATUS_OPTIONS } from '../core/widgets/common';
 import { useWidgetOrders } from '../core/widgets/hooks';
 import { useOverlays } from '../core/overlays/OverlayProvider';
-import { OrderRow } from '../components/orders/OrderRow';
-import { EmptyState, ScrollArea } from '../core/widgets/parts';
-import { listItem } from '../core/ui/motion';
+import { OrderRow, ORDER_ROW_H } from '../components/orders/OrderRow';
+import { EmptyState } from '../core/widgets/parts';
+import { FitList } from '../core/widgets/Fit';
 
-const RecentOrdersView = ({ config }) => {
+const RecentOrdersView = ({ config, size }) => {
   const { orders } = useWidgetOrders(config.period);
   const { openOrder } = useOverlays();
 
@@ -17,17 +16,16 @@ const RecentOrdersView = ({ config }) => {
     .filter((o) => (config.status === 'all' || o.status === config.status) && (config.channel === 'all' || o.channel === config.channel))
     .slice(0, config.count), [orders, config.status, config.channel, config.count]);
 
-  if (rows.length === 0) return <EmptyState icon={ShoppingCart}>Aucune commande à afficher.</EmptyState>;
+  if (rows.length === 0) return <EmptyState emoji="🌱">Vos prochaines commandes apparaîtront ici — chaque vente commence par une première.</EmptyState>;
   return (
-    <ScrollArea>
-      <div className="divide-y divide-purple-50">
-        {rows.map((order, i) => (
-          <motion.div key={order.id} custom={i} variants={listItem} initial="hidden" animate="visible">
-            <OrderRow order={order} compact showChannel={config.showChannel} showStatus={config.showStatus} onClick={() => openOrder(order)} />
-          </motion.div>
-        ))}
-      </div>
-    </ScrollArea>
+    <FitList
+      items={rows}
+      rowHeight={ORDER_ROW_H.compact}
+      resetKey={`${config.status}|${config.channel}|${config.count}|${config.period}`}
+      renderItem={(order, i) => (
+        <OrderRow key={order.id} order={order} index={i} compact showChannel={config.showChannel && size.wTier !== 'xs'} showStatus={config.showStatus} onClick={() => openOrder(order)} />
+      )}
+    />
   );
 };
 

@@ -18,9 +18,6 @@ export const PERIOD_OPTIONS = [
   { id: 'all', label: 'Tout' },
 ];
 
-// Le filtre du haut de page propose en plus une plage de dates libre (« custom »), qui n'a de sens qu'à ce niveau.
-export const PAGE_PERIOD_OPTIONS = [...PERIOD_OPTIONS, { id: 'custom', label: 'Personnalisé' }];
-
 export const DEFAULT_PAGE_PERIOD = 'month';
 
 const isDay = (v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);

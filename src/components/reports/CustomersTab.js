@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
 import { Card } from '../ui/Card';
+import { Paged } from '../../core/widgets/Fit';
 import { getInitials, getCustomerBadges } from '../../utils/customerBadges';
 
 const rankIcon = (i) => (i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : null);
@@ -44,9 +45,13 @@ export const CustomersTab = ({ stats, firstOrderByName, onSelectCustomer }) => {
           />
         </div>
 
-        <div className="@md:max-h-[520px] @md:overflow-y-auto divide-y divide-gray-100">
-          {filtered.length === 0 && <p className="text-sm text-gray-500 text-center py-8">Aucun résultat.</p>}
-          {filtered.map((c) => {
+        {filtered.length === 0 && <p className="text-sm text-gray-500 text-center py-8">Aucun résultat.</p>}
+        <Paged
+          items={filtered}
+          pageSize={5}
+          resetKey={search}
+          className="divide-y divide-gray-100"
+          renderItem={(c) => {
             const globalRank = stats.customers.indexOf(c);
             const badges = getCustomerBadges(c);
             const rank = rankIcon(globalRank);
@@ -85,8 +90,8 @@ export const CustomersTab = ({ stats, firstOrderByName, onSelectCustomer }) => {
                 </div>
               </button>
             );
-          })}
-        </div>
+          }}
+        />
       </Card>
     </div>
   );

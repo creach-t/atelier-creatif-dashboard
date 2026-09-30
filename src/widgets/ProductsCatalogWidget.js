@@ -3,17 +3,20 @@ import { Plus, LayoutGrid, List, Palette } from 'lucide-react';
 import { defineWidget } from '../core/widgets/registry';
 import { useData } from '../core/data/DataProvider';
 import { useOverlays } from '../core/overlays/OverlayProvider';
-import { ProductCard } from '../components/products/ProductCard';
+import { ProductCard, PRODUCT_CARD_INFO_H } from '../components/products/ProductCard';
 import { ProductCover } from '../components/ui/ProductThumbnail';
 import { GroupPrice } from '../components/ui/PriceTag';
 import { SortHeader, SortChip } from '../components/ui/SortHeader';
 import { useSort, sortRows } from '../hooks/useSort';
 import { priceRange, groupKind } from '../utils/productVariants';
-import { EmptyState, ScrollArea, SearchBox } from '../core/widgets/parts';
+import { EmptyState, SearchBox } from '../core/widgets/parts';
+import { FitGrid, FitList, toolbarBudget } from '../core/widgets/Fit';
 
+const PRODUCT_ROW_H = 60;
 const SELECT = 'px-3 py-2.5 bg-white border border-purple-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-400';
 
-const CatalogView = ({ config, updateConfig }) => {
+// Densité selon la hauteur du widget : on retire d'abord les filtres, puis le tri, puis la recherche, pour laisser la place à la liste.
+const CatalogView = ({ config, updateConfig, size }) => {
   const { products, productGroups: groups, soldByName, revenueByName } = useData();
   const { openProduct, newProduct } = useOverlays();
   const [term, setTerm] = useState('');
@@ -21,6 +24,13 @@ const CatalogView = ({ config, updateConfig }) => {
   const [kind, setKind] = useState('all');
   const [sort, toggleSort] = useSort('sold', 'desc');
   const view = config.view;
+  // Barre d'outils à budget : grille = au moins une demi-carte de contenu, liste = au moins une ligne + son en-tête.
+  const narrow = size.width < 520;
+  const take = toolbarBudget(size.measured ? size.height : 9999, view === 'grid' ? 290 : 220);
+  const showTop = take(20 + 64); // marges du bloc + recherche / bouton
+  const showCount = take(36);
+  const showFilters = take(narrow ? 108 : 56); // deux lignes en étroit (sélecteurs, puis Grille/Liste)
+  const showSort = view === 'grid' && take(narrow ? 84 : 44);
 
   const categories = useMemo(() => [...new Set(products.map((p) => p.category))], [products]);
   const supportsFlags = products.length === 0 || 'kind' in products[0];
@@ -55,6 +65,7 @@ const CatalogView = ({ config, updateConfig }) => {
 
   return (
     <div className="flex-1 min-h-0 flex flex-col">
+      {showTop && (
       <div className="px-4 pt-2 pb-3 space-y-3 shrink-0">
         <div className="flex gap-2">
           <div className="flex-1 min-w-0"><SearchBox value={term} onChange={setTerm} placeholder="Rechercher un produit…" /></div>
@@ -62,6 +73,7 @@ const CatalogView = ({ config, updateConfig }) => {
             <Plus size={16} /><span className="hidden @md:inline">Nouveau produit</span><span className="@md:hidden">Nouveau</span>
           </button>
         </div>
+        {showFilters && (
         <div className="flex flex-wrap items-center gap-2">
           <select className={SELECT} value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Catégorie">
             <option value="all">Toutes catégories</option>
@@ -88,7 +100,8 @@ const CatalogView = ({ config, updateConfig }) => {
             ))}
           </div>
         </div>
-        {view === 'grid' && (
+        )}
+        {showSort && view === 'grid' && (
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-semibold uppercase tracking-wide text-gray-400 mr-1">Trier</span>
             <SortChip label="Vendus" sortKey="sold" firstDir="desc" sort={sort} onSort={toggleSort} />
@@ -98,62 +111,73 @@ const CatalogView = ({ config, updateConfig }) => {
             <SortChip label="Récents" sortKey="created" firstDir="desc" sort={sort} onSort={toggleSort} />
           </div>
         )}
+        {showCount && (
         <p className="text-sm text-gray-500">
           <strong className="text-gray-900">{rows.length}</strong> produit{rows.length > 1 ? 's' : ''}
           {category !== 'all' || term ? ` sur ${groups.length}` : ''}
         </p>
+        )}
       </div>
+      )}
 
       {rows.length === 0 && <EmptyState icon={Palette}>Aucun produit trouvé.</EmptyState>}
 
       {rows.length > 0 && view === 'grid' && (
-        <ScrollArea className="px-4 pb-4">
-          {/* auto-fill : le nombre de colonnes suit la largeur du widget, pas celle de l'écran. */}
-          <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(8.5rem, 1fr))' }}>
-            {rows.map((group) => {
-              const { sold, revenue } = statsOf.get(group.key);
-              return <ProductCard key={group.key} group={group} sold={sold} revenue={revenue} onClick={() => openProduct(group.variants[0].product.name)} />;
-            })}
-          </div>
-        </ScrollArea>
+        // Colonnes selon la largeur, lignes selon la hauteur : ce qui ne tient pas passe à la page suivante.
+        <FitGrid
+          items={rows}
+          minCol={136}
+          cardHeight={(w) => w + PRODUCT_CARD_INFO_H + 2}
+          resetKey={`${term}|${category}|${kind}|${sort.key}|${sort.dir}`}
+          renderItem={(group) => {
+            const { sold, revenue } = statsOf.get(group.key);
+            return <ProductCard key={group.key} group={group} sold={sold} revenue={revenue} onClick={() => openProduct(group.variants[0].product.name)} />;
+          }}
+        />
       )}
 
       {rows.length > 0 && view === 'list' && (
-        <ScrollArea>
-          <table className="w-full">
-            <thead className="bg-purple-50/60 sticky top-0 z-10">
-              <tr>
-                <th className="text-left px-4 py-2.5"><SortHeader label="Produit" sortKey="name" sort={sort} onSort={toggleSort} /></th>
-                <th className="text-left px-4 py-2.5 hidden @lg:table-cell"><SortHeader label="Catégorie" sortKey="category" sort={sort} onSort={toggleSort} /></th>
-                <th className="text-left px-4 py-2.5"><SortHeader label="Prix" sortKey="price" sort={sort} onSort={toggleSort} /></th>
-                <th className="text-left px-4 py-2.5"><SortHeader label="Vendus" sortKey="sold" firstDir="desc" sort={sort} onSort={toggleSort} /></th>
-                <th className="text-left px-4 py-2.5 hidden @md:table-cell"><SortHeader label="Revenu" sortKey="revenue" firstDir="desc" sort={sort} onSort={toggleSort} /></th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((group) => {
-                const { sold, revenue } = statsOf.get(group.key);
-                return (
-                  <tr key={group.key} onClick={() => openProduct(group.variants[0].product.name)} className="border-t border-purple-50 hover:bg-purple-25 cursor-pointer transition-colors">
-                    <td className="px-4 py-2.5">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-10 shrink-0"><ProductCover image={group.image} rounded="rounded-lg" /></div>
-                        <div className="min-w-0">
-                          <span className="block font-medium text-gray-900 break-words max-w-[16rem]">{group.name}</span>
-                          {group.isFamily && <span className="text-xs text-purple-600">{group.variants.length} variantes</span>}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-2.5 hidden @lg:table-cell text-sm text-gray-600">{group.category}</td>
-                    <td className="px-4 py-2.5"><GroupPrice group={group} compact /></td>
-                    <td className="px-4 py-2.5 text-sm text-gray-700">{sold}</td>
-                    <td className="px-4 py-2.5 hidden @md:table-cell text-sm font-semibold text-gray-900">{revenue > 0 ? `${revenue.toFixed(2)}€` : '—'}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </ScrollArea>
+        <div className="flex-1 min-h-0 flex flex-col">
+          <div className="shrink-0 flex items-center gap-3 px-4 h-10 bg-purple-50/60 border-y border-purple-100">
+            <div className="flex-1 min-w-0"><SortHeader label="Produit" sortKey="name" sort={sort} onSort={toggleSort} /></div>
+            <div className="hidden @lg:block w-28 shrink-0"><SortHeader label="Catégorie" sortKey="category" sort={sort} onSort={toggleSort} /></div>
+            <div className="w-24 shrink-0"><SortHeader label="Prix" sortKey="price" sort={sort} onSort={toggleSort} /></div>
+            <div className="w-16 shrink-0"><SortHeader label="Vendus" sortKey="sold" firstDir="desc" sort={sort} onSort={toggleSort} /></div>
+            <div className="hidden @md:block w-24 shrink-0 text-right"><SortHeader label="Revenu" sortKey="revenue" firstDir="desc" align="right" sort={sort} onSort={toggleSort} /></div>
+          </div>
+          <FitList
+            items={rows}
+            rowHeight={PRODUCT_ROW_H}
+            gap={0}
+            padding=""
+            padBottom={0}
+            resetKey={`${term}|${category}|${kind}|${sort.key}|${sort.dir}`}
+            renderItem={(group) => {
+              const { sold, revenue } = statsOf.get(group.key);
+              return (
+                <button
+                  key={group.key}
+                  type="button"
+                  onClick={() => openProduct(group.variants[0].product.name)}
+                  style={{ height: PRODUCT_ROW_H }}
+                  className="shrink-0 w-full flex items-center gap-3 px-4 text-left border-b border-purple-50 hover:bg-purple-25 transition-colors overflow-hidden"
+                >
+                  <div className="flex-1 min-w-0 flex items-center gap-3">
+                    <div className="w-10 shrink-0"><ProductCover image={group.image} rounded="rounded-lg" /></div>
+                    <div className="min-w-0">
+                      <span className="block font-medium text-gray-900 truncate">{group.name}</span>
+                      {group.isFamily && <span className="text-xs text-purple-600">{group.variants.length} variantes</span>}
+                    </div>
+                  </div>
+                  <span className="hidden @lg:block w-28 shrink-0 text-sm text-gray-600 truncate">{group.category}</span>
+                  <span className="w-24 shrink-0"><GroupPrice group={group} compact /></span>
+                  <span className="w-16 shrink-0 text-sm text-gray-700">{sold}</span>
+                  <span className="hidden @md:block w-24 shrink-0 text-sm font-semibold text-gray-900 text-right">{revenue > 0 ? `${revenue.toFixed(2)}€` : '—'}</span>
+                </button>
+              );
+            }}
+          />
+        </div>
       )}
     </div>
   );

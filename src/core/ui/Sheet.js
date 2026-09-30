@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useIsNarrow } from '../../hooks/useIsNarrow';
@@ -29,7 +30,9 @@ export const Sheet = ({ open, onClose, title, subtitle, children, footer, pinned
         initial: { x: '100%' }, animate: { x: 0 }, exit: { x: '100%' },
       };
 
-  return (
+  // Rendu à la racine du document : un panneau ouvert depuis l'en-tête (ou tout parent qui crée son propre
+  // niveau d'empilement) doit rester au-dessus de la navigation.
+  return createPortal(
     <AnimatePresence>
       {open && (
         <div className="fixed inset-0 z-[60]" role="presentation">
@@ -64,6 +67,7 @@ export const Sheet = ({ open, onClose, title, subtitle, children, footer, pinned
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };

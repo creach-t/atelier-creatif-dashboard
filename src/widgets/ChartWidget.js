@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { AreaChart, Area, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { LineChart as LineChartIcon, BarChart3 } from 'lucide-react';
+import { BarChart3 } from 'lucide-react';
 import { defineWidget } from '../core/widgets/registry';
 import { metricField, periodField, tintField } from '../core/widgets/common';
 import { useWidgetOrders } from '../core/widgets/hooks';
@@ -30,29 +30,33 @@ const ChartView = ({ config, size }) => {
   const fmt = (n) => formatValue(n, metric.format);
   const gradientId = `chart-${metric.id}-${config.tint}`;
   const narrow = size.width > 0 && size.width < 380;
+  // Densité selon la hauteur : court = total compact, très court = simple courbe sans axes ni grille.
+  const tiny = size.measured && size.height < 150;
+  const short = size.measured && size.height < 210;
+  const hideYAxis = size.measured && size.width < 300;
 
   const axes = (
     <>
-      <CartesianGrid strokeDasharray="3 3" stroke="#f3e8ff" vertical={false} />
-      <XAxis dataKey="label" tick={AXIS} axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={narrow ? 28 : 16} />
-      <YAxis tick={AXIS} axisLine={false} tickLine={false} tickFormatter={(v) => formatValue(v, metric.format, true)} width={narrow ? 38 : 46} />
+      {!tiny && <CartesianGrid strokeDasharray="3 3" stroke="#f3e8ff" vertical={false} />}
+      {!tiny && <XAxis dataKey="label" tick={AXIS} axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={narrow ? 28 : 16} />}
+      {!tiny && !hideYAxis && <YAxis tick={AXIS} axisLine={false} tickLine={false} tickFormatter={(v) => formatValue(v, metric.format, true)} width={narrow ? 38 : 46} />}
       <Tooltip content={<ChartTooltip format={fmt} />} cursor={{ fill: '#f3e8ff55' }} />
     </>
   );
 
   return (
     <div className="flex-1 min-h-0 flex flex-col">
-      {config.showTotal && (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-2">
-          <p className="text-2xl @md:text-3xl font-bold text-gray-900 leading-tight">
+      {config.showTotal && !tiny && (
+        <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 ${short ? 'mb-1' : 'mb-2'}`}>
+          <p className={`font-bold text-gray-900 leading-tight ${short ? 'text-lg' : 'text-2xl @md:text-3xl'}`}>
             <AnimatedNumber value={total} format={fmt} />
           </p>
           {config.compare && <Variation value={delta} label={period.prev ? undefined : period.label} />}
-          <span className="text-xs text-gray-400">{metric.short} · {period.label}</span>
+          {!short && <span className="text-xs text-gray-400">{metric.short} · {period.label}</span>}
         </div>
       )}
       {points.length < 2 ? (
-        <EmptyState icon={LineChartIcon}>Pas encore assez de données sur cette période.</EmptyState>
+        <EmptyState emoji="🌱">Dès les premières ventes, la courbe prend vie — ça démarre ici !</EmptyState>
       ) : (
         <ChartBox>
           <ResponsiveContainer width="100%" height="100%">

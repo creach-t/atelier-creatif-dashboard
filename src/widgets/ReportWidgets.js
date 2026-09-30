@@ -9,7 +9,8 @@ import { computeReportStats } from '../utils/computeReportStats';
 import { OverviewTab } from '../components/reports/OverviewTab';
 import { CustomersTab } from '../components/reports/CustomersTab';
 import { ProductsReportTab } from '../components/reports/ProductsReportTab';
-import { EmptyState, ScrollArea } from '../core/widgets/parts';
+import { EmptyState } from '../core/widgets/parts';
+import { ScaleToFit } from '../core/widgets/ScaleToFit';
 
 // Les trois vues détaillées de l'ancien onglet « Rapports », désormais des widgets indépendants :
 // chacun se place, se dimensionne et suit la période comme n'importe quel autre.
@@ -22,7 +23,7 @@ const useReportStats = (configPeriod) => {
 const OverviewView = ({ config }) => {
   const { orders, period, stats } = useReportStats(config.period);
   if (orders.length === 0) return <EmptyState icon={Layers}>Aucune commande sur {period.short}.</EmptyState>;
-  return <ScrollArea><OverviewTab stats={stats} orders={orders} /></ScrollArea>;
+  return <ScaleToFit min={0.25}><OverviewTab stats={stats} orders={orders} /></ScaleToFit>;
 };
 
 const CustomersReportView = ({ config }) => {
@@ -39,7 +40,7 @@ const CustomersReportView = ({ config }) => {
     return map;
   }, [all]);
   if (orders.length === 0) return <EmptyState icon={Crown}>Aucune commande sur {period.short}.</EmptyState>;
-  return <ScrollArea><CustomersTab stats={stats} firstOrderByName={firstOrderByName} onSelectCustomer={openCustomer} /></ScrollArea>;
+  return <ScaleToFit min={0.25}><CustomersTab stats={stats} firstOrderByName={firstOrderByName} onSelectCustomer={openCustomer} /></ScaleToFit>;
 };
 
 const ProductsReportView = ({ config }) => {
@@ -47,7 +48,7 @@ const ProductsReportView = ({ config }) => {
   const { openProduct } = useOverlays();
   const { orders, period } = useReportStats(config.period);
   if (orders.length === 0) return <EmptyState icon={Package}>Aucune commande sur {period.short}.</EmptyState>;
-  return <ScrollArea><ProductsReportTab products={products} orders={orders} onSelectProduct={openProduct} /></ScrollArea>;
+  return <ScaleToFit min={0.25}><ProductsReportTab products={products} orders={orders} onSelectProduct={openProduct} /></ScaleToFit>;
 };
 
 const common = { category: 'Rapports', schema: [periodField()], defaultConfig: { period: 'page' } };
@@ -58,7 +59,7 @@ defineWidget({
   title: 'Rapport : évolution',
   description: 'Courbes mensuelles, cumul, répartition par canal et jours de la semaine.',
   icon: Layers,
-  size: { w: 12, h: 24, minW: 4, minH: 8, maxW: 12, maxH: 44 },
+  size: { w: 12, h: 24, minW: 4, minH: 14, maxW: 12, maxH: 44 },
   component: OverviewView,
 });
 
@@ -68,7 +69,7 @@ defineWidget({
   title: 'Rapport : clients',
   description: 'Classement détaillé de vos clients avec recherche.',
   icon: Crown,
-  size: { w: 6, h: 20, minW: 3, minH: 8, maxW: 12, maxH: 44 },
+  size: { w: 6, h: 20, minW: 4, minH: 12, maxW: 12, maxH: 44 },
   component: CustomersReportView,
 });
 
@@ -78,6 +79,6 @@ defineWidget({
   title: 'Rapport : produits',
   description: 'Ventes par produit, y compris les articles sans fiche.',
   icon: Package,
-  size: { w: 6, h: 20, minW: 3, minH: 8, maxW: 12, maxH: 44 },
+  size: { w: 6, h: 20, minW: 4, minH: 12, maxW: 12, maxH: 44 },
   component: ProductsReportView,
 });

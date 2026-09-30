@@ -31,13 +31,13 @@ export const Header = ({ onAddWidget, onPageSettings }) => {
   const title = isSettings ? 'Réglages' : page.title;
 
   return (
-    <header className="bg-white border-b border-purple-100 px-4 sm:px-6 py-3">
+    <header className="relative z-30 bg-white border-b border-purple-100 px-4 sm:px-6 py-3">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
         <h2 className="text-lg sm:text-2xl font-bold text-gray-900 truncate min-w-0 flex-1 lg:flex-none">{title}</h2>
 
         {/* Ligne à part (pleine largeur) en dessous de lg ; entre le titre et les actions au-delà. */}
         {!isSettings && (
-          <div className="order-last w-full lg:order-none lg:w-auto lg:flex-1 lg:min-w-0">
+          <div className="order-last w-full lg:w-auto lg:order-none lg:flex-1 lg:min-w-0">
             <PeriodPicker />
           </div>
         )}

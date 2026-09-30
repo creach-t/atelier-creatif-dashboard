@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Zap, ShoppingCart, Palette, Users } from 'lucide-react';
 import { defineWidget } from '../core/widgets/registry';
 import { useOverlays } from '../core/overlays/OverlayProvider';
+import { ScaleToFit } from '../core/widgets/ScaleToFit';
 
 const ACTIONS = {
   order: { label: 'Nouvelle commande', icon: ShoppingCart, run: (o) => o.newOrder(), tone: 'from-pink-400 to-purple-500 text-white' },
@@ -14,9 +15,8 @@ const QuickActionsView = ({ config }) => {
   const overlays = useOverlays();
   const shown = config.actions.filter((a) => ACTIONS[a]);
   return (
-    <div className="flex-1 min-h-0 flex items-center">
-      {/* Une seule rangée qui défile : les boutons ne se replient pas sur plusieurs lignes dans un bloc de hauteur fixe. */}
-      <div className="flex gap-2 w-full overflow-x-auto no-scrollbar">
+    <ScaleToFit>
+      <div className="flex flex-wrap gap-2 w-full">
         {shown.map((key, i) => {
           const a = ACTIONS[key];
           const Icon = a.icon;
@@ -29,7 +29,7 @@ const QuickActionsView = ({ config }) => {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: i * 0.06 }}
               whileTap={{ scale: 0.96 }}
-              className={`flex-1 shrink-0 min-w-[10.5rem] whitespace-nowrap flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold rounded-xl ${a.tone.includes('from-') ? `bg-gradient-to-r shadow-md ${a.tone}` : a.tone}`}
+              className={`flex-1 min-w-[10.5rem] whitespace-nowrap flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold rounded-xl ${a.tone.includes('from-') ? `bg-gradient-to-r shadow-md ${a.tone}` : a.tone}`}
             >
               <Icon size={16} /> {a.label}
             </motion.button>
@@ -37,7 +37,7 @@ const QuickActionsView = ({ config }) => {
         })}
         {shown.length === 0 && <p className="text-sm text-gray-500">Choisissez des actions dans les réglages.</p>}
       </div>
-    </div>
+    </ScaleToFit>
   );
 };
 

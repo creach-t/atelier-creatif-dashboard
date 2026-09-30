@@ -4,13 +4,14 @@ import { defineWidget } from '../core/widgets/registry';
 import { periodField } from '../core/widgets/common';
 import { useWidgetOrders } from '../core/widgets/hooks';
 import { useOverlays } from '../core/overlays/OverlayProvider';
-import { OrderRow } from '../components/orders/OrderRow';
+import { OrderRow, ORDER_ROW_H } from '../components/orders/OrderRow';
+import { FitList, toolbarBudget } from '../core/widgets/Fit';
 import { ChannelLogo } from '../components/ui/ChannelBadge';
-import { SortHeader } from '../components/ui/SortHeader';
+import { SortChip } from '../components/ui/SortHeader';
 import { useSort, sortRows } from '../hooks/useSort';
 import { netOf } from '../utils/orderAmounts';
 import { money } from '../core/metrics/format';
-import { Chip, EmptyState, ScrollArea, SearchBox } from '../core/widgets/parts';
+import { Chip, EmptyState, SearchBox } from '../core/widgets/parts';
 
 const CHANNEL_FILTERS = [
   { id: 'all', label: 'Tous' },
@@ -25,7 +26,8 @@ const STATUS_FILTERS = [
   { id: 'cancelled', label: 'Annulée' },
 ];
 
-const OrdersTableView = ({ config }) => {
+// Densité selon la hauteur du widget : on retire d'abord les filtres, puis le tri, puis la recherche, pour laisser la place à la liste.
+const OrdersTableView = ({ config, size }) => {
   const { orders } = useWidgetOrders(config.period);
   const { openOrder, newOrder } = useOverlays();
   const [channel, setChannel] = useState('all');
@@ -47,9 +49,19 @@ const OrdersTableView = ({ config }) => {
 
   const filtersActive = channel !== 'all' || status !== 'all' || term !== '';
   const reset = () => { setChannel('all'); setStatus('all'); setTerm(''); };
+  // Chaque élément de la barre d'outils n'apparaît que s'il reste de la place pour au moins une commande.
+  // Coûts réels en px (marges comprises) : le filtre des canaux/statuts passe sur plusieurs lignes en étroit.
+  const narrow = size.width < 520;
+  const take = toolbarBudget(size.measured ? size.height : 9999, ORDER_ROW_H.full * 2 + 44) // au moins 2 commandes visibles;
+  const showTop = take(20 + 64); // marges du bloc + recherche / bouton
+  const showCount = take(36);
+  const showSort = take(narrow ? 84 : 44);
+  const showFilters = config.showFilters && take(narrow ? 108 : 56);
+  const denseRows = size.wTier === 'xs' || size.wTier === 'sm';
 
   return (
     <div className="flex-1 min-h-0 flex flex-col">
+      {showTop && (
       <div className="px-4 pt-2 pb-3 space-y-3 shrink-0">
         <div className="flex gap-2">
           {config.showSearch && <div className="flex-1 min-w-0"><SearchBox value={term} onChange={setTerm} placeholder="Client ou n° de commande…" /></div>}
@@ -59,9 +71,9 @@ const OrdersTableView = ({ config }) => {
             </button>
           )}
         </div>
-        {config.showFilters && (
+        {showFilters && (
           <div className="flex flex-col gap-2">
-            <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
+            <div className="flex flex-wrap items-center gap-1.5">
               {CHANNEL_FILTERS.map((c) => (
                 <Chip key={c.id} active={channel === c.id} onClick={() => setChannel(c.id)}>
                   {c.logo && <ChannelLogo channel={c.id} size={12} className="inline mr-1.5 -mt-0.5" />}{c.label}
@@ -72,6 +84,7 @@ const OrdersTableView = ({ config }) => {
             </div>
           </div>
         )}
+        {showCount && (
         <div className="flex items-center justify-between text-sm text-gray-500">
           <span>
             {rows.length} commande{rows.length !== 1 ? 's' : ''}
@@ -81,26 +94,29 @@ const OrdersTableView = ({ config }) => {
             <button onClick={reset} className="inline-flex items-center gap-1 text-xs font-semibold text-purple-600 hover:underline"><X size={12} /> Réinitialiser</button>
           )}
         </div>
+        )}
       </div>
+      )}
 
       {rows.length === 0 ? (
         <EmptyState icon={List}>Aucune commande ne correspond.</EmptyState>
       ) : (
         <>
-          <div className="flex items-center gap-3 @md:gap-4 px-4 py-2.5 bg-purple-50/60 border-y border-purple-100 shrink-0">
-            <span className="w-9 shrink-0" />
-            <div className="flex-1 min-w-0 flex items-center gap-4">
-              <SortHeader label="Client" sortKey="client" sort={sort} onSort={toggleSort} />
-              <span className="@md:hidden"><SortHeader label="Date" sortKey="date" firstDir="desc" sort={sort} onSort={toggleSort} /></span>
-            </div>
-            <div className="hidden @md:block w-28 shrink-0"><SortHeader label="Date" sortKey="date" firstDir="desc" sort={sort} onSort={toggleSort} /></div>
-            <div className="hidden @md:block w-36 shrink-0"><SortHeader label="Canal" sortKey="channel" sort={sort} onSort={toggleSort} /></div>
-            <div className="@md:w-24 shrink-0 flex justify-end"><SortHeader label="Total" sortKey="total" firstDir="desc" align="right" sort={sort} onSort={toggleSort} /></div>
-            <span className="hidden @md:block w-4 shrink-0" />
+          {showSort && (
+          <div className="flex flex-wrap items-center gap-1.5 px-4 pb-2 shrink-0">
+            <span className="text-[11px] font-bold uppercase tracking-wide text-gray-400 mr-1">Trier</span>
+            <SortChip label="Date" sortKey="date" firstDir="desc" sort={sort} onSort={toggleSort} />
+            <SortChip label="Montant" sortKey="total" firstDir="desc" sort={sort} onSort={toggleSort} />
+            <SortChip label="Client" sortKey="client" sort={sort} onSort={toggleSort} />
+            <SortChip label="Canal" sortKey="channel" sort={sort} onSort={toggleSort} />
           </div>
-          <ScrollArea className="divide-y divide-purple-50">
-            {rows.map((order) => <OrderRow key={order.id} order={order} onClick={() => openOrder(order)} />)}
-          </ScrollArea>
+          )}
+          <FitList
+            items={rows}
+            rowHeight={denseRows ? ORDER_ROW_H.compact : ORDER_ROW_H.full}
+            resetKey={`${channel}|${status}|${term}|${sort.key}|${sort.dir}|${config.period}`}
+            renderItem={(order, i) => <OrderRow key={order.id} order={order} index={i} compact={denseRows} onClick={() => openOrder(order)} />}
+          />
         </>
       )}
     </div>

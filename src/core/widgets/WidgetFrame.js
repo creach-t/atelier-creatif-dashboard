@@ -24,6 +24,9 @@ class WidgetBoundary extends React.Component {
   }
 }
 
+const HEADER_H = 36;
+const MIN_HEIGHT_WITH_TITLE = 125;
+
 const Skeleton = () => (
   <div className="absolute inset-0 p-4 space-y-3 animate-pulse bg-white z-10" aria-hidden="true">
     <div className="h-4 w-1/3 rounded bg-purple-100" />
@@ -59,13 +62,18 @@ export const WidgetFrame = ({ widget, index, unlocked = false, onUnlock, onLock,
   const def = getWidget(widget.type);
   const { loading, orders } = useData();
   const [bodyRef, size] = useContainerSize();
+  const headerShown = React.useRef(true);
   if (!def) return null;
 
   const config = { ...UNIVERSAL_DEFAULTS, ...resolveConfig(def, widget.config) };
   const title = (config.title || '').trim() || (def.getTitle ? def.getTitle(config) : def.title);
   const Icon = def.icon;
   const Component = def.component;
-  const showHeader = config.showTitle && !unlocked;
+  // Très court : le titre cède sa place au contenu. La décision porte sur la hauteur TOTALE (corps + titre s'il
+  // est affiché) : mesurée sur le corps seul, retirer le titre l'agrandirait et le ferait revenir en boucle.
+  const total = size.height + (headerShown.current ? HEADER_H : 0);
+  const showHeader = config.showTitle && !unlocked && !(size.measured && total < MIN_HEIGHT_WITH_TITLE);
+  headerShown.current = showHeader;
   const lockable = Boolean(onUnlock);
 
   return (
@@ -96,7 +104,7 @@ export const WidgetFrame = ({ widget, index, unlocked = false, onUnlock, onLock,
         </div>
       )}
 
-      <div ref={bodyRef} className={`@container relative flex-1 min-h-0 flex flex-col ${def.bleed ? '' : 'px-4 pb-4 pt-2'}`}>
+      <div ref={bodyRef} className={`@container relative flex-1 min-h-0 flex flex-col overflow-hidden ${def.bleed ? '' : 'px-4 pb-4 pt-2'}`}>
         {loading && orders.length === 0 && <Skeleton />}
         <WidgetBoundary type={widget.type}>
           <Component config={config} widget={widget} size={size} updateConfig={onConfig} unlocked={unlocked} />

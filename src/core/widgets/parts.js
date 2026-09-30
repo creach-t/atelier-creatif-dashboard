@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Search } from 'lucide-react';
 import { tintColor } from '../config/ConfigForm';
 
@@ -26,22 +27,33 @@ export const ChartTooltip = ({ active, payload, label, format = (n) => `${Number
   );
 };
 
+// Une baisse n'est jamais en rouge alarmiste : ambre doux, même forme que la hausse. On informe, on ne décourage pas.
 export const Variation = ({ value, label }) => {
   if (value === null || value === undefined) return label ? <span className="text-[11px] text-gray-400">{label}</span> : null;
   const up = value >= 0;
   const Icon = up ? TrendingUp : TrendingDown;
   return (
-    <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${up ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+    <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${up ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-700'}`}>
       <Icon size={12} />
       {up ? '+' : ''}{value.toFixed(0)} %
     </span>
   );
 };
 
-export const EmptyState = ({ icon: Icon, children }) => (
+// État vide : toujours un ton chaleureux (un petit emoji qui flotte, une phrase qui donne envie) plutôt qu'un « Aucune donnée ».
+export const EmptyState = ({ icon: Icon, emoji, children }) => (
   <div className="flex-1 flex flex-col items-center justify-center gap-2 text-center text-sm text-gray-500 py-6 px-4">
-    {Icon && <Icon size={22} className="text-purple-300" />}
-    <p>{children}</p>
+    {emoji ? (
+      <motion.span
+        aria-hidden="true"
+        className="text-3xl"
+        animate={{ y: [0, -5, 0] }}
+        transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+      >
+        {emoji}
+      </motion.span>
+    ) : Icon && <Icon size={22} className="text-purple-300" />}
+    <p className="max-w-xs">{children}</p>
   </div>
 );
 
@@ -79,9 +91,4 @@ export const TintTile = ({ tint = 'purple', children, size = 'w-10 h-10' }) => (
   >
     {children}
   </span>
-);
-
-// Zone défilante d'un widget (liste longue) : le défilement reste dans le widget, sans piéger le doigt à la fin.
-export const ScrollArea = ({ children, className = '' }) => (
-  <div className={`flex-1 min-h-0 overflow-y-auto scroll-soft ${className}`} style={{ overscrollBehavior: 'auto' }}>{children}</div>
 );
