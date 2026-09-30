@@ -3,6 +3,8 @@ const { requireUser } = require('./lib/auth');
 const { serverError } = require('./lib/errors');
 const { isFiniteNumber, optionalString, MAX_AMOUNT } = require('./lib/validate');
 
+const KINDS = ['physical', 'digital', 'both'];
+
 module.exports = async (req, res) => {
   const user = await requireUser(req, res);
   if (!user) return;
@@ -43,24 +45,18 @@ module.exports = async (req, res) => {
       name: body.name.trim(),
       category: body.category.trim(),
       price: body.price,
-      image: body.image || '🎨',
+      image: body.image || '🎁',
       kofi_url: body.kofi_url || null,
     };
 
-    const KINDS = ['physical', 'digital', 'both'];
     if (body.kind !== undefined && body.kind !== null && !KINDS.includes(body.kind)) {
       res.status(400).json({ error: `kind must be one of: ${KINDS.join(', ')}` });
       return;
     }
-    const optional = {};
-    if (body.is_free !== undefined) optional.is_free = Boolean(body.is_free);
-    if (body.kind !== undefined) optional.kind = body.kind;
+    if (body.is_free !== undefined) product.is_free = Boolean(body.is_free);
+    if (body.kind !== undefined) product.kind = body.kind;
 
-    // Colonnes des migrations 0006/0007 : si elles n'existent pas encore, on crée sans elles.
-    let { data, error } = await supabase.from('products').insert({ ...product, ...optional }).select().single();
-    if (error && Object.keys(optional).some((c) => error.message.includes(c))) {
-      ({ data, error } = await supabase.from('products').insert(product).select().single());
-    }
+    const { data, error } = await supabase.from('products').insert(product).select().single();
     if (error) return serverError(res, error, 'POST /products');
     res.status(201).json(data);
     return;

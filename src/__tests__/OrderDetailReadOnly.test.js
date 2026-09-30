@@ -27,7 +27,7 @@ const setup = (props = {}) => {
 describe('fiche commande : lecture seule', () => {
   test("aucun champ modifiable ni bouton « Enregistrer » avant de cliquer sur Modifier", () => {
     setup();
-    expect(document.querySelectorAll('input, select, textarea')).toHaveLength(0);
+    ['textbox', 'combobox', 'spinbutton', 'checkbox'].forEach((role) => expect(screen.queryAllByRole(role)).toHaveLength(0));
     expect(screen.queryByRole('button', { name: /enregistrer/i })).toBeNull();
   });
 

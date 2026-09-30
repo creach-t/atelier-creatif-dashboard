@@ -60,12 +60,7 @@ module.exports = async (req, res) => {
     .select()
     .maybeSingle();
 
-  if (error) {
-    const missing = ['notes', 'extras', 'commission_rate'].find((c) => error.message.includes(c));
-    if (!missing) return serverError(res, error, 'PATCH /orders/:id');
-    res.status(500).json({ error: `La colonne « ${missing} » n'existe pas encore : exécute les migrations 0005 et 0008 dans Supabase.` });
-    return;
-  }
+  if (error) return serverError(res, error, 'PATCH /orders/:id');
   if (!data) return notFound(res);
 
   // Le client a pu changer : on crée sa fiche si elle n'existe pas encore (comme à la création).

@@ -67,8 +67,6 @@ module.exports = async (req, res) => {
       shipping: body.shipping || null,
       shop_name: body.channel === 'reel' ? body.shop_name || null : null,
     };
-    // Colonne ajoutée par la migration 0005 : on ne l'envoie que si une note est saisie, pour que
-    // créer une commande fonctionne même si la migration n'est pas encore passée.
     if (body.notes) order.notes = body.notes;
 
     // Divers (frais, dons, remises) : lignes { label, amount } qui ne sont pas des articles.
@@ -80,12 +78,7 @@ module.exports = async (req, res) => {
     if (body.commission_rate > 0) order.commission_rate = body.commission_rate;
 
     const { data, error } = await supabase.from('orders').insert(order).select().single();
-    if (error) {
-      const missing = ['notes', 'extras', 'commission_rate'].find((c) => error.message.includes(c));
-      if (!missing) return serverError(res, error, 'POST /orders');
-      res.status(500).json({ error: `La colonne « ${missing} » n'existe pas encore : exécute les migrations 0005 et 0008 dans Supabase.` });
-      return;
-    }
+    if (error) return serverError(res, error, 'POST /orders');
 
     if (order.customer_name) {
       await syncCustomerFromOrder(supabase, user.id, { name: order.customer_name, email: order.customer_email });
