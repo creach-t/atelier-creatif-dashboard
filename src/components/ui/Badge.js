@@ -1,4 +1,5 @@
 import React from 'react';
+import { STATUS_LABELS } from '../../domain/constants';
 
 export const Badge = ({ children, variant = 'default' }) => {
   const variants = {
@@ -14,13 +15,6 @@ export const Badge = ({ children, variant = 'default' }) => {
       {children}
     </span>
   );
-};
-
-export const STATUS_LABELS = {
-  pending: 'En attente',
-  shipped: 'Expédiée',
-  delivered: 'Livrée',
-  cancelled: 'Annulée',
 };
 
 // Le statut n'est plus un badge dans les fiches de commande : c'est une couleur d'accent sur le numéro.

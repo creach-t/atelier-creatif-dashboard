@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { money } from '../../core/metrics/format';
 import { ChevronRight, Trash2, Edit } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
-import { STATUS_LABELS, OrderNumber } from '../ui/Badge';
+import { OrderNumber } from '../ui/Badge';
+import { STATUS_LABELS } from '../../domain/constants';
 import { ChannelBadge } from '../ui/ChannelBadge';
 import { describeOrder, countOrderItems } from '../../utils/computeProductRevenue';
 import { catalogPrices, estimatedNames } from '../../utils/estimatePrices';
@@ -43,7 +45,7 @@ export const OrderDetailModal = ({ order, products, onDelete, onEdit, onNavigate
         title={line.estimated ? "Prix estimé à partir de l'ensemble des commandes (pas de prix connu)" : undefined}
       >
         {line.estimated && <span className="text-gray-400 font-normal">≈ </span>}
-        {line.total.toFixed(2)}€
+        {money(line.total)}
       </span>
     );
   };
@@ -133,7 +135,7 @@ export const OrderDetailModal = ({ order, products, onDelete, onEdit, onNavigate
                 <div key={i} className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg">
                   <span className="text-sm text-gray-600">{e.label}</span>
                   <span className={`text-sm font-semibold ${Number(e.amount) < 0 ? 'text-rose-500' : 'text-gray-900'}`}>
-                    {Number(e.amount) < 0 ? '−' : ''}{Math.abs(Number(e.amount)).toFixed(2)}€
+                    {Number(e.amount) < 0 ? '−' : ''}{money(Math.abs(Number(e.amount)))}
                   </span>
                 </div>
               ))}
@@ -145,7 +147,7 @@ export const OrderDetailModal = ({ order, products, onDelete, onEdit, onNavigate
           <div className="flex items-center justify-between text-sm text-gray-500">
             <span>{adjustment > 0 ? 'Don / prix libre' : 'Remise'}</span>
             <span className={adjustment > 0 ? 'text-emerald-600 font-medium' : 'text-rose-500 font-medium'}>
-              {adjustment > 0 ? '+' : '−'}{Math.abs(adjustment).toFixed(2)}€
+              {adjustment > 0 ? '+' : '−'}{money(Math.abs(adjustment))}
             </span>
           </div>
         )}
@@ -153,17 +155,17 @@ export const OrderDetailModal = ({ order, products, onDelete, onEdit, onNavigate
         <div className="pt-2 border-t border-purple-100 space-y-1">
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-600">Total{rate > 0 ? ' payé' : ''}</span>
-            <span className={`${rate > 0 ? 'text-sm font-semibold' : 'text-lg font-bold'} text-gray-900`}>{totalPaid.toFixed(2)}€</span>
+            <span className={`${rate > 0 ? 'text-sm font-semibold' : 'text-lg font-bold'} text-gray-900`}>{money(totalPaid)}</span>
           </div>
           {rate > 0 && (
             <>
               <div className="flex items-center justify-between text-sm text-gray-500">
                 <span>Commission de la boutique ({rate} %)</span>
-                <span className="text-rose-500 font-medium">−{commissionOf(order).toFixed(2)}€</span>
+                <span className="text-rose-500 font-medium">−{money(commissionOf(order))}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Net perçu</span>
-                <span className="text-lg font-bold text-gray-900">{netOf(order).toFixed(2)}€</span>
+                <span className="text-lg font-bold text-gray-900">{money(netOf(order))}</span>
               </div>
             </>
           )}

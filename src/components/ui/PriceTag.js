@@ -1,4 +1,5 @@
 import React from 'react';
+import { money } from '../../core/metrics/format';
 import { Sparkles } from 'lucide-react';
 import { priceRange } from '../../utils/productVariants';
 
@@ -24,7 +25,7 @@ export const PriceTag = ({ product, large = false, compact = false }) => {
   const size = large ? 'text-lg' : 'text-base';
 
   if (state === 'manual') {
-    return <span className={`${size} font-bold text-purple-600`}>{Number(product.price).toFixed(2)}€</span>;
+    return <span className={`${size} font-bold text-purple-600`}>{money(product.price)}</span>;
   }
   if (state === 'estimated') {
     return (
@@ -33,7 +34,7 @@ export const PriceTag = ({ product, large = false, compact = false }) => {
         title={`Prix moyen pondéré, deviné à partir de ${product.price_support || 'vos'} commandes`}
       >
         <Sparkles size={12} />
-        <span className={`${size} font-bold`}>≈ {Number(product.price).toFixed(2)}€</span>
+        <span className={`${size} font-bold`}>≈ {money(product.price)}</span>
         {!compact && <span className="text-[10px] font-medium uppercase tracking-wide">estimé</span>}
       </span>
     );
@@ -44,7 +45,7 @@ export const PriceTag = ({ product, large = false, compact = false }) => {
         className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg border border-dashed border-gray-300 bg-gray-50 text-gray-500"
         title="Piste peu fiable : pas assez de commandes concordantes"
       >
-        <span className={`${size} font-semibold`}>≈ {Number(product.price_guess).toFixed(2)}€ ?</span>
+        <span className={`${size} font-semibold`}>≈ {money(product.price_guess)} ?</span>
         {!compact && <span className="text-[10px] font-medium uppercase tracking-wide">à confirmer</span>}
       </span>
     );
@@ -88,8 +89,8 @@ export const GroupPrice = ({ group, large = false, compact = false }) => {
   if (min === null) return <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded-full">Prix à définir</span>;
 
   const size = large ? 'text-lg' : 'text-base';
-  const range = min === max ? `${min.toFixed(2)}€` : `${min.toFixed(2)}–${max.toFixed(2)}€`;
-  const text = free ? `Gratuit – ${max.toFixed(2)}€` : range;
+  const range = min === max ? money(min) : `${min.toFixed(2)}–${money(max)}`;
+  const text = free ? `Gratuit – ${money(max)}` : range;
   if (!estimated && !unknown) return <span className={`${size} font-bold text-purple-600`}>{text}</span>;
 
   return (

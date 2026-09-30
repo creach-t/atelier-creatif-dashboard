@@ -1,4 +1,7 @@
 import React, { useMemo, useState } from 'react';
+import { money } from '../../core/metrics/format';
+import { round2 } from '../../utils/money';
+import { ORDER_STATUSES, STATUS_LABELS, defaultStatusFor, DEFAULT_PRODUCT_IMAGE, UNCATEGORIZED } from '../../domain/constants';
 import { Plus, Trash2 } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
@@ -21,11 +24,7 @@ const rememberCommission = (value) => {
   try { window.localStorage.setItem(LAST_COMMISSION_KEY, String(value)); } catch (e) { /* stockage indisponible */ }
 };
 
-const money = (n) => `${Number(n || 0).toFixed(2)}€`;
-const round2 = (n) => Math.round(n * 100) / 100;
 const sameJson = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-
-const defaultStatusFor = (channel) => (channel === 'reel' ? 'delivered' : 'pending');
 
 const MAX_SUGGESTIONS = 8;
 
@@ -156,7 +155,7 @@ export const OrderForm = ({ order, products, customers, createProduct, onCreate,
         await Promise.all(
           newProductNames.map((name) => {
             const item = cleanItems.find((i) => i.name === name);
-            return createProduct({ name, category: 'Sans catégorie', price: item.price, image: '🎁' }).catch(() => {});
+            return createProduct({ name, category: UNCATEGORIZED, price: item.price, image: DEFAULT_PRODUCT_IMAGE }).catch(() => {});
           })
         );
       }
@@ -296,7 +295,7 @@ export const OrderForm = ({ order, products, customers, createProduct, onCreate,
                     renderOption={(p) => (
                       <>
                         <span className="truncate">{p.name}</span>
-                        <span className="text-gray-500 shrink-0 ml-2">{Number(p.price).toFixed(2)}€</span>
+                        <span className="text-gray-500 shrink-0 ml-2">{money(p.price)}</span>
                       </>
                     )}
                     newLabel="Nouveau produit — sera ajouté au catalogue"
@@ -390,10 +389,7 @@ export const OrderForm = ({ order, products, customers, createProduct, onCreate,
                 onChange={(e) => setStatus(e.target.value)}
                 className={FIELD_CLASS}
               >
-                <option value="pending">En attente</option>
-                <option value="shipped">Expédiée</option>
-                <option value="delivered">Livrée</option>
-                <option value="cancelled">Annulée</option>
+                {ORDER_STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
               </select>
             </div>
           </div>

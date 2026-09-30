@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
-import { STATUS_LABELS } from '../ui/Badge';
+import { STATUS_LABELS } from '../../domain/constants';
 import { CHANNELS, ChannelLogo } from '../ui/ChannelBadge';
 import { netOf, commissionRateOf } from '../../utils/orderAmounts';
 import { money, relativeDay, itemsSummary } from '../../core/metrics/format';

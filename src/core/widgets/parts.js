@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Search } from 'lucide-react';
 import { tintColor } from '../config/ConfigForm';
+import { money } from '../metrics/format';
 
 // Petites briques d'interface partagées par les widgets.
 
@@ -13,7 +14,7 @@ export const ChartBox = ({ children, className = '' }) => (
   </div>
 );
 
-export const ChartTooltip = ({ active, payload, label, format = (n) => `${Number(n).toFixed(2)}€` }) => {
+export const ChartTooltip = ({ active, payload, label, format = money }) => {
   if (!active || !payload || !payload.length) return null;
   return (
     <div className="rounded-xl px-3.5 py-2.5 shadow-lg text-sm border border-purple-100 bg-white">

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { money } from '../../core/metrics/format';
 import { Search } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Paged } from '../../core/widgets/Fit';
@@ -85,8 +86,8 @@ export const CustomersTab = ({ stats, firstOrderByName, onSelectCustomer }) => {
                   </div>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="text-base font-bold text-gray-900 whitespace-nowrap">{c.total.toFixed(2)}€</p>
-                  {c.count > 1 && <p className="text-xs text-gray-500 whitespace-nowrap">moy. {(c.total / c.count).toFixed(2)}€</p>}
+                  <p className="text-base font-bold text-gray-900 whitespace-nowrap">{money(c.total)}</p>
+                  {c.count > 1 && <p className="text-xs text-gray-500 whitespace-nowrap">moy. {money(c.total / c.count)}</p>}
                 </div>
               </button>
             );

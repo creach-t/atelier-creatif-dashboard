@@ -3,8 +3,9 @@ import { X } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { ProductThumbnail } from '../ui/ProductThumbnail';
+import { DEFAULT_PRODUCT_IMAGE } from '../../domain/constants';
 
-const emptyProduct = { name: '', category: '', price: '', image: '🎁', kofi_url: '', is_free: false, kind: '' };
+const emptyProduct = { name: '', category: '', price: '', image: DEFAULT_PRODUCT_IMAGE, kofi_url: '', is_free: false, kind: '' };
 
 const KIND_OPTIONS = [
   { id: '', label: 'Non précisé' },
@@ -20,7 +21,7 @@ export const ProductForm = ({ product, onSave, onClose, supportsFlags = true }) 
           name: product.name || '',
           category: product.category || '',
           price: String(product.price ?? ''),
-          image: product.image || '🎁',
+          image: product.image || DEFAULT_PRODUCT_IMAGE,
           kofi_url: product.kofi_url || '',
           is_free: Boolean(product.is_free),
           kind: product.kind || '',
@@ -45,7 +46,7 @@ export const ProductForm = ({ product, onSave, onClose, supportsFlags = true }) 
       name: form.name.trim(),
       category: form.category.trim(),
       price: form.is_free ? 0 : Number(form.price) || 0,
-      image: form.image.trim() || '🎁',
+      image: form.image.trim() || DEFAULT_PRODUCT_IMAGE,
       kofi_url: form.kofi_url.trim() || null,
     };
     if (supportsFlags) {
@@ -85,7 +86,7 @@ export const ProductForm = ({ product, onSave, onClose, supportsFlags = true }) 
                   <ProductThumbnail image={form.image} className="!w-12 !h-12" />
                   <button
                     type="button"
-                    onClick={() => setForm((f) => ({ ...f, image: '🎁' }))}
+                    onClick={() => setForm((f) => ({ ...f, image: DEFAULT_PRODUCT_IMAGE }))}
                     className="text-[10px] text-purple-600 hover:underline mt-1 w-full text-center"
                   >
                     Retirer la photo

@@ -1,9 +1,10 @@
+import { round2 } from './money';
+
 // Montants d'une commande.
 //   total  = ce que le client a payé (brut) : articles + lignes « divers »
 //   divers = frais, dons, remises (montant négatif) : comptent dans le total, jamais dans les articles
 //   commission = % prélevé par la boutique (point de vente) sur le total ; net = ce que tu touches vraiment.
 // Les revenus de l'app (Dashboard, Rapports) sont comptés en net.
-const round2 = (n) => Math.round(n * 100) / 100;
 
 export const extrasOf = (order) =>
   (Array.isArray(order.extras) ? order.extras : []).filter((e) => e && e.label && Number(e.amount));

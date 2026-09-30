@@ -1,4 +1,5 @@
 import React from 'react';
+import { money } from '../../core/metrics/format';
 import { Package, Download } from 'lucide-react';
 import { ProductCover } from '../ui/ProductThumbnail';
 import { GroupPrice } from '../ui/PriceTag';
@@ -59,11 +60,11 @@ export const ProductCard = ({ group, sold, revenue, onClick, rank, emphasis = 's
         </div>
         {emphasis === 'revenue' ? (
           <p className="text-xs text-gray-500">
-            <span className="text-sm font-bold text-purple-700">{Number(revenue || 0).toFixed(2)}€</span> · {soldText}
+            <span className="text-sm font-bold text-purple-700">{money(revenue || 0)}</span> · {soldText}
           </p>
         ) : (
           <p className="text-xs text-gray-500">
-            {soldText}{sold > 0 && revenue > 0 && ` · ${Number(revenue).toFixed(2)}€`}
+            {soldText}{sold > 0 && revenue > 0 && ` · ${money(revenue)}`}
           </p>
         )}
       </div>

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { money } from '../core/metrics/format';
 import { Plus, LayoutGrid, List, Palette } from 'lucide-react';
 import { defineWidget } from '../core/widgets/registry';
 import { useData } from '../core/data/DataProvider';
@@ -172,7 +173,7 @@ const CatalogView = ({ config, updateConfig, size }) => {
                   <span className="hidden @lg:block w-28 shrink-0 text-sm text-gray-600 truncate">{group.category}</span>
                   <span className="w-24 shrink-0"><GroupPrice group={group} compact /></span>
                   <span className="w-16 shrink-0 text-sm text-gray-700">{sold}</span>
-                  <span className="hidden @md:block w-24 shrink-0 text-sm font-semibold text-gray-900 text-right">{revenue > 0 ? `${revenue.toFixed(2)}€` : '—'}</span>
+                  <span className="hidden @md:block w-24 shrink-0 text-sm font-semibold text-gray-900 text-right">{revenue > 0 ? `${money(revenue)}` : '—'}</span>
                 </button>
               );
             }}

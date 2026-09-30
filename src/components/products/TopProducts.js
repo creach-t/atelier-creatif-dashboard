@@ -1,4 +1,5 @@
 import React from 'react';
+import { money } from '../../core/metrics/format';
 import { motion } from 'framer-motion';
 import { ProductCover } from '../ui/ProductThumbnail';
 import { AnimatedNumber } from '../../core/ui/AnimatedNumber';
@@ -16,7 +17,6 @@ const PHOTO_MIN_H = 84;
 
 const PodiumWrap = ({ scale, children }) => (scale ? <ScaleToFit>{children}</ScaleToFit> : <div className="shrink-0">{children}</div>);
 
-const money = (n) => `${Number(n || 0).toFixed(2)}€`;
 const soldText = (n) => `${n} vendu${n > 1 ? 's' : ''}`;
 
 // Médaille et teinte par rang : on lit le classement avant même les chiffres.

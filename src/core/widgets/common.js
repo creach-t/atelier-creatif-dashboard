@@ -1,5 +1,6 @@
 import { PERIOD_OPTIONS } from '../metrics/periods';
 import { metricOptions } from '../metrics/metrics';
+import { ORDER_STATUSES, STATUS_LABELS } from '../../domain/constants';
 import { TINT_OPTIONS } from '../config/ConfigForm';
 
 // Champs de schéma réutilisables : les widgets les assemblent au lieu de les réécrire.
@@ -29,10 +30,7 @@ export const CHANNEL_OPTIONS = [
 
 export const STATUS_OPTIONS = [
   { value: 'all', label: 'Tous' },
-  { value: 'pending', label: 'En attente' },
-  { value: 'shipped', label: 'Expédiée' },
-  { value: 'delivered', label: 'Livrée' },
-  { value: 'cancelled', label: 'Annulée' },
+  ...ORDER_STATUSES.map((value) => ({ value, label: STATUS_LABELS[value] })),
 ];
 
 // Champs communs à tous les widgets, ajoutés automatiquement en tête des réglages.

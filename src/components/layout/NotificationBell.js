@@ -1,5 +1,6 @@
 import { netOf } from '../../utils/orderAmounts';
 import React, { useMemo, useState } from 'react';
+import { money } from '../../core/metrics/format';
 import { Bell } from 'lucide-react';
 import { ChannelBadge } from '../ui/ChannelBadge';
 
@@ -58,7 +59,7 @@ export const NotificationBell = ({ orders, onSelectOrder }) => {
                       {order.customer_name || 'Client anonyme'}
                     </p>
                     <span className="text-sm font-semibold text-gray-900 shrink-0">
-                      {netOf(order).toFixed(2)}€
+                      {money(netOf(order))}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 mt-1">

@@ -1,4 +1,5 @@
 import React from 'react';
+import { money } from '../../core/metrics/format';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, BarChart, Bar,
@@ -16,7 +17,7 @@ const ChartTooltip = ({ active, payload, label }) => {
       <p className="text-xs mb-1 font-semibold text-gray-500">{label}</p>
       {payload.map((p) => (
         <p key={p.dataKey} style={{ color: p.stroke || p.fill }} className="font-bold">
-          {Number(p.value).toFixed(2)}€
+          {money(p.value)}
         </p>
       ))}
     </div>
@@ -87,7 +88,7 @@ export const OverviewTab = ({ stats, orders }) => {
                 {channelData.map((c) => (
                   <div key={c.name} className="flex items-center justify-between text-sm">
                     <span className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full" style={{ background: c.color }} />{c.name}</span>
-                    <span className="font-semibold text-gray-900">{c.value.toFixed(2)}€</span>
+                    <span className="font-semibold text-gray-900">{money(c.value)}</span>
                   </div>
                 ))}
               </div>

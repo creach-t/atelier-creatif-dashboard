@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { money } from '../core/metrics/format';
 import { Plus, Edit, Mail, Users } from 'lucide-react';
 import { defineWidget } from '../core/widgets/registry';
 import { useData } from '../core/data/DataProvider';
@@ -85,7 +86,7 @@ const CustomersListView = ({ config, size }) => {
                 <div className="w-9 h-9 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 flex items-center justify-center text-white text-xs font-bold shrink-0">{getInitials(c.name)}</div>
                 <div className="min-w-0 flex-1">
                   <p className="font-medium text-gray-900 truncate">{c.name}</p>
-                  <p className="@md:hidden text-sm font-semibold text-gray-900 mt-0.5">{Number(c.total || 0).toFixed(2)}€ <span className="text-xs font-normal text-gray-400">· {c.count || 0} commande{(c.count || 0) > 1 ? 's' : ''}</span></p>
+                  <p className="@md:hidden text-sm font-semibold text-gray-900 mt-0.5">{money(c.total || 0)} <span className="text-xs font-normal text-gray-400">· {c.count || 0} commande{(c.count || 0) > 1 ? 's' : ''}</span></p>
                   {badges.length > 0 && (
                     <div className="flex items-center gap-1.5 mt-0.5 overflow-hidden">
                       {badges.map((b) => <span key={b.label} className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-purple-50 text-purple-700 whitespace-nowrap">{b.icon} {b.label}</span>)}
@@ -96,7 +97,7 @@ const CustomersListView = ({ config, size }) => {
                   )}
                 </div>
                 <p className="hidden @lg:block w-24 shrink-0 text-sm text-gray-700">{c.count || 0}</p>
-                <p className="hidden @md:block @md:w-28 shrink-0 font-semibold text-gray-900 whitespace-nowrap">{Number(c.total || 0).toFixed(2)}€</p>
+                <p className="hidden @md:block @md:w-28 shrink-0 font-semibold text-gray-900 whitespace-nowrap">{money(c.total || 0)}</p>
                 <p className="hidden @xl:block w-36 shrink-0 text-sm text-gray-500">{c.last || '—'}</p>
                 <button onClick={(e) => { e.stopPropagation(); editCustomer(c); }} aria-label={`Modifier ${c.name}`} className="p-2 -mr-2 text-gray-600 hover:bg-purple-50 rounded-lg shrink-0">
                   <Edit size={16} />

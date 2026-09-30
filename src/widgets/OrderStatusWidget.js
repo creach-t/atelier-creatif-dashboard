@@ -8,7 +8,7 @@ import { useOverlays } from '../core/overlays/OverlayProvider';
 import { OrderRow, ORDER_ROW_H } from '../components/orders/OrderRow';
 import { ScaleToFit } from '../core/widgets/ScaleToFit';
 import { FitList } from '../core/widgets/Fit';
-import { STATUS_LABELS } from '../components/ui/Badge';
+import { STATUS_LABELS } from '../domain/constants';
 import { EmptyState } from '../core/widgets/parts';
 import { spring } from '../core/ui/motion';
 

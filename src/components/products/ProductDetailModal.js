@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { money } from '../../core/metrics/format';
 import { ExternalLink, Edit, Check, Trash2 } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
@@ -6,7 +7,6 @@ import { ProductCover } from '../ui/ProductThumbnail';
 import { PriceTag, GroupPrice, priceState } from '../ui/PriceTag';
 import { groupKind, KIND_LABELS } from '../../utils/productVariants';
 
-const money = (n) => `${Number(n || 0).toFixed(2)}€`;
 const guessedPrice = (product) => (priceState(product) === 'guess' ? Number(product.price_guess) : Number(product.price));
 
 // group : produit seul, ou famille de variantes (voir utils/productVariants). Les ventes restent
@@ -155,7 +155,7 @@ export const ProductDetailModal = ({ group, soldByName = {}, revenueByName = {},
             </p>
             {onConfirmPrice && (
               <Button size="sm" onClick={() => onConfirmPrice(single, guessedPrice(single))} className="w-full justify-center">
-                Confirmer {guessedPrice(single).toFixed(2)}€ comme prix
+                Confirmer {money(guessedPrice(single))} comme prix
               </Button>
             )}
           </div>
