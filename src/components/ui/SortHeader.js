@@ -16,7 +16,7 @@ export const SortHeader = ({ label, sortKey, sort, onSort, firstDir = 'asc', ali
       } ${align === 'right' ? 'flex-row-reverse' : ''}`}
     >
       {label}
-      <Icon size={12} className={active ? '' : 'opacity-40 sm:opacity-0 sm:group-hover:opacity-70'} />
+      <Icon size={12} className={active ? '' : 'opacity-40 @md:opacity-0 @md:group-hover:opacity-70'} />
     </button>
   );
 };

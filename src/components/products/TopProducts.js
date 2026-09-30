@@ -16,14 +16,16 @@ const RANK_COLORS = [
 // Classement compact des produits les plus rentables : une carte, une ligne par produit (rang, miniature,
 // nom, barre proportionnelle au n°1, revenu), et une frise fine de la part du revenu total en tête.
 // items : [{ group, sold, revenue }] déjà triés ; totalRevenue : revenu de tous les produits.
-export const TopProducts = ({ items, totalRevenue, onView }) => {
+export const TopProducts = ({ items, totalRevenue, onView, by = 'revenue', bare = false }) => {
   if (items.length === 0) return null;
-  const max = items[0].revenue || 1;
+  const value = (t) => (by === 'sold' ? t.sold : t.revenue);
+  const rank = (i) => RANK_COLORS[Math.min(i, RANK_COLORS.length - 1)];
+  const max = value(items[0]) || 1;
   const topSum = items.reduce((s, t) => s + t.revenue, 0);
   const share = (n) => (totalRevenue > 0 ? (n / totalRevenue) * 100 : 0);
 
   return (
-    <Card className="overflow-hidden">
+    <Card className={bare ? 'overflow-hidden border-0 shadow-none rounded-none' : 'overflow-hidden'}>
       {totalRevenue > 0 && (
         <div className="px-4 pt-3 pb-2.5 border-b border-purple-50">
           <p className="text-xs text-gray-500 mb-1.5">
@@ -31,7 +33,7 @@ export const TopProducts = ({ items, totalRevenue, onView }) => {
           </p>
           <div className="flex h-2 rounded-full overflow-hidden bg-purple-50 gap-[2px]">
             {items.map((t, i) => (
-              <div key={t.group.key} className={RANK_COLORS[i].seg} style={{ width: `${share(t.revenue)}%` }} />
+              <div key={t.group.key} className={rank(i).seg} style={{ width: `${share(t.revenue)}%` }} />
             ))}
           </div>
         </div>
@@ -43,9 +45,9 @@ export const TopProducts = ({ items, totalRevenue, onView }) => {
             <button
               type="button"
               onClick={() => onView(t.group.variants[0].product.name)}
-              className="w-full flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-2 text-left hover:bg-purple-25 transition-colors"
+              className="w-full flex items-center gap-2.5 @md:gap-3 px-3 @md:px-4 py-2 text-left hover:bg-purple-25 transition-colors"
             >
-              <span className={`w-5 h-5 shrink-0 rounded-full flex items-center justify-center text-[11px] font-bold ${RANK_COLORS[i].dot}`}>
+              <span className={`w-5 h-5 shrink-0 rounded-full flex items-center justify-center text-[11px] font-bold ${rank(i).dot}`}>
                 {i + 1}
               </span>
               <div className="w-9 shrink-0">
@@ -54,12 +56,12 @@ export const TopProducts = ({ items, totalRevenue, onView }) => {
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-gray-900 break-words">{t.group.name}</p>
                 <div className="h-1 bg-purple-50 rounded-full mt-1.5 overflow-hidden">
-                  <div className={`h-full rounded-full ${RANK_COLORS[i].bar}`} style={{ width: `${(t.revenue / max) * 100}%` }} />
+                  <div className={`h-full rounded-full ${rank(i).bar}`} style={{ width: `${(value(t) / max) * 100}%` }} />
                 </div>
               </div>
               <div className="text-right shrink-0">
-                <p className="text-sm font-bold text-gray-900 whitespace-nowrap">{money(t.revenue)}</p>
-                <p className="text-[11px] text-gray-400 whitespace-nowrap">{t.sold} vendu{t.sold > 1 ? 's' : ''}</p>
+                <p className="text-sm font-bold text-gray-900 whitespace-nowrap">{by === 'sold' ? `${t.sold} vendu${t.sold > 1 ? 's' : ''}` : money(t.revenue)}</p>
+                <p className="text-[11px] text-gray-400 whitespace-nowrap">{by === 'sold' ? money(t.revenue) : `${t.sold} vendu${t.sold > 1 ? 's' : ''}`}</p>
               </div>
             </button>
           </li>

@@ -3,7 +3,18 @@ const { requireUser } = require('./lib/auth');
 const { serverError, isUniqueViolation } = require('./lib/errors');
 const { optionalString } = require('./lib/validate');
 
-const PATCHABLE_FIELDS = ['display_name', 'kofi_verification_token', 'onboarding_completed'];
+const PATCHABLE_FIELDS = ['display_name', 'kofi_verification_token', 'onboarding_completed', 'workspace'];
+
+// Espace de travail (pages, widgets, disposition) : un objet JSON libre côté produit, mais borné ici
+// pour qu'un client ne puisse pas stocker n'importe quoi ni gonfler la ligne.
+const MAX_WORKSPACE_BYTES = 200 * 1024;
+const isValidWorkspace = (w) =>
+  w !== null &&
+  typeof w === 'object' &&
+  !Array.isArray(w) &&
+  Array.isArray(w.pages) &&
+  w.pages.length <= 30 &&
+  Buffer.byteLength(JSON.stringify(w), 'utf8') <= MAX_WORKSPACE_BYTES;
 
 module.exports = async (req, res) => {
   const user = await requireUser(req, res);
@@ -47,6 +58,11 @@ module.exports = async (req, res) => {
       return;
     }
 
+    if (updates.workspace !== undefined && !isValidWorkspace(updates.workspace)) {
+      res.status(400).json({ error: 'workspace must be an object with a pages array (200 KB max)' });
+      return;
+    }
+
     if (Object.keys(updates).length === 0) {
       res.status(400).json({ error: 'No valid fields to update' });
       return;
@@ -65,6 +81,12 @@ module.exports = async (req, res) => {
       // confirmer à un tiers qu'un token donné existe déjà.
       if (isUniqueViolation(error)) {
         res.status(409).json({ error: 'Ce token ne peut pas être utilisé.' });
+        return;
+      }
+      // Colonne `workspace` absente (migration 0010 pas encore exécutée) : ce n'est pas une panne, juste une
+      // fonction optionnelle indisponible. Réponse dédiée, sans log d'erreur : le client cesse d'insister.
+      if (error.code === 'PGRST204' && /workspace/.test(error.message || '')) {
+        res.status(501).json({ error: 'workspace_unsupported' });
         return;
       }
       return serverError(res, error, 'PATCH /profile');

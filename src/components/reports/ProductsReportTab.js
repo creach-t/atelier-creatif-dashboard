@@ -30,7 +30,7 @@ export const ProductsReportTab = ({ products, orders, onSelectProduct }) => {
 
   if (ranked.length === 0) {
     return (
-      <Card className="p-4 sm:p-6 sm:p-12 text-center">
+      <Card className="p-4 @md:p-6 @md:p-12 text-center">
         <Package size={32} className="mx-auto mb-3 text-gray-300" />
         <p className="font-semibold text-gray-600">Aucun produit vendu pour le moment.</p>
       </Card>
@@ -38,7 +38,7 @@ export const ProductsReportTab = ({ products, orders, onSelectProduct }) => {
   }
 
   return (
-    <Card className="p-4 sm:p-6">
+    <Card className="p-4 @md:p-6">
       <div className="relative mb-4">
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
         <input
@@ -54,7 +54,7 @@ export const ProductsReportTab = ({ products, orders, onSelectProduct }) => {
         <strong className="text-gray-900">{totalUnits}</strong> unité{totalUnits > 1 ? 's' : ''} vendue{totalUnits > 1 ? 's' : ''}
       </p>
 
-      <div className="sm:max-h-[540px] sm:overflow-y-auto divide-y divide-gray-100">
+      <div className="@md:max-h-[540px] @md:overflow-y-auto divide-y divide-gray-100">
         {filtered.map((p) => {
           const Wrapper = p.hasProduct ? 'button' : 'div';
           return (
@@ -62,7 +62,7 @@ export const ProductsReportTab = ({ products, orders, onSelectProduct }) => {
               key={p.id}
               type={p.hasProduct ? 'button' : undefined}
               onClick={p.hasProduct ? () => onSelectProduct && onSelectProduct(p.name) : undefined}
-              className={`w-full py-4 flex items-center gap-3 sm:gap-4 text-left ${
+              className={`w-full py-4 flex items-center gap-3 @md:gap-4 text-left ${
                 p.hasProduct ? 'hover:bg-purple-25 transition-colors -mx-2 px-2 rounded-lg' : ''
               }`}
             >

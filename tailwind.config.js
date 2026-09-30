@@ -5,6 +5,8 @@ module.exports = {
   ],
   theme: {
     extend: {
+      // Seuils des variantes @sm: @md: @lg: @xl: — relatifs à la largeur du WIDGET (conteneur), pas de l'écran.
+      containers: { sm: '30rem', md: '40rem', lg: '48rem', xl: '56rem' },
       colors: {
         purple: {
           25: '#fdfcff',
@@ -67,5 +69,5 @@ module.exports = {
       },
     },
   },
-  plugins: [],
+  plugins: [require('@tailwindcss/container-queries')],
 }

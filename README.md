@@ -25,12 +25,17 @@ Une solution complète pour gérer efficacement vos commandes Ko-fi, vos ventes 
 - Import de l'historique Ko-fi (CSV) réutilisable — corrige aussi les données déjà importées en cas de bug
 - Édition du nom affiché
 
-### 📊 **Dashboard Principal ("Vue d'ensemble")**
-- Mois navigable (chevrons précédent/suivant) plutôt que figé sur le mois courant
-- **Revenus du mois en héros**, avec la variation vs le mois précédent et l'évolution sur 6 mois ; à côté : commandes, panier moyen et nouveaux clients (chacun avec sa variation). Les revenus sont comptés **en net** (après commission de la boutique)
-- **Top 3 des produits les plus rentables du mois** : podium compact (rang, miniature, barre proportionnelle, revenu) précédé d'une frise « ces produits = X % du revenu »
-- Répartition par canal (donut) et commandes récentes cliquables → ouvrent leur détail en popup, sans changer d'onglet
-- Notifications (activité récente) accessibles depuis la cloche du header
+### 🧩 **Espace de travail modulaire**
+Toute l'application est composée de **pages de widgets** que chacun organise à sa façon — pensé mobile d'abord, avec des animations discrètes (framer-motion, désactivées si le système demande de réduire les animations).
+- **Cinq pages livrées** (Vue d'ensemble, Commandes, Produits, Clients, Rapports), entièrement recomposables : on peut créer, renommer, changer l'icône, réordonner, réinitialiser ou supprimer des pages
+- **17 widgets** : indicateur (revenus, commandes, panier moyen, nouveaux clients, articles, en attente…), graphique (aires / courbe / barres, cumul), répartition par canal, produits les plus rentables ou vendus, commandes récentes, liste des commandes, calendrier d'activité, suivi des statuts, catalogue produits, liste des clients, meilleur·es client·es, jours de la semaine, 3 rapports détaillés, raccourcis, note libre. Le catalogue (« Ajouter ») montre un **aperçu réel** de chacun avec vos données
+- **Verrouillé par défaut, déverrouillage par widget** : une icône de cadenas apparaît au survol (toujours visible sur écran tactile) ; elle autorise le glisser (poignée), le redimensionnement (coin) et un menu (réglages, dupliquer, supprimer) pour ce seul widget. Échap, ✓ ou un clic ailleurs le reverrouille. Annulation des dernières modifications
+- **Réglages en direct** : chaque widget expose ses options (indicateur, période, forme, regroupement, nombre de lignes, filtres, couleur…) ; le panneau garde un **aperçu du widget épinglé en haut** pour toujours voir ce qu'on règle
+- **Dispositions par taille d'écran** (bureau 12 colonnes, tablette 6, mobile 1) : réorganiser sur téléphone ne touche pas au bureau. Les widgets s'adaptent à **leur propre largeur** (container queries), en temps réel pendant qu'on les redimensionne
+- **Filtre de période dans la barre du haut**, suivi par tous les widgets réglés sur « Suivre la page » : mois navigable, 7/30/90 jours, **année navigable** (flèches quand il existe d'autres années de commandes), tout, ou **plage de dates personnalisée**. Les revenus sont comptés **en net** (après commission de la boutique)
+- **Sauvegarde** dans le navigateur, et synchronisée entre appareils via le profil (migration `0010`, optionnelle)
+- Ouvrir une commande, un produit ou un client depuis n'importe quel widget affiche sa fiche en popup, sans changer de page
+- Notifications (activité récente) accessibles depuis la cloche de la barre du haut
 
 ### 🛒 **Gestion des Commandes**
 - **Calendrier d'activité** (26 semaines, une case par jour, un seul violet qui fonce avec le nombre de commandes) ; un clic sur un jour filtre la liste
@@ -45,7 +50,7 @@ Une solution complète pour gérer efficacement vos commandes Ko-fi, vos ventes 
 ### 🎯 **Catalogue Produits**
 - Enrichi automatiquement à partir des ventes Ko-fi (nom, photo et lien Ko-fi direct quand disponibles dans la boutique)
 - Pas de gestion de stock — la métrique qui compte est la **quantité vendue**, calculée depuis les commandes
-- **Top 5 des produits les plus rentables depuis le début** en tête de page (même podium que la vue d'ensemble)
+- **Top 5 des produits les plus rentables depuis le début** en tête de page (widget « Produits les plus rentables », même podium partout)
 - Cartes façon boutique Ko-fi (grande photo, placeholder sans photo) ou vue **Liste** ; tri par clic sur les en-têtes (liste) ou pastilles (grille), recherche, filtres catégorie et type
 - **Variantes regroupées** : `Produit - Variant: X` (ou `(variant : X)`) forme une seule carte ; les ventes restent détaillées par variante dans la fiche (aucune fusion en base)
 - **Physique / numérique** et **gratuit** explicites (0 € voulu ≠ prix manquant), modifiables dans le formulaire
@@ -57,9 +62,9 @@ Une solution complète pour gérer efficacement vos commandes Ko-fi, vos ventes 
 - Tri par clic sur les en-têtes (client, commandes, total dépensé, dernière commande), "Top 5 des client·es" en graphique
 
 ### 📈 **Rapports et Analyses**
-- Évolution mensuelle des revenus (graphique), répartition par canal, revenus par jour de la semaine
+- Évolution des revenus (graphique), répartition par canal, revenus par jour de la semaine
 - Classement des clients (avec badges VIP/Fidèle/Généreux·se/Super fan) et des produits par quantité vendue — chaque ligne cliquable ouvre la vraie fiche (client/produit) en popup, sans quitter Rapports
-- Filtre par année
+- Période au choix (mois, année navigable, plage personnalisée) grâce au filtre de la barre du haut
 
 ### 💰 **Prix, gratuité et revenus**
 - **Un prix connu prime toujours** : prix inscrit sur la ligne de commande, sinon prix du catalogue ; jamais écrasé par une déduction
@@ -96,7 +101,7 @@ Cashly est multi-utilisateur : l'authentification (**Supabase Auth**) isole les 
 
 1. **Créer le projet Supabase**
    - Sur [app.supabase.com](https://app.supabase.com), crée un nouveau projet.
-   - Dans l'éditeur SQL du projet, exécute le contenu de [`supabase/schema.sql`](supabase/schema.sql) (installation neuve) — ça crée les tables `profiles`, `orders`, `products`, `customers`, le trigger qui crée un profil à chaque inscription, et les policies RLS. Pour une base existante, applique dans l'ordre les migrations de [`supabase/migrations/`](supabase/migrations) (`0002_multi_tenant.sql`, `0003_customers.sql`, `0004_products_kofi_link.sql`, `0005_orders_notes.sql`, `0006_products_price_estimated.sql`, `0007_products_free_kind.sql`, `0008_orders_commission_extras.sql`).
+   - Dans l'éditeur SQL du projet, exécute le contenu de [`supabase/schema.sql`](supabase/schema.sql) (installation neuve) — ça crée les tables `profiles`, `orders`, `products`, `customers`, le trigger qui crée un profil à chaque inscription, et les policies RLS. Pour une base existante, applique dans l'ordre les migrations de [`supabase/migrations/`](supabase/migrations) (`0002_multi_tenant.sql`, `0003_customers.sql`, `0004_products_kofi_link.sql`, `0005_orders_notes.sql`, `0006_products_price_estimated.sql`, `0007_products_free_kind.sql`, `0008_orders_commission_extras.sql`, `0009_orders_kofi_id_per_user.sql`, `0010_profiles_workspace.sql`).
    - Dans *Project Settings → API Keys*, récupère l'**URL du projet**, la **clé secrète** (`sb_secret_...`, ou `service_role` si l'ancien système) — jamais exposée au navigateur — et la **clé publishable** (`sb_publishable_...`, ou `anon`) — celle-là est safe à exposer au front, elle sert à l'authentification.
 
 2. **Variables d'environnement**
@@ -140,13 +145,15 @@ Lance en parallèle le serveur React (`react-scripts start`, port 3000) et l'API
 
 ## 📱 Responsive Design
 
-La sidebar devient un menu coulissant (hamburger dans le header) sous `md` (768px) — avant ça, l'appli était inutilisable sur téléphone. Les tableaux (Commandes, Clients) masquent leurs colonnes secondaires sur petit écran plutôt que de forcer un scroll horizontal.
+Mobile d'abord : sous `md` (768px) la navigation passe en **barre du bas** (4 premières pages + « Plus » qui ouvre le menu complet), les panneaux deviennent des feuilles qui montent du bas (glissables pour fermer) et la grille de widgets tient sur **une colonne**.
 
-| Breakpoint | Largeur | Description |
-|------------|---------|-------------|
-| Mobile     | < 768px | Sidebar en overlay, colonnes secondaires masquées, grilles 1-2 colonnes |
-| Tablet     | 768px+  | Sidebar fixe, grilles 2-3 colonnes |
-| Desktop    | 1024px+ | Layout complet, grilles 4+ colonnes |
+Les widgets ne se basent **pas** sur la largeur de l'écran mais sur **la leur** : leur corps est un conteneur (`@container`), et leurs variantes CSS sont `@md:`, `@lg:`, `@xl:` (seuils 640 / 768 / 896 px de *widget*, voir `tailwind.config.js`). Un widget étroit sur un grand écran adopte donc la disposition compacte, et réagit en direct quand on le redimensionne. **N'utilisez pas** les variantes `sm:`/`md:`/`lg:` dans un widget.
+
+| Zone | Largeur de la page | Grille |
+|------|--------------------|--------|
+| Mobile   | < 560px | 1 colonne, bas de page = barre de navigation |
+| Tablette | 560px+  | 6 colonnes |
+| Bureau   | 900px+  | 12 colonnes |
 
 ## 🛠️ Structure du Projet
 
@@ -168,34 +175,45 @@ api/                         # Routes API (montées par server.js)
 ├── products/[id].js          # PATCH / DELETE
 ├── customers.js               # GET / POST — filtré par user_id
 ├── customers/[id].js          # PATCH / DELETE
-└── profile.js                 # GET / PATCH — display_name, kofi_verification_token
+└── profile.js                 # GET / PATCH — display_name, kofi_verification_token, workspace (pages/widgets JSON, 200 Ko max)
 
 Dockerfile                   # Build multi-stage : React puis image Node/Express de prod
 docker-compose.prod.yml      # Service Docker + labels Traefik (cashly.creachtheo.fr)
 
 supabase/
 ├── schema.sql              # Schéma complet (installation neuve, multi-utilisateur)
-└── migrations/              # 0002 à 0008 — migrations additives (multi-tenant, clients, lien Ko-fi, notes, prix estimé, gratuit/type, commission/divers)
+└── migrations/              # 0002 à 0010 — migrations additives (multi-tenant, clients, lien Ko-fi, notes, prix estimé, gratuit/type, commission/divers, id Ko-fi par utilisateur, espace de travail)
 
 src/
-├── App.js                  # Routage (login → dashboard), popups globaux commande/produit (jamais de changement d'onglet)
+├── App.js                  # Connexion, puis <AppShell />
+├── core/                   # Moteur de l'application (indépendant de tout widget)
+│   ├── shell/              # AppShell, Sidebar, BottomNav (mobile), Header (titre + période + actions), icônes de pages
+│   ├── workspace/          # model.js (fonctions pures : pages, widgets, dispositions), WorkspaceProvider (état, annulation, sauvegarde),
+│   │                       # Board (grille react-grid-layout), WidgetPicker, WidgetSettings, PageSettings, PeriodPicker, defaults.js, storage.js
+│   ├── widgets/            # registry.js (defineWidget), WidgetFrame (cadre, verrou, barre d'outils), WidgetPreview, hooks (période/commandes), parts, common
+│   ├── metrics/            # metrics.js (indicateurs), periods.js (mois/année/plage), series.js (séries temporelles), format.js
+│   ├── config/             # ConfigForm : formulaire de réglages généré depuis le schéma d'un widget
+│   ├── data/               # DataProvider : commandes, produits, clients et dérivés partagés (prix estimés, variantes, ventes)
+│   ├── overlays/           # OverlayProvider : fiches et formulaires (commande, produit, client), ouverts depuis n'importe quel widget
+│   └── ui/                 # Sheet (panneau/feuille), AnimatedNumber, réglages d'animation
+├── widgets/                # 1 fichier = 1 widget (defineWidget) ; index.js les enregistre tous
 ├── api/
 │   ├── client.js            # Wrapper fetch (JWT Supabase, gestion des erreurs)
 │   └── supabaseClient.js    # Client Supabase côté navigateur (clé publishable, auth uniquement)
-├── hooks/                  # useOrders, useProducts, useCustomers (fetch + mutations), useSort (tri par en-têtes), useEstimatedPrices (écriture des prix estimés)
-├── components/
+├── hooks/                  # useOrders, useProducts, useCustomers (fetch + mutations), useSort (tri par en-têtes), useEstimatedPrices (écriture des prix estimés), useIsNarrow
+├── components/             # Briques réutilisées par les widgets et les popups
 │   ├── ui/                 # Card, Button, Badge, ChannelBadge (vrais logos), ProductThumbnail/Cover, Modal, PriceTag, SortHeader
-│   ├── layout/              # Sidebar (menu mobile + menu utilisateur), Header, NotificationBell
 │   ├── auth/Login.js        # Écran de connexion / inscription (Supabase Auth)
-│   ├── settings/             # Réglages : compte, source Ko-fi, import d'historique
-│   ├── dashboard/           # Dashboard + répartition par canal
-│   ├── orders/               # Liste des commandes, formulaire de saisie, détail cliquable
-│   ├── products/             # Catalogue (cartes, liste, variantes), ProductCard, TopProducts, fiche, formulaire
-│   ├── customers/            # Page Clients (liste, édition)
-│   └── reports/               # Rapports : aperçu, classement clients, classement produits
-├── utils/                    # parseCsv, normalizeKofiCsv, computeReportStats, computeSoldByName, estimatePrices, computeProductRevenue, productVariants, orderAmounts (net/commission/divers)
+│   ├── settings/             # Réglages : compte, source Ko-fi, import d'historique, personnalisation (réinitialisation)
+│   ├── orders/               # OrderRow, OrdersHeatmap, formulaire de saisie, détail cliquable
+│   ├── products/             # ProductCard, TopProducts, fiche, formulaire
+│   ├── customers/            # Fiche client, formulaire
+│   ├── reports/               # Vues détaillées des rapports (utilisées par les widgets « Rapport »)
+│   └── layout/NotificationBell.js
+├── utils/                    # parseCsv, normalizeKofiCsv, computeReportStats, computeSoldByName, estimatePrices, computeProductRevenue, productVariants, productRanking, customerStats, orderAmounts (net/commission/divers)
+├── __tests__/                # Jest : modèle de l'espace de travail, périodes/métriques/séries, prix, variantes, montants, Ko-fi…
 ├── index.js                 # Point d'entrée React
-└── index.css                 # Styles Tailwind + custom
+└── index.css                 # Styles Tailwind + grille de widgets
 
 public/
 ├── index.html               # Template HTML
@@ -214,11 +232,14 @@ colors: {
 }
 ```
 
+### Ajouter un widget (développeurs)
+Un widget = un fichier dans [`src/widgets/`](src/widgets) qui appelle `defineWidget` (titre, icône, catégorie, taille par défaut, schéma de réglages, préréglages, composant), puis une ligne d'import dans `src/widgets/index.js`. Il apparaît alors tout seul dans le catalogue (avec aperçu), les réglages et la sauvegarde. Il lit ses données avec `useWidgetOrders(config.period)` / `useData()` et ouvre les fiches avec `useOverlays()`. Nouvel indicateur : une entrée dans `src/core/metrics/metrics.js`, disponible dans tous les widgets configurables.
+
 ### Ajouter des Produits
 Depuis l'interface : bouton "Nouveau Produit" sur la page Produits. Ils se créent aussi automatiquement à chaque vente boutique Ko-fi (nom de l'article, catégorie "Ko-fi", prix à 0€ à compléter toi-même — Ko-fi ne fournit pas de prix unitaire fiable). Les produits vivent dans Supabase, propres à chaque compte (`user_id`) ; pas de gestion de stock, seule la quantité vendue (calculée depuis les commandes) est affichée.
 
 ### Personnaliser le Branding
-1. Remplacez "Cashly" par votre nom dans [`src/components/layout/Sidebar.js`](src/components/layout/Sidebar.js), [`src/components/auth/Login.js`](src/components/auth/Login.js), `public/index.html` et `public/manifest.json`
+1. Remplacez "Cashly" par votre nom dans [`src/core/shell/Sidebar.js`](src/core/shell/Sidebar.js), [`src/components/auth/Login.js`](src/components/auth/Login.js), `public/index.html` et `public/manifest.json`
 2. Modifiez les gradients de couleur
 3. Ajoutez votre logo dans la sidebar
 
@@ -242,12 +263,13 @@ npm run eject      # Éjection Create React App (⚠️ irréversible)
 - [x] Page Clients avec fiches persistées
 - [x] Rapports et analyses avec graphiques (Recharts), liés aux vraies fiches client/produit
 - [x] Notifications (activité récente)
-- [x] Responsive mobile (sidebar en menu coulissant)
-- [x] Dashboard cliquable avec graphiques et mois navigable
+- [x] Responsive mobile d'abord (barre de navigation du bas, feuilles, widgets adaptatifs)
+- [x] Vue d'ensemble cliquable avec graphiques et mois navigable
 - [x] Recherche/auto-complétion clients et produits dans le formulaire de commande, avec création automatique
 - [x] Refonte de l'interface : podium des produits rentables, calendrier d'activité, cartes produit, tri par en-têtes, fiches en lecture seule, suppression avec double confirmation
 - [x] Prix estimés par résolution globale des commandes, produits gratuits, physique/numérique, variantes regroupées
 - [x] Commission de la boutique (revenus en net), lignes « divers », modification complète des commandes
+- [x] Application modulaire en widgets : pages personnalisables, déverrouillage par widget, aperçus, filtre de période (année navigable, plage libre), sauvegarde synchronisée
 
 ### À venir
 - [ ] Export des données (CSV/PDF)

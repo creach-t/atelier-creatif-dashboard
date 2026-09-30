@@ -105,3 +105,41 @@ code {
 
 /* 100vh dépasse la zone visible sur mobile (barre d'adresse) : le bas de l'app était rogné. */
 .h-screen { height: 100vh; height: 100dvh; }
+
+/* ---------- Grille de widgets (react-grid-layout) ---------- */
+.cashly-grid .react-grid-item.react-grid-placeholder {
+  background: #b794f6;
+  opacity: 0.18;
+  border-radius: 1rem;
+  transition-duration: 120ms;
+}
+.cashly-grid .react-grid-item.resizing,
+.cashly-grid .react-grid-item.react-draggable-dragging {
+  z-index: 30;
+  box-shadow: 0 18px 40px -12px rgba(107, 70, 193, 0.35);
+  border-radius: 1rem;
+}
+.cashly-grid .react-grid-item.react-draggable-dragging { transform-origin: center; }
+/* Poignée de redimensionnement plus grande et visible (usage tactile). */
+.cashly-grid .react-resizable-handle {
+  width: 28px;
+  height: 28px;
+  bottom: 0;
+  right: 0;
+  z-index: 25;
+  background: none;
+}
+.cashly-grid .react-resizable-handle::after {
+  content: '';
+  position: absolute;
+  right: 7px;
+  bottom: 7px;
+  width: 10px;
+  height: 10px;
+  border-right: 3px solid #a78bfa;
+  border-bottom: 3px solid #a78bfa;
+  border-radius: 0 0 4px 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cashly-grid .react-grid-item { transition: none !important; }
+}

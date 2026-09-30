@@ -34,7 +34,7 @@ export const OverviewTab = ({ stats, orders }) => {
 
   return (
     <div className="space-y-6">
-      <Card className="p-4 sm:p-6">
+      <Card className="p-4 @md:p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-1">Évolution des revenus</h3>
         <p className="text-sm text-gray-500 mb-4">Mois par mois, avec cumul</p>
         {stats.monthlyData.length === 0 ? (
@@ -67,8 +67,8 @@ export const OverviewTab = ({ stats, orders }) => {
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="p-4 sm:p-6">
+      <div className="grid grid-cols-1 @xl:grid-cols-2 gap-6">
+        <Card className="p-4 @md:p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-1">Répartition par canal</h3>
           <p className="text-sm text-gray-500 mb-4">Sur la période affichée</p>
           {channelData.length === 0 ? (
@@ -95,7 +95,7 @@ export const OverviewTab = ({ stats, orders }) => {
           )}
         </Card>
 
-        <Card className="p-4 sm:p-6">
+        <Card className="p-4 @md:p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-1">Revenus par jour</h3>
           <p className="text-sm text-gray-500 mb-4">Quand tes ventes se concentrent</p>
           <ResponsiveContainer width="100%" height={180}>

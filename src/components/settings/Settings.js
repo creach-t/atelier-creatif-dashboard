@@ -4,11 +4,14 @@ import { KofiSourceCard } from './KofiSourceCard';
 import { ImportKofiHistory } from './ImportKofiHistory';
 import { Card } from '../ui/Card';
 import { ChannelLogo } from '../ui/ChannelBadge';
+import { WorkspaceCard } from './WorkspaceCard';
 
 export const Settings = () => {
   return (
     <div className="p-4 sm:p-6 space-y-6">
       <AccountCard />
+
+      <WorkspaceCard />
 
       <div>
         <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Sources</h4>
@@ -24,8 +27,8 @@ export const Settings = () => {
               </span>
             </div>
             <p className="text-sm text-gray-600 mt-2">
-              Les ventes en boutique partenaire se saisissent manuellement depuis l'onglet
-              Commandes — aucune connexion à configurer.
+              Les ventes en boutique partenaire se saisissent manuellement (bouton « Nouvelle
+              commande ») — aucune connexion à configurer.
             </p>
           </Card>
         </div>
