@@ -1,7 +1,7 @@
 # 🔎 Prompt d'audit complet (développeur senior fullstack)
 
 À coller tel quel dans une nouvelle session Claude Code ouverte sur ce dépôt, avec le serveur MCP **codebase-memory** actif.
-Avant de le lancer : `index_repository` (mode `full`) sur le dépôt, pour que le graphe reflète le code actuel.
+Avant de le lancer : `index_repository` (mode `full`) sur le dépôt, pour que le graphe reflète le code actuel. ⚠️ Une réindexation complète **efface l'ADR** : après elle, vérifie avec `manage_adr(mode="get")` et, s'il est vide, recopie le contenu de la section « Contexte déjà connu » ci-dessous dans un `manage_adr(mode="update")` (ou demande à Claude de le régénérer depuis `docs/ARCHITECTURE.md`).
 
 ---
 
