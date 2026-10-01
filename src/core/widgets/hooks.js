@@ -3,6 +3,7 @@ import { useData } from '../../data/DataProvider';
 import { useWorkspace } from '../workspace/WorkspaceProvider';
 import { resolvePeriod, ordersInPeriod, ordersInPrevPeriod } from '../metrics/periods';
 import { isoDayNow } from './today';
+import { isCounted } from '../../utils/orderAmounts';
 
 // Période effective d'un widget : la sienne, ou celle de la page (« page »).
 export function useWidgetPeriod(configPeriod = 'page') {
@@ -17,13 +18,18 @@ export function useWidgetPeriod(configPeriod = 'page') {
 }
 
 // Commandes d'un widget pour sa période (+ la période précédente pour les variations).
-export function useWidgetOrders(configPeriod = 'page') {
-  const { orders } = useData();
+// Les commandes annulées sont écartées (revenus, graphiques, classements) ; les widgets qui listent les
+// commandes ou leurs statuts passent `includeCancelled` pour les voir.
+export function useWidgetOrders(configPeriod = 'page', { includeCancelled = false } = {}) {
+  const { orders: every } = useData();
   const period = useWidgetPeriod(configPeriod);
-  return useMemo(() => ({
-    period,
-    allOrders: orders,
-    orders: ordersInPeriod(orders, period),
-    prevOrders: ordersInPrevPeriod(orders, period),
-  }), [orders, period]);
+  return useMemo(() => {
+    const orders = includeCancelled ? every : every.filter(isCounted);
+    return {
+      period,
+      allOrders: orders,
+      orders: ordersInPeriod(orders, period),
+      prevOrders: ordersInPrevPeriod(orders, period),
+    };
+  }, [every, period, includeCancelled]);
 }

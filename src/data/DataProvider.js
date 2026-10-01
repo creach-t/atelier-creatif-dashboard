@@ -8,6 +8,7 @@ import { groupProducts } from '../utils/productVariants';
 import { computeProductRevenue } from '../utils/computeProductRevenue';
 import { computeSoldByName } from '../utils/computeSoldByName';
 import { withCustomerStats } from '../utils/customerStats';
+import { isCounted } from '../utils/orderAmounts';
 
 const DataContext = createContext(null);
 
@@ -25,16 +26,17 @@ export const DataProvider = ({ children }) => {
   useEstimatedPrices(rawProducts, priceEstimates, updateProduct);
 
   const value = useMemo(() => {
-    const soldByName = computeSoldByName(orders);
+    const counted = orders.filter(isCounted); // les annulées ne comptent ni en ventes ni en revenus
+    const soldByName = computeSoldByName(counted);
     const revenueByName = Object.fromEntries(
-      computeProductRevenue(orders, catalogPrices(products)).map((r) => [r.name, r.revenue])
+      computeProductRevenue(counted, catalogPrices(products)).map((r) => [r.name, r.revenue])
     );
     return {
       loading,
       orders,
       products,
       customers,
-      customerRows: withCustomerStats(customers, orders),
+      customerRows: withCustomerStats(customers, counted),
       productGroups: groupProducts(products),
       soldByName,
       revenueByName,

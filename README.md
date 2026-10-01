@@ -101,7 +101,7 @@ Cashly est multi-utilisateur : l'authentification (**Supabase Auth**) isole les 
 
 1. **Créer le projet Supabase**
    - Sur [app.supabase.com](https://app.supabase.com), crée un nouveau projet.
-   - Dans l'éditeur SQL du projet, exécute le contenu de [`supabase/schema.sql`](supabase/schema.sql) (installation neuve) — ça crée les tables `profiles`, `orders`, `products`, `customers`, le trigger qui crée un profil à chaque inscription, et les policies RLS. Pour une base existante, applique dans l'ordre les migrations de [`supabase/migrations/`](supabase/migrations) (`0002_multi_tenant.sql`, `0003_customers.sql`, `0004_products_kofi_link.sql`, `0005_orders_notes.sql`, `0006_products_price_estimated.sql`, `0007_products_free_kind.sql`, `0008_orders_commission_extras.sql`, `0009_orders_kofi_id_per_user.sql`, `0010_profiles_workspace.sql`).
+   - Dans l'éditeur SQL du projet, exécute le contenu de [`supabase/schema.sql`](supabase/schema.sql) (installation neuve) — ça crée les tables `profiles`, `orders`, `products`, `customers`, le trigger qui crée un profil à chaque inscription, et les policies RLS. Pour une base existante, applique dans l'ordre les migrations de [`supabase/migrations/`](supabase/migrations) (`0002_multi_tenant.sql`, `0003_customers.sql`, `0004_products_kofi_link.sql`, `0005_orders_notes.sql`, `0006_products_price_estimated.sql`, `0007_products_free_kind.sql`, `0008_orders_commission_extras.sql`, `0009_orders_kofi_id_per_user.sql`, `0010_profiles_workspace.sql`, `0011_hardening.sql`).
    - Dans *Project Settings → API Keys*, récupère l'**URL du projet**, la **clé secrète** (`sb_secret_...`, ou `service_role` si l'ancien système) — jamais exposée au navigateur — et la **clé publishable** (`sb_publishable_...`, ou `anon`) — celle-là est safe à exposer au front, elle sert à l'authentification.
 
 2. **Variables d'environnement**
@@ -195,7 +195,7 @@ docker-compose.prod.yml      # Service Docker + labels Traefik (cashly.creachthe
 
 supabase/
 ├── schema.sql              # Schéma complet (installation neuve, multi-utilisateur)
-└── migrations/              # 0002 à 0010 — migrations additives (multi-tenant, clients, lien Ko-fi, notes, prix estimé, gratuit/type, commission/divers, id Ko-fi par utilisateur, espace de travail)
+└── migrations/              # 0002 à 0011 — migrations additives (multi-tenant, clients, lien Ko-fi, notes, prix estimé, gratuit/type, commission/divers, id Ko-fi par utilisateur, espace de travail, durcissement RLS/index)
 
 src/
 ├── App.js                  # Connexion, puis <AppShell />

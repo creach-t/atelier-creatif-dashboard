@@ -44,7 +44,7 @@ AXES D'AUDIT (tous obligatoires, dans cet ordre)
 2. Justesse métier (priorité haute : c'est de l'argent)
    - Calculs de montants : arrondis flottants, net/commission, lignes « divers », écart don/remise (utils/orderAmounts, utils/computeProductRevenue, features/orders/orderDraft), estimation de prix (utils/estimatePrices) ; cohérence entre les différents endroits qui recalculent les mêmes chiffres (computeReportStats en net vs customerStats en brut).
    - Dates et fuseaux : jours calendaires Europe/Paris côté serveur (api/lib/dates.js) vs navigateur (src/utils/dates.js, new Date(order_date) sans heure, getDay sur une chaîne), changements d'heure, périodes (core/metrics/periods.js).
-   - Concurrence et cohérence : écritures optimistes + polling toutes les 30 s (écrasement d'une modification par un refresh), doubles soumissions, course lors de la création produit/client (pas d'index unique sur products(user_id, name)), upsert d'import et dédoublonnage par kofi_transaction_id.
+   - Concurrence et cohérence : polling toutes les 30 s (corrigé : une réponse périmée est ignorée après une écriture ; vérifier qu'il ne reste pas d'autre course), doubles soumissions, course lors de la création produit/client (index unique products(user_id, name) depuis la migration 0011), upsert d'import et dédoublonnage par kofi_transaction_id.
 3. Architecture et modularité
    - Respect des couches (voir ADR) et règles ESLint ; dette restante (utils/ vs domain/, hooks/ importé par core, doublons de dates entre api/ et src/).
    - Cohésion/couplage mesurés sur le graphe (clusters, fan-in/fan-out) ; fichiers trop gros ; abstractions inutiles ou manquantes ; code mort.
@@ -92,4 +92,4 @@ CONTRAINTES
 Consigné dans l'ADR du projet (`manage_adr`) et dans [`ARCHITECTURE.md`](ARCHITECTURE.md) :
 - couches `domain < utils < api < services < data < core/ui < features < widgets < app`, vérifiées par ESLint ;
 - l'API ne contourne plus l'absence de migration (0005 à 0008 obligatoires), sauf `profiles.workspace` (0010) ;
-- compromis connus : pas d'index unique `products(user_id, name)`, dates dupliquées entre `api/` et `src/`, `utils/` pas encore dans `domain/`, statistiques clients calculées à deux endroits, pas de TypeScript ni d'E2E.
+- compromis connus : prix estimés écrits en base en tâche de fond par chaque appareil ouvert (`useEstimatedPrices`), clés `key={index}` dans les listes de saisie contrôlées, fuseau Europe/Paris fixe pour tous les comptes, dates dupliquées entre `api/` et `src/`, `utils/` pas encore dans `domain/`, statistiques clients calculées à deux endroits, pas de TypeScript ni d'E2E.

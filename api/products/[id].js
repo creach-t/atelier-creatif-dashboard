@@ -30,7 +30,7 @@ module.exports = route({
 
     if (Object.keys(updates).length === 0) return badRequest(res, 'No valid fields to update');
 
-    const product = await updateOwned(ctx, 'products', updates, { context: 'PATCH /products/:id' });
+    const product = await updateOwned(ctx, 'products', updates, { context: 'PATCH /products/:id', conflictMessage: 'Un produit porte déjà ce nom.' });
     if (product) res.status(200).json(product);
   },
 

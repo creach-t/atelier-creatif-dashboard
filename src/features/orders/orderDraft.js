@@ -5,6 +5,7 @@ import { catalogPrices, estimatedNames } from '../../utils/estimatePrices';
 import { extrasSum } from '../../utils/orderAmounts';
 import { round2 } from '../../utils/money';
 import { todayLocal } from '../../utils/dates';
+import { scopedKey } from '../../utils/userScope';
 import { defaultStatusFor } from '../../domain/constants';
 
 export const emptyItem = () => ({ name: '', quantity: 1, price: 0 });
@@ -13,12 +14,12 @@ export const emptyExtra = () => ({ label: '', amount: '' });
 const sameJson = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
 // Dernière commission saisie, pour préremplir la suivante (la boutique garde en général le même taux).
-const LAST_COMMISSION_KEY = 'cashly.lastCommission';
+const LAST_COMMISSION_KEY = () => scopedKey('cashly.lastCommission');
 export const readLastCommission = () => {
-  try { return window.localStorage.getItem(LAST_COMMISSION_KEY) || ''; } catch (e) { return ''; }
+  try { return window.localStorage.getItem(LAST_COMMISSION_KEY()) || ''; } catch (e) { return ''; }
 };
 export const rememberCommission = (value) => {
-  try { window.localStorage.setItem(LAST_COMMISSION_KEY, String(value)); } catch (e) { /* stockage indisponible */ }
+  try { window.localStorage.setItem(LAST_COMMISSION_KEY(), String(value)); } catch (e) { /* stockage indisponible */ }
 };
 
 // En modification, chaque article reprend son prix (saisi, catalogue, ou déduit du total). Ce qui reste
@@ -65,8 +66,8 @@ export function orderTotals(draft) {
   const extrasTotal = draft.extras.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
   const total = round2(itemsTotal + extrasTotal + draft.gap); // ce que le client paie (brut)
   const commissionRate = draft.channel === 'reel' ? Math.min(Math.max(Number(draft.commission) || 0, 0), 100) : 0;
-  const commissionAmount = Math.round(total * commissionRate) / 100;
-  return { total, commissionRate, commissionAmount, net: total - commissionAmount };
+  const commissionAmount = round2((total * commissionRate) / 100); // même arrondi que orderAmounts.commissionOf
+  return { total, commissionRate, commissionAmount, net: round2(total - commissionAmount) };
 }
 
 export const cleanItems = (items) => items

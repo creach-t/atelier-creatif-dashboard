@@ -145,16 +145,27 @@ describe('syncProductsFromItems (requêtes groupées)', () => {
     await syncProductsFromItems(supabase, 'user-1', items);
 
     expect(supabase.calls.filter((c) => c.op === 'select')).toHaveLength(3); // 3 lots de 100
-    const inserts = supabase.calls.filter((c) => c.op === 'insert');
+    const inserts = supabase.calls.filter((c) => c.op === 'upsert');
     expect(inserts).toHaveLength(1);
+    expect(inserts[0].options).toMatchObject({ onConflict: 'user_id,name', ignoreDuplicates: true });
     expect(inserts[0].payload).toHaveLength(249); // « Produit 0 » existe déjà
     expect(inserts[0].payload[0]).toMatchObject({ user_id: 'user-1', category: 'Ko-fi', price: 0 });
+  });
+
+  test('index unique absent (migration 0011 pas passée) : retombe sur un simple insert', async () => {
+    const supabase = fakeSupabase((call) => {
+      if (call.op === 'select') return { data: [], error: null };
+      if (call.op === 'upsert') return { error: { code: '42P10' } };
+      return { error: null };
+    });
+    await syncProductsFromItems(supabase, 'user-1', [{ name: 'A' }]);
+    expect(supabase.calls.filter((c) => c.op === 'insert')).toHaveLength(1);
   });
 
   test('doublons et noms vides ignorés ; rien à insérer = aucune écriture', async () => {
     const supabase = fakeSupabase(() => ({ data: [{ name: 'A' }], error: null }));
     await syncProductsFromItems(supabase, 'user-1', [{ name: 'A' }, { name: ' A ' }, { name: '' }, null]);
-    expect(supabase.calls.filter((c) => c.op === 'insert')).toHaveLength(0);
+    expect(supabase.calls.filter((c) => c.op === 'insert' || c.op === 'upsert')).toHaveLength(0);
   });
 });
 

@@ -9,7 +9,7 @@ import { EmptyState } from '../core/widgets/parts';
 import { FitList } from '../core/widgets/Fit';
 
 const RecentOrdersView = ({ config, size }) => {
-  const { orders } = useWidgetOrders(config.period);
+  const { orders } = useWidgetOrders(config.period, { includeCancelled: true });
   const { openOrder } = useOverlays();
 
   const rows = useMemo(() => orders

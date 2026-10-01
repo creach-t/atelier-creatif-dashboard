@@ -28,7 +28,7 @@ const STATUS_FILTERS = [
 
 // Densité selon la hauteur du widget : on retire d'abord les filtres, puis le tri, puis la recherche, pour laisser la place à la liste.
 const OrdersTableView = ({ config, size }) => {
-  const { orders } = useWidgetOrders(config.period);
+  const { orders } = useWidgetOrders(config.period, { includeCancelled: true });
   const { openOrder, newOrder } = useOverlays();
   const [channel, setChannel] = useState('all');
   const [status, setStatus] = useState('all');

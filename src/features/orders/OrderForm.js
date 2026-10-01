@@ -71,7 +71,7 @@ export const OrderForm = ({ order, products, customers, createProduct, onCreate,
       if (createProduct) {
         await Promise.all(
           newProducts(cleanItems(draft.items), products).map((item) =>
-            createProduct({ name: item.name, category: UNCATEGORIZED, price: item.price, image: DEFAULT_PRODUCT_IMAGE }).catch(() => {})
+            createProduct({ name: item.name, category: UNCATEGORIZED, price: item.price, image: DEFAULT_PRODUCT_IMAGE }).catch((err) => console.warn('Création du produit impossible :', err.message))
           )
         );
       }

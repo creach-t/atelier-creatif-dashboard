@@ -13,7 +13,7 @@ const badRequest = (res, message) => res.status(400).json({ error: message });
 // withId : la route vise une ligne (/:id) — un id qui n'est pas un UUID répond 404 avant tout accès base.
 function route(methods, { withId = false } = {}) {
   return async (req, res) => {
-    const user = await requireUser(req, res);
+    const user = req.user || (await requireUser(req, res)); // req.user : déjà authentifié en amont (import CSV)
     if (!user) return;
 
     let id;

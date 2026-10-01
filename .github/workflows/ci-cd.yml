@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+# Droits minimaux par défaut ; chaque job n'ajoute que ce dont il a besoin.
+permissions:
+  contents: read
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
@@ -24,6 +28,7 @@ jobs:
           node-version: "22"
           cache: "npm"
       - run: npm ci
+      - run: npm run lint
       - run: npm test -- --watchAll=false --ci
       - run: npm run build
 
@@ -35,7 +40,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
       - run: npm ci
       - run: npm audit --audit-level=high
@@ -149,15 +154,15 @@ jobs:
           GHCR_USER: ${{ github.actor }}
         run: |
           set -euo pipefail
+          # Le PAT passe par stdin (jamais en argument de ligne de commande, visible dans `ps` sur le VPS).
+          printf '%s' "$GHCR_PAT" | ssh "$SSH_HOSTNAME" "docker login ghcr.io -u '$GHCR_USER' --password-stdin" \
+            || echo "⚠️ GHCR login ignoré (image publique)"
           ssh "$SSH_HOSTNAME" \
             IMAGE_TAG="$IMAGE_TAG" \
-            GHCR_PAT="$GHCR_PAT" \
-            GHCR_USER="$GHCR_USER" \
             VPS_DEPLOY_PATH="$VPS_DEPLOY_PATH" \
             'bash -s' <<'REMOTE'
           set -e
           cd "$VPS_DEPLOY_PATH"
-          echo "$GHCR_PAT" | docker login ghcr.io -u "$GHCR_USER" --password-stdin || echo "⚠️ GHCR login ignoré (image publique)"
           echo "📦 Deploying image tag: $IMAGE_TAG"
           export IMAGE_TAG
           docker compose -f docker-compose.prod.yml pull

@@ -16,7 +16,7 @@ const STATUSES = ['pending', 'shipped', 'delivered', 'cancelled'];
 const COLORS = { pending: 'text-amber-600 bg-amber-50', shipped: 'text-blue-600 bg-blue-50', delivered: 'text-emerald-600 bg-emerald-50', cancelled: 'text-rose-600 bg-rose-50' };
 
 const OrderStatusView = ({ config, size }) => {
-  const { orders } = useWidgetOrders(config.period);
+  const { orders } = useWidgetOrders(config.period, { includeCancelled: true });
   const { openOrder } = useOverlays();
   const [selected, setSelected] = useState('pending');
 

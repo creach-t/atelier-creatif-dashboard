@@ -6,6 +6,9 @@ import { round2 } from './money';
 //   commission = % prélevé par la boutique (point de vente) sur le total ; net = ce que tu touches vraiment.
 // Les revenus de l'app (Dashboard, Rapports) sont comptés en net.
 
+// Une commande annulée n'est jamais comptée dans les revenus, quantités vendues ni statistiques clients.
+export const isCounted = (order) => order.status !== 'cancelled';
+
 export const extrasOf = (order) =>
   (Array.isArray(order.extras) ? order.extras : []).filter((e) => e && e.label && Number(e.amount));
 

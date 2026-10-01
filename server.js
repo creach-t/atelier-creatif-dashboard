@@ -5,6 +5,7 @@ const express = require('express');
 const helmet = require('helmet');
 const compression = require('compression');
 const { rateLimit } = require('express-rate-limit');
+const { requireUser } = require('./api/lib/auth');
 
 // En prod (Docker), les variables d'env sont déjà injectées par docker-compose (env_file) —
 // ce fichier n'existe pas dans le container, donc ce chargement est un no-op silencieux.
@@ -56,6 +57,15 @@ app.use(
 // Seul l'import CSV Ko-fi (des centaines de lignes, chacune avec sa ligne brute conservée dans
 // raw_payload) a besoin d'un gros corps. Monté avant le parseur global : body-parser ignore une
 // requête déjà parsée. Partout ailleurs (webhook public compris) on reste à 100kb.
+// L'utilisateur est authentifié AVANT de lire ce gros corps : un anonyme ne peut pas faire parser 10 Mo.
+app.use('/api/orders/import', async (req, res, next) => {
+  try {
+    req.user = await requireUser(req, res);
+    if (req.user) next();
+  } catch (err) {
+    next(err);
+  }
+});
 app.use('/api/orders/import', express.json({ limit: '10mb' }));
 app.use(express.json({ limit: '100kb' }));
 app.use(express.urlencoded({ extended: false, limit: '100kb' }));

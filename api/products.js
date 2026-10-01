@@ -33,7 +33,7 @@ module.exports = route({
     if (body.is_free !== undefined) product.is_free = Boolean(body.is_free);
     if (body.kind !== undefined) product.kind = body.kind;
 
-    const created = await insertOwned(ctx, 'products', product, { context: 'POST /products' });
+    const created = await insertOwned(ctx, 'products', product, { context: 'POST /products', conflictMessage: 'Un produit porte déjà ce nom.' });
     if (created) res.status(201).json(created);
   },
 });

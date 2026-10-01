@@ -1,13 +1,15 @@
 import { getProfile, updateProfile } from '../../services/profileService';
+import { scopedKey } from '../../utils/userScope';
 
 // Deux couches : localStorage (instantané, hors-ligne, fonctionne sans migration SQL) et le profil côté
 // serveur (suit l'utilisatrice d'un appareil à l'autre). Le serveur est optionnel : s'il échoue (colonne
 // `workspace` pas encore créée, réseau coupé), l'app continue en local sans rien afficher.
-const KEY = 'cashly.workspace.v1';
+const BASE_KEY = 'cashly.workspace.v1';
+const KEY = () => scopedKey(BASE_KEY); // une disposition par compte
 
 export const loadLocal = () => {
   try {
-    const raw = window.localStorage.getItem(KEY);
+    const raw = window.localStorage.getItem(KEY());
     return raw ? JSON.parse(raw) : null;
   } catch (e) {
     return null;
@@ -15,11 +17,11 @@ export const loadLocal = () => {
 };
 
 export const saveLocal = (ws) => {
-  try { window.localStorage.setItem(KEY, JSON.stringify(ws)); } catch (e) { /* stockage indisponible */ }
+  try { window.localStorage.setItem(KEY(), JSON.stringify(ws)); } catch (e) { /* stockage indisponible */ }
 };
 
 export const clearLocal = () => {
-  try { window.localStorage.removeItem(KEY); } catch (e) { /* stockage indisponible */ }
+  try { window.localStorage.removeItem(KEY()); } catch (e) { /* stockage indisponible */ }
 };
 
 export const loadRemote = async () => {

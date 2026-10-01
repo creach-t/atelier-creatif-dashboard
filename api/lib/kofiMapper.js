@@ -14,21 +14,36 @@ function describeKofiType(type) {
   return KOFI_TYPE_LABELS[type] || 'Support Ko-fi';
 }
 
+// Le payload arrive d'Internet (même avec un token valide) : on ne stocke que des textes bornés et des nombres finis.
+const MAX_ITEMS = 200;
+const text = (v, max) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, max) : null);
+const finiteAmount = (v) => {
+  const n = Number(v);
+  return Number.isFinite(n) && n >= 0 && n < 1e8 ? n : 0;
+};
+
+// Le verification_token est le secret du webhook : il ne doit pas être recopié dans chaque commande.
+const withoutSecret = ({ verification_token: _token, ...rest }) => rest;
+
 function buildItems(payload) {
   if (Array.isArray(payload.shop_items) && payload.shop_items.length > 0) {
     // Ko-fi ne fournit pas de prix unitaire par article dans shop_items,
     // uniquement le nom/variation et la quantité — le total reste `amount`.
-    return payload.shop_items.map((item) => ({
-      name: item.variation_name || item.direct_link_code || 'Article Ko-fi',
-      quantity: Number(item.quantity) || 1,
-    }));
+    return payload.shop_items.slice(0, MAX_ITEMS).map((item) => {
+      const it = item && typeof item === 'object' ? item : {};
+      const quantity = Number(it.quantity);
+      return {
+        name: text(it.variation_name, 200) || text(it.direct_link_code, 200) || 'Article Ko-fi',
+        quantity: Number.isFinite(quantity) && quantity > 0 && quantity < 10000 ? quantity : 1,
+      };
+    });
   }
 
   return [
     {
       name: describeKofiType(payload.type),
       quantity: 1,
-      price: Number(payload.amount) || 0,
+      price: finiteAmount(payload.amount),
     },
   ];
 }
@@ -43,17 +58,17 @@ function mapKofiPayload(payload) {
 
   return {
     channel: 'kofi',
-    customer_name: payload.from_name || null,
-    customer_email: payload.email || null,
+    customer_name: text(payload.from_name, 200),
+    customer_email: text(payload.email, 254),
     items: buildItems(payload),
-    total: Number(payload.amount) || 0,
+    total: finiteAmount(payload.amount),
     status: 'pending',
     order_date: orderDate,
     tracking: null,
     shipping: payload.shipping ? 'standard' : null,
     shop_name: null,
-    kofi_transaction_id: payload.kofi_transaction_id || null,
-    raw_payload: payload,
+    kofi_transaction_id: text(payload.kofi_transaction_id, 200),
+    raw_payload: withoutSecret(payload),
   };
 }
 

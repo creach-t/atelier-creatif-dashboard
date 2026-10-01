@@ -82,7 +82,8 @@ export const ImportKofiHistory = () => {
       {result && (
         <p className="text-sm text-green-600 mb-4">
           {result.imported} commande(s) importée(s)/mise(s) à jour
-          {result.skipped > 0 ? `, ${result.skipped} ligne(s) ignorée(s)` : ''}.
+          {result.skipped > 0 ? `, ${result.skipped} ligne(s) ignorée(s)` : ''}
+          {result.invalid_date > 0 ? ` (dont ${result.invalid_date} sans date lisible)` : ''}.
         </p>
       )}
 

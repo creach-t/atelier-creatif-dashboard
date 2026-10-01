@@ -37,7 +37,8 @@ export function computeReportStats(orders) {
   const dayTotals = Array(7).fill(0);
   list.forEach((o) => {
     if (!o.order_date) return;
-    const day = new Date(o.order_date).getDay();
+    // Midi : pas de décalage d'un jour selon le fuseau du navigateur.
+    const day = new Date(`${o.order_date}T12:00:00`).getDay();
     dayTotals[day] += netOf(o);
   });
   const dayData = DAYS_FR.map((name, i) => ({ name, montant: Math.round(dayTotals[i] * 100) / 100 }));

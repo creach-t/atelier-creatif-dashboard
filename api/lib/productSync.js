@@ -25,7 +25,10 @@ async function syncProductsFromItems(supabase, userId, items, { price = 0 } = {}
     .map((name) => ({ user_id: userId, name, category: 'Ko-fi', price: Number(price) || 0, image: '🎁' }));
 
   for (const batch of chunk(rows, 500)) {
-    const { error } = await supabase.from('products').insert(batch);
+    // Index unique (user_id, name) : une course avec une autre requête ignore le doublon au lieu de le créer.
+    let { error } = await supabase.from('products').upsert(batch, { onConflict: 'user_id,name', ignoreDuplicates: true });
+    // 42P10 : l'index de la migration 0011 n'est pas encore créé -> simple insertion, comme avant.
+    if (error && error.code === '42P10') ({ error } = await supabase.from('products').insert(batch));
     if (error) console.error('productSync insert error:', error);
   }
 }

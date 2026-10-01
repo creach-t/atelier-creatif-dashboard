@@ -2,6 +2,7 @@ const { route, pickFields, badRequest } = require('./lib/resource');
 const { serverError, isUniqueViolation } = require('./lib/errors');
 const { optionalString } = require('./lib/validate');
 
+const MIN_TOKEN_LENGTH = 20; // un verification_token Ko-fi est un UUID (36 caractères)
 const PATCHABLE_FIELDS = ['display_name', 'kofi_verification_token', 'onboarding_completed', 'workspace'];
 
 // Espace de travail (pages, widgets, disposition) : un objet JSON libre côté produit, mais borné ici
@@ -28,8 +29,9 @@ module.exports = route({
     if (!optionalString(updates.display_name, 100)) return badRequest(res, 'display_name must be a string (100 chars max)');
     if (updates.kofi_verification_token !== undefined && updates.kofi_verification_token !== null) {
       const token = updates.kofi_verification_token;
-      if (typeof token !== 'string' || !token.trim() || token.length > 200) {
-        return badRequest(res, 'kofi_verification_token must be a non-empty string (200 chars max) or null');
+      // Longueur minimale : ce token est le seul secret du webhook public, un token court se devine.
+      if (typeof token !== 'string' || token.trim().length < MIN_TOKEN_LENGTH || token.length > 200) {
+        return badRequest(res, `kofi_verification_token must be a string of ${MIN_TOKEN_LENGTH} to 200 chars, or null`);
       }
       updates.kofi_verification_token = token.trim();
     }
