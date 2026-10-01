@@ -18,7 +18,9 @@ Une solution complète pour gérer efficacement vos commandes Ko-fi, vos ventes 
 ### 🌐 **Multi-canal**
 - **Ko-fi** : commandes/paiements synchronisés automatiquement via webhook (identifié par compte via le verification token), enrichit aussi le catalogue produits et les fiches clients automatiquement
 - **Point de vente** : ventes physiques/personnalisées saisies manuellement
-- D'autres canaux pourront être ajoutés par la suite (le canal est une donnée, pas du code en dur)
+- **Etsy** : import de l'export CSV officiel (articles ou commandes, frais réels convertis en taux), dédoublonné par n° de commande ; saisie manuelle possible
+- **Vinted, Depop, Leboncoin, marché / salon** : canaux de saisie (Vinted n'a ni API publique ni export de ventes : pas d'import, voir [`docs/SOURCES.md`](docs/SOURCES.md))
+- Les canaux viennent d'un **registre de sources** : en ajouter un = une entrée de registre (+ un adaptateur CSV si besoin). Réglages : activer les sources utilisées, taux de frais par défaut, import par source
 
 ### ⚙️ **Réglages**
 - Connexion/déconnexion Ko-fi (verification token, URL de webhook) à tout moment, pas juste à l'inscription
@@ -49,6 +51,7 @@ Toute l'application est composée de **pages de widgets** que chacun organise à
 
 ### 🎯 **Catalogue Produits**
 - Enrichi automatiquement à partir des ventes Ko-fi (nom, photo et lien Ko-fi direct quand disponibles dans la boutique)
+- **Image par produit** : lien Ko-fi (nom, prix et image pré-remplis), URL d'image, fichier (redimensionné puis envoyé vers Supabase Storage) ou emoji ; « Resynchroniser depuis Ko-fi » avec comparatif avant/après et **jamais d'écrasement sans confirmation** ; rafraîchissement en masse depuis Réglages. Ko-fi peut bloquer la lecture côté serveur (Cloudflare) : on ne contourne pas, la saisie manuelle reste disponible
 - Pas de gestion de stock — la métrique qui compte est la **quantité vendue**, calculée depuis les commandes
 - **Top 5 des produits les plus rentables depuis le début** en tête de page (widget « Produits les plus rentables », même podium partout)
 - Cartes façon boutique Ko-fi (grande photo, placeholder sans photo) ou vue **Liste** ; tri par clic sur les en-têtes (liste) ou pastilles (grille), recherche, filtres catégorie et type
@@ -101,7 +104,7 @@ Cashly est multi-utilisateur : l'authentification (**Supabase Auth**) isole les 
 
 1. **Créer le projet Supabase**
    - Sur [app.supabase.com](https://app.supabase.com), crée un nouveau projet.
-   - Dans l'éditeur SQL du projet, exécute le contenu de [`supabase/schema.sql`](supabase/schema.sql) (installation neuve) — ça crée les tables `profiles`, `orders`, `products`, `customers`, le trigger qui crée un profil à chaque inscription, et les policies RLS. Pour une base existante, applique dans l'ordre les migrations de [`supabase/migrations/`](supabase/migrations) (`0002_multi_tenant.sql`, `0003_customers.sql`, `0004_products_kofi_link.sql`, `0005_orders_notes.sql`, `0006_products_price_estimated.sql`, `0007_products_free_kind.sql`, `0008_orders_commission_extras.sql`, `0009_orders_kofi_id_per_user.sql`, `0010_profiles_workspace.sql`, `0011_hardening.sql`).
+   - Dans l'éditeur SQL du projet, exécute le contenu de [`supabase/schema.sql`](supabase/schema.sql) (installation neuve) — ça crée les tables `profiles`, `orders`, `products`, `customers`, le trigger qui crée un profil à chaque inscription, et les policies RLS. Pour une base existante, applique dans l'ordre les migrations de [`supabase/migrations/`](supabase/migrations) (`0002_multi_tenant.sql`, `0003_customers.sql`, `0004_products_kofi_link.sql`, `0005_orders_notes.sql`, `0006_products_price_estimated.sql`, `0007_products_free_kind.sql`, `0008_orders_commission_extras.sql`, `0009_orders_kofi_id_per_user.sql`, `0010_profiles_workspace.sql`, `0011_hardening.sql`, `0012_orders_sources.sql`, `0013_product_images_bucket.sql`).
    - Dans *Project Settings → API Keys*, récupère l'**URL du projet**, la **clé secrète** (`sb_secret_...`, ou `service_role` si l'ancien système) — jamais exposée au navigateur — et la **clé publishable** (`sb_publishable_...`, ou `anon`) — celle-là est safe à exposer au front, elle sert à l'authentification.
 
 2. **Variables d'environnement**
@@ -178,14 +181,20 @@ api/                         # Routes API (montées par server.js)
 │   ├── dates.js            # Jours calendaires au fuseau Europe/Paris
 │   ├── batch.js            # chunk : lots pour les requêtes groupées
 │   ├── kofiMapper.js       # Traduction payload webhook Ko-fi -> commande
+│   ├── sources.js          # Copie CommonJS du registre de sources (synchro testée avec src/domain/sources.js)
+│   ├── importOrders.js     # Import CSV générique d'une source (Etsy…), dédoublonné par source_ref
+│   ├── kofiProduct.js      # Aperçu d'un produit Ko-fi (Open Graph) : validation d'URL anti-SSRF, fetch borné
+│   ├── productImage.js     # Validation d'une image produit (emoji ou URL https)
 │   ├── productSync.js       # Auto-création de produits à partir des articles vendus (requêtes groupées)
 │   └── customerSync.js       # Auto-création de fiches clients à partir des commandes (requêtes groupées)
 ├── kofi-webhook.js         # Réception des webhooks Ko-fi (résout le compte via profiles.kofi_verification_token)
 ├── orders.js                # GET (liste triée par order_date, filtre ?channel=) / POST — filtré par user_id
 ├── orders/[id].js           # PATCH (tous les champs, validés) / DELETE
-├── orders/import.js          # POST — import/réimport de l'historique Ko-fi (CSV)
+├── orders/import.js          # POST — import/réimport de l'historique Ko-fi (CSV) ; avec { source } : import CSV d'une autre source (Etsy)
 ├── products.js               # GET / POST (dont is_free, kind) — filtré par user_id
 ├── products/[id].js          # PATCH / DELETE
+├── products/kofi-preview.js  # POST — aperçu nom/prix/image d'un lien Ko-fi, sans rien écrire
+├── products/image.js         # POST — envoi d'une photo vers Supabase Storage
 ├── customers.js               # GET / POST — filtré par user_id
 ├── customers/[id].js          # PATCH / DELETE
 └── profile.js                 # GET / PATCH — display_name, kofi_verification_token, workspace (pages/widgets JSON, 200 Ko max)
@@ -195,7 +204,7 @@ docker-compose.prod.yml      # Service Docker + labels Traefik (cashly.creachthe
 
 supabase/
 ├── schema.sql              # Schéma complet (installation neuve, multi-utilisateur)
-└── migrations/              # 0002 à 0011 — migrations additives (multi-tenant, clients, lien Ko-fi, notes, prix estimé, gratuit/type, commission/divers, id Ko-fi par utilisateur, espace de travail, durcissement RLS/index)
+└── migrations/              # 0002 à 0013 — migrations additives (multi-tenant, clients, lien Ko-fi, notes, prix estimé, gratuit/type, commission/divers, id Ko-fi par utilisateur, espace de travail, durcissement RLS/index, sources de vente, bucket d'images)
 
 src/
 ├── App.js                  # Connexion, puis <AppShell />
@@ -209,14 +218,15 @@ src/
 │   └── ui/                 # Sheet (panneau/feuille), AnimatedNumber, réglages d'animation
 ├── data/                   # DataProvider (commandes, produits, clients et dérivés partagés) + hooks de données (useResource, useOrders, useProducts, useCustomers, useEstimatedPrices, useAccount)
 ├── services/               # authService, profileService, importService : seuls (avec data/ et api/) à parler au serveur ou à Supabase — imposé par ESLint
-├── domain/                 # constants.js : statuts, canaux, valeurs par défaut
+├── domain/                 # constants.js (statuts, valeurs par défaut) et sources.js (registre de sources : un canal = une entrée)
+├── sources/                # Adaptateurs d'import CSV par source (etsy.js) + briques communes (csvFields.js) — voir docs/SOURCES.md
 ├── ui/                     # Briques d'interface sans logique métier : Card, Button, Badge, ChannelBadge (vrais logos), ProductThumbnail/Cover, Modal, PriceTag, SortHeader
 ├── features/               # Une feuille par domaine métier (composants + logique de saisie)
 │   ├── orders/             # OrderRow, OrdersHeatmap, NotificationBell, OrderForm (+ orderDraft.js, éditeurs), détail cliquable
-│   ├── products/           # ProductCard, TopProducts, fiche, formulaire
+│   ├── products/           # ProductCard, TopProducts, fiche, formulaire (ImagePicker : lien Ko-fi / URL / fichier / emoji), comparatif Ko-fi (kofiSyncPlan.js : règles de non-écrasement)
 │   ├── customers/          # Fiche client, formulaire
 │   ├── reports/            # Vues détaillées des rapports (utilisées par les widgets « Rapport »)
-│   ├── settings/           # Réglages : compte, source Ko-fi, import d'historique, personnalisation (réinitialisation)
+│   ├── settings/           # Réglages : compte, source Ko-fi, sources de vente (activer, frais, import CSV), import d'historique, rafraîchissement du catalogue depuis Ko-fi, personnalisation
 │   ├── auth/Login.js       # Écran de connexion / inscription (Supabase Auth)
 │   └── overlays/           # OverlayProvider : fiches et formulaires, ouverts depuis n'importe quel widget
 ├── widgets/                # 1 fichier = 1 widget (defineWidget) ; index.js les enregistre tous
