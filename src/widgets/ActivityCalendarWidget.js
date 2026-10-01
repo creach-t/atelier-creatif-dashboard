@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { CalendarDays } from 'lucide-react';
 import { defineWidget } from '../core/widgets/registry';
 import { CHANNEL_OPTIONS } from '../core/widgets/common';
@@ -7,39 +7,43 @@ import { useOverlays } from '../features/overlays/OverlayProvider';
 import { OrdersHeatmap } from '../features/orders/OrdersHeatmap';
 import { heatmapGrid } from '../features/orders/heatmapLayout';
 import { OrderRow } from '../features/orders/OrderRow';
-import { formatDate } from '../core/metrics/format';
+import { formatDate, plural } from '../core/metrics/format';
 import { ScaleToFit } from '../core/widgets/ScaleToFit';
-import { Paged } from '../core/widgets/Fit';
+import { Sheet } from '../core/ui/Sheet';
 
 // Le calendrier tient toujours en entier, sans défilement, avec des cases carrées : leur taille suit la hauteur du
 // widget, puis on ajoute autant de semaines que la largeur en accepte (la durée choisie est un minimum). Si le tout
-// dépasse encore, le contenu est réduit à l'échelle. Court : on retire les chiffres et la légende.
+// dépasse encore, le contenu est réduit à l'échelle, sinon il est centré. Court : on retire les chiffres et la légende.
+// Toucher un jour ouvre ses commandes dans un panneau, sans toucher à la taille du calendrier.
 const CalendarView = ({ config, size }) => {
   const { orders } = useData();
   const { openOrder } = useOverlays();
   const [day, setDay] = useState(null);
 
   const scoped = useMemo(() => orders.filter((o) => config.channel === 'all' || o.channel === config.channel), [orders, config.channel]);
-  const dayOrders = useMemo(() => (day ? scoped.filter((o) => o.order_date === day) : []), [scoped, day]);
+  // Le détail du jour s'ouvre dans un panneau par-dessus : le calendrier garde sa taille quoi qu'on touche.
+  // `shown` garde le dernier jour pendant l'animation de fermeture, pour que le panneau ne se vide pas en partant.
+  const shown = useRef(null);
+  if (day) shown.current = day;
+  const dayOrders = useMemo(() => (shown.current ? scoped.filter((o) => o.order_date === shown.current) : []), [scoped, day]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const tall = size.hTier === 'md' || size.hTier === 'lg';
-  const { cell, weeks } = heatmapGrid({ ...size, minWeeks: Number(config.weeks), showStats: tall, dayOpen: Boolean(day) });
+  const { cell, weeks } = heatmapGrid({ ...size, minWeeks: Number(config.weeks), showStats: tall });
+
+  // La fiche de commande s'ouvre dans une fenêtre sous le panneau : on ferme celui-ci d'abord.
+  const open = (order) => { setDay(null); openOrder(order); };
 
   return (
-    <ScaleToFit>
-      <OrdersHeatmap orders={scoped} weeksCount={weeks} selectedDay={day} onSelectDay={setDay} cell={cell} showStats={tall} showLegend={tall} />
-      {day && (
-        <div className="mt-3 border-t border-purple-100 pt-3">
-          <p className="text-xs font-semibold text-gray-500 mb-2">{formatDate(day)}</p>
-          <Paged
-            items={dayOrders}
-            pageSize={2}
-            resetKey={day}
-            renderItem={(o, i) => <div key={o.id} className="mb-2"><OrderRow order={o} index={i} compact onClick={() => openOrder(o)} /></div>}
-          />
+    <>
+      <ScaleToFit center>
+        <OrdersHeatmap orders={scoped} weeksCount={weeks} selectedDay={day} onSelectDay={setDay} cell={cell} showStats={tall} showLegend={tall} />
+      </ScaleToFit>
+      <Sheet open={Boolean(day)} onClose={() => setDay(null)} title={formatDate(shown.current)} subtitle={plural(dayOrders.length, 'commande')}>
+        <div className="space-y-2">
+          {dayOrders.map((o, i) => <OrderRow key={o.id} order={o} index={i} onClick={() => open(o)} />)}
         </div>
-      )}
-    </ScaleToFit>
+      </Sheet>
+    </>
   );
 };
 

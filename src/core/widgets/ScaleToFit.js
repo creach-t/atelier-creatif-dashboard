@@ -6,7 +6,7 @@ import { useContainerSize } from './useContainerSize';
 // scrollé. Jamais agrandi (échelle max 1) ; `min` évite de descendre sous une taille illisible.
 // Le contenu est mis en page à la largeur réelle du widget (ses variantes @md: etc. restent justes) ; seule sa
 // hauteur naturelle est mesurée, donc aucune boucle de mesure.
-export const ScaleToFit = ({ children, min = 0.45, className = '' }) => {
+export const ScaleToFit = ({ children, min = 0.45, className = '', center = false }) => {
   const [outerRef, outer] = useContainerSize();
   const innerRef = useRef(null);
   const [natural, setNatural] = useState(0);
@@ -22,13 +22,15 @@ export const ScaleToFit = ({ children, min = 0.45, className = '' }) => {
   }, []);
 
   const scale = outer.measured && natural > 0 ? Math.max(min, Math.min(1, outer.height / natural)) : 1;
+  // `center` : le contenu qui ne remplit pas toute la hauteur est centré au lieu de laisser le vide en dessous.
+  const top = center && outer.measured && natural > 0 ? Math.max(0, (outer.height - natural * scale) / 2) : 0;
 
   return (
     <div ref={outerRef} className={`relative flex-1 min-h-0 overflow-hidden ${className}`}>
       <div
         ref={innerRef}
-        className="absolute inset-x-0 top-0"
-        style={{ transform: scale < 1 ? `scale(${scale})` : undefined, transformOrigin: 'top center' }}
+        className="absolute inset-x-0"
+        style={{ top, transform: scale < 1 ? `scale(${scale})` : undefined, transformOrigin: 'top center' }}
       >
         {children}
       </div>

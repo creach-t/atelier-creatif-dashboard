@@ -1,7 +1,7 @@
 import { heatmapGrid } from '../features/orders/heatmapLayout';
 import { GAP } from '../features/orders/OrdersHeatmap';
 
-const base = { measured: true, minWeeks: 26, showStats: false, dayOpen: false };
+const base = { measured: true, minWeeks: 26, showStats: false };
 const gridW = ({ cell, weeks }) => weeks * cell + (weeks - 1) * GAP;
 
 describe('heatmapGrid', () => {
@@ -37,10 +37,14 @@ describe('heatmapGrid', () => {
     expect(tall.cell).toBeGreaterThan(short.cell);
   });
 
-  test('ouvrir le détail du jour ou afficher les chiffres réduit les cases', () => {
-    const closed = heatmapGrid({ ...base, width: 1400, height: 330, minWeeks: 12 });
-    expect(heatmapGrid({ ...base, width: 1400, height: 330, minWeeks: 12, dayOpen: true }).cell).toBeLessThan(closed.cell);
-    expect(heatmapGrid({ ...base, width: 1400, height: 330, minWeeks: 12, showStats: true }).cell).toBeLessThan(closed.cell);
+  test('afficher les chiffres et la légende réduit les cases', () => {
+    const without = heatmapGrid({ ...base, width: 1400, height: 330, minWeeks: 12 });
+    expect(heatmapGrid({ ...base, width: 1400, height: 330, minWeeks: 12, showStats: true }).cell).toBeLessThan(without.cell);
+  });
+
+  test("la hauteur est exploitée jusqu'au bout : cases grandes dans un grand widget", () => {
+    const grid = heatmapGrid({ ...base, width: 1400, height: 520, minWeeks: 12 });
+    expect(grid.cell).toBeGreaterThan(60);
   });
 
   test('bornes : cases de 5 px minimum, 104 semaines maximum', () => {
