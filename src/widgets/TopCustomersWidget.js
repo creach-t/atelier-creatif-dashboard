@@ -4,7 +4,7 @@ import { Crown } from 'lucide-react';
 import { defineWidget } from '../core/widgets/registry';
 import { countField, periodField } from '../core/widgets/common';
 import { useWidgetOrders } from '../core/widgets/hooks';
-import { useOverlays } from '../core/overlays/OverlayProvider';
+import { useOverlays } from '../features/overlays/OverlayProvider';
 import { computeStatsByName } from '../utils/customerStats';
 import { getInitials } from '../utils/customerBadges';
 import { money } from '../core/metrics/format';

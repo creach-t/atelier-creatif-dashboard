@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useData } from '../data/DataProvider';
+import { useData } from '../../data/DataProvider';
 import { useWorkspace } from '../workspace/WorkspaceProvider';
 import { resolvePeriod, ordersInPeriod, ordersInPrevPeriod } from '../metrics/periods';
 import { isoDayNow } from './today';

@@ -4,7 +4,7 @@ import { Check, Copy, GripVertical, Lock, SlidersHorizontal, Trash2, AlertTriang
 import { getWidget, resolveConfig } from './registry';
 import { UNIVERSAL_DEFAULTS } from './common';
 import { useContainerSize } from './useContainerSize';
-import { useData } from '../data/DataProvider';
+import { useData } from '../../data/DataProvider';
 import { widgetVariants } from '../ui/motion';
 
 // Un widget qui plante ne doit jamais vider toute la page.

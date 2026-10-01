@@ -51,6 +51,18 @@
     "extends": [
       "react-app",
       "react-app/jest"
+    ],
+    "overrides": [
+      {
+        "files": ["src/core/**/*.js"],
+        "rules": {
+          "no-restricted-imports": ["error", {
+            "patterns": [
+              { "group": ["**/features/**", "**/app/**", "**/widgets/index", "**/widgets/*Widget"], "message": "core/ est le moteur : il ne dépend pas des couches supérieures (features, app, widgets)." }
+            ]
+          }]
+        }
+      }
     ]
   },
   "browserslist": {

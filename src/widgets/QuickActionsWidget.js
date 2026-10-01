@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Zap, ShoppingCart, Palette, Users } from 'lucide-react';
 import { defineWidget } from '../core/widgets/registry';
-import { useOverlays } from '../core/overlays/OverlayProvider';
+import { useOverlays } from '../features/overlays/OverlayProvider';
 import { ScaleToFit } from '../core/widgets/ScaleToFit';
 
 const ACTIONS = {

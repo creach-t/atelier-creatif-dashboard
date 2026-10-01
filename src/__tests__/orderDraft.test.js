@@ -1,6 +1,6 @@
 import {
   initialDraft, orderTotals, validateDraft, newProducts, buildCreatePayload, buildUpdateChanges, emptyItem,
-} from '../components/orders/orderDraft';
+} from '../features/orders/orderDraft';
 
 const products = [{ id: 'p1', name: 'Sticker', price: 3 }];
 

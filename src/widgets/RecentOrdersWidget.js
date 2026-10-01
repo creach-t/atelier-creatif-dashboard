@@ -3,8 +3,8 @@ import { ShoppingCart } from 'lucide-react';
 import { defineWidget } from '../core/widgets/registry';
 import { countField, periodField, CHANNEL_OPTIONS, STATUS_OPTIONS } from '../core/widgets/common';
 import { useWidgetOrders } from '../core/widgets/hooks';
-import { useOverlays } from '../core/overlays/OverlayProvider';
-import { OrderRow, ORDER_ROW_H } from '../components/orders/OrderRow';
+import { useOverlays } from '../features/overlays/OverlayProvider';
+import { OrderRow, ORDER_ROW_H } from '../features/orders/OrderRow';
 import { EmptyState } from '../core/widgets/parts';
 import { FitList } from '../core/widgets/Fit';
 

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ArrowDown, ArrowUp, RotateCcw, Trash2 } from 'lucide-react';
 import { Sheet } from '../ui/Sheet';
 import { Segmented } from '../config/ConfigForm';
-import { PAGE_ICONS } from '../shell/icons';
+import { PAGE_ICONS } from './pageIcons';
 import { PERIOD_OPTIONS } from '../metrics/periods';
 import { useWorkspace } from './WorkspaceProvider';
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { OrderForm } from '../components/orders/OrderForm';
+import { OrderForm } from '../features/orders/OrderForm';
 
 const products = [
   { id: 'p1', name: 'Sticker chat', category: 'Ko-fi', price: 3, image: '🎁' },

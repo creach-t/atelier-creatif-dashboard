@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CalendarRange, Check, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { PERIOD_OPTIONS, resolvePeriod, dayKey } from '../metrics/periods';
-import { useData } from '../data/DataProvider';
+import { useData } from '../../data/DataProvider';
 import { useWorkspace } from './WorkspaceProvider';
 import { Sheet } from '../ui/Sheet';
 import { useIsNarrow } from '../../hooks/useIsNarrow';

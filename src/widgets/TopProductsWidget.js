@@ -3,10 +3,10 @@ import { Trophy } from 'lucide-react';
 import { defineWidget } from '../core/widgets/registry';
 import { countField, periodField } from '../core/widgets/common';
 import { useWidgetOrders } from '../core/widgets/hooks';
-import { useData } from '../core/data/DataProvider';
-import { useOverlays } from '../core/overlays/OverlayProvider';
+import { useData } from '../data/DataProvider';
+import { useOverlays } from '../features/overlays/OverlayProvider';
 import { rankProducts } from '../utils/productRanking';
-import { TopProducts } from '../components/products/TopProducts';
+import { TopProducts } from '../features/products/TopProducts';
 import { EmptyState } from '../core/widgets/parts';
 
 const TopProductsView = ({ config, size }) => {

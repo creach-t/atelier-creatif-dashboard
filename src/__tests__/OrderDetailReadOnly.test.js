@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { OrderDetailModal } from '../components/orders/OrderDetailModal';
+import { OrderDetailModal } from '../features/orders/OrderDetailModal';
 
 const order = {
   id: 'abcdef12-0000',

@@ -9,7 +9,7 @@ import { getMetric } from '../core/metrics/metrics';
 import { formatValue } from '../core/metrics/format';
 import { ChartTooltip, EmptyState } from '../core/widgets/parts';
 import { ScaleToFit } from '../core/widgets/ScaleToFit';
-import { ChannelBadge, CHANNELS } from '../components/ui/ChannelBadge';
+import { ChannelBadge, CHANNELS } from '../ui/ChannelBadge';
 
 const PALETTE = ['#a78bfa', '#f472b6', '#fbbf24', '#34d399'];
 

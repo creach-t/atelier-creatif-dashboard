@@ -3,12 +3,12 @@ import { Layers, Crown, Package } from 'lucide-react';
 import { defineWidget } from '../core/widgets/registry';
 import { periodField } from '../core/widgets/common';
 import { useWidgetOrders } from '../core/widgets/hooks';
-import { useData } from '../core/data/DataProvider';
-import { useOverlays } from '../core/overlays/OverlayProvider';
+import { useData } from '../data/DataProvider';
+import { useOverlays } from '../features/overlays/OverlayProvider';
 import { computeReportStats } from '../utils/computeReportStats';
-import { OverviewTab } from '../components/reports/OverviewTab';
-import { CustomersTab } from '../components/reports/CustomersTab';
-import { ProductsReportTab } from '../components/reports/ProductsReportTab';
+import { OverviewTab } from '../features/reports/OverviewTab';
+import { CustomersTab } from '../features/reports/CustomersTab';
+import { ProductsReportTab } from '../features/reports/ProductsReportTab';
 import { EmptyState } from '../core/widgets/parts';
 import { ScaleToFit } from '../core/widgets/ScaleToFit';
 

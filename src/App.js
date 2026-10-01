@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { AppShell } from './core/shell/AppShell';
-import { Login } from './components/auth/Login';
+import { AppShell } from './app/AppShell';
+import { Login } from './features/auth/Login';
 import { onUnauthorized } from './api/client';
 import { supabase } from './api/supabaseClient';
 

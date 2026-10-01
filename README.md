@@ -192,30 +192,30 @@ supabase/
 
 src/
 ├── App.js                  # Connexion, puis <AppShell />
-├── core/                   # Moteur de l'application (indépendant de tout widget)
-│   ├── shell/              # AppShell, Sidebar, BottomNav (mobile), Header (titre + période + actions), icônes de pages
+├── app/                    # Composition de l'application : AppShell, Sidebar, BottomNav (mobile), Header (titre + période + actions)
+├── core/                   # Moteur générique : ne dépend ni de features/, ni de app/, ni de widgets/ (règle ESLint no-restricted-imports)
 │   ├── workspace/          # model.js (fonctions pures : pages, widgets, dispositions), WorkspaceProvider (état, annulation, sauvegarde),
-│   │                       # Board (grille react-grid-layout), WidgetPicker, WidgetSettings, PageSettings, PeriodPicker, defaults.js, storage.js
+│   │                       # Board (grille react-grid-layout), WidgetPicker, WidgetSettings, PageSettings, PeriodPicker, pageIcons, defaults.js, storage.js
 │   ├── widgets/            # registry.js (defineWidget), WidgetFrame (cadre, verrou, barre d'outils), WidgetPreview, hooks (période/commandes), parts, common
-│   ├── metrics/            # metrics.js (indicateurs), periods.js (mois/année/plage), series.js (séries temporelles), format.js
+│   ├── metrics/            # metrics.js (indicateurs), periods.js (mois/année/plage), series.js (séries temporelles), format.js (money, dates…)
 │   ├── config/             # ConfigForm : formulaire de réglages généré depuis le schéma d'un widget
-│   ├── data/               # DataProvider : commandes, produits, clients et dérivés partagés (prix estimés, variantes, ventes)
-│   ├── overlays/           # OverlayProvider : fiches et formulaires (commande, produit, client), ouverts depuis n'importe quel widget
 │   └── ui/                 # Sheet (panneau/feuille), AnimatedNumber, réglages d'animation
+├── data/                   # DataProvider (commandes, produits, clients et dérivés partagés) + hooks de données (useResource, useOrders, useProducts, useCustomers, useEstimatedPrices)
+├── domain/                 # constants.js : statuts, canaux, valeurs par défaut
+├── ui/                     # Briques d'interface sans logique métier : Card, Button, Badge, ChannelBadge (vrais logos), ProductThumbnail/Cover, Modal, PriceTag, SortHeader
+├── features/               # Une feuille par domaine métier (composants + logique de saisie)
+│   ├── orders/             # OrderRow, OrdersHeatmap, NotificationBell, OrderForm (+ orderDraft.js, éditeurs), détail cliquable
+│   ├── products/           # ProductCard, TopProducts, fiche, formulaire
+│   ├── customers/          # Fiche client, formulaire
+│   ├── reports/            # Vues détaillées des rapports (utilisées par les widgets « Rapport »)
+│   ├── settings/           # Réglages : compte, source Ko-fi, import d'historique, personnalisation (réinitialisation)
+│   ├── auth/Login.js       # Écran de connexion / inscription (Supabase Auth)
+│   └── overlays/           # OverlayProvider : fiches et formulaires, ouverts depuis n'importe quel widget
 ├── widgets/                # 1 fichier = 1 widget (defineWidget) ; index.js les enregistre tous
 ├── api/
 │   ├── client.js            # Wrapper fetch (JWT Supabase, gestion des erreurs)
 │   └── supabaseClient.js    # Client Supabase côté navigateur (clé publishable, auth uniquement)
-├── hooks/                  # useOrders, useProducts, useCustomers (fetch + mutations), useSort (tri par en-têtes), useEstimatedPrices (écriture des prix estimés), useIsNarrow
-├── components/             # Briques réutilisées par les widgets et les popups
-│   ├── ui/                 # Card, Button, Badge, ChannelBadge (vrais logos), ProductThumbnail/Cover, Modal, PriceTag, SortHeader
-│   ├── auth/Login.js        # Écran de connexion / inscription (Supabase Auth)
-│   ├── settings/             # Réglages : compte, source Ko-fi, import d'historique, personnalisation (réinitialisation)
-│   ├── orders/               # OrderRow, OrdersHeatmap, formulaire de saisie, détail cliquable
-│   ├── products/             # ProductCard, TopProducts, fiche, formulaire
-│   ├── customers/            # Fiche client, formulaire
-│   ├── reports/               # Vues détaillées des rapports (utilisées par les widgets « Rapport »)
-│   └── layout/NotificationBell.js
+├── hooks/                  # useSort (tri par en-têtes), useIsNarrow
 ├── utils/                    # parseCsv, normalizeKofiCsv, computeReportStats, computeSoldByName, estimatePrices, computeProductRevenue, productVariants, productRanking, customerStats, orderAmounts (net/commission/divers)
 ├── __tests__/                # Jest : modèle de l'espace de travail, périodes/métriques/séries, prix, variantes, montants, Ko-fi…
 ├── index.js                 # Point d'entrée React
@@ -245,7 +245,7 @@ Un widget = un fichier dans [`src/widgets/`](src/widgets) qui appelle `defineWid
 Depuis l'interface : bouton "Nouveau Produit" sur la page Produits. Ils se créent aussi automatiquement à chaque vente boutique Ko-fi (nom de l'article, catégorie "Ko-fi", prix à 0€ à compléter toi-même — Ko-fi ne fournit pas de prix unitaire fiable). Les produits vivent dans Supabase, propres à chaque compte (`user_id`) ; pas de gestion de stock, seule la quantité vendue (calculée depuis les commandes) est affichée.
 
 ### Personnaliser le Branding
-1. Remplacez "Cashly" par votre nom dans [`src/core/shell/Sidebar.js`](src/core/shell/Sidebar.js), [`src/components/auth/Login.js`](src/components/auth/Login.js), `public/index.html` et `public/manifest.json`
+1. Remplacez "Cashly" par votre nom dans [`src/app/Sidebar.js`](src/app/Sidebar.js), [`src/features/auth/Login.js`](src/features/auth/Login.js), `public/index.html` et `public/manifest.json`
 2. Modifiez les gradients de couleur
 3. Ajoutez votre logo dans la sidebar
 
