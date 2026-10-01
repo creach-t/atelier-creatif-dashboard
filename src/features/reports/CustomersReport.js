@@ -7,7 +7,7 @@ import { getInitials, getCustomerBadges } from '../../utils/customerBadges';
 
 const rankIcon = (i) => (i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : null);
 
-export const CustomersTab = ({ stats, firstOrderByName, onSelectCustomer }) => {
+export const CustomersReport = ({ stats, firstOrderByName, onSelectCustomer }) => {
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() => {

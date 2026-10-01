@@ -1,4 +1,4 @@
-import { apiClient } from '../../api/client';
+import { getProfile, updateProfile } from '../../services/profileService';
 
 // Deux couches : localStorage (instantané, hors-ligne, fonctionne sans migration SQL) et le profil côté
 // serveur (suit l'utilisatrice d'un appareil à l'autre). Le serveur est optionnel : s'il échoue (colonne
@@ -24,7 +24,7 @@ export const clearLocal = () => {
 
 export const loadRemote = async () => {
   try {
-    const profile = await apiClient.get('/profile');
+    const profile = await getProfile();
     return (profile && profile.workspace) || null;
   } catch (e) {
     return null;
@@ -38,7 +38,7 @@ let remoteUnsupported = false;
 export const saveRemote = async (ws) => {
   if (remoteUnsupported) return false;
   try {
-    await apiClient.patch('/profile', { workspace: ws });
+    await updateProfile({ workspace: ws });
     return true;
   } catch (e) {
     if (e && e.message === 'workspace_unsupported') remoteUnsupported = true;

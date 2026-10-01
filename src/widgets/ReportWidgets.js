@@ -6,13 +6,13 @@ import { useWidgetOrders } from '../core/widgets/hooks';
 import { useData } from '../data/DataProvider';
 import { useOverlays } from '../features/overlays/OverlayProvider';
 import { computeReportStats } from '../utils/computeReportStats';
-import { OverviewTab } from '../features/reports/OverviewTab';
-import { CustomersTab } from '../features/reports/CustomersTab';
-import { ProductsReportTab } from '../features/reports/ProductsReportTab';
+import { OverviewReport } from '../features/reports/OverviewReport';
+import { CustomersReport } from '../features/reports/CustomersReport';
+import { ProductsReport } from '../features/reports/ProductsReport';
 import { EmptyState } from '../core/widgets/parts';
 import { ScaleToFit } from '../core/widgets/ScaleToFit';
 
-// Les trois vues détaillées de l'ancien onglet « Rapports », désormais des widgets indépendants :
+// Les trois rapports détaillés (features/reports) sous forme de widgets indépendants :
 // chacun se place, se dimensionne et suit la période comme n'importe quel autre.
 const useReportStats = (configPeriod) => {
   const { orders, period } = useWidgetOrders(configPeriod);
@@ -23,7 +23,7 @@ const useReportStats = (configPeriod) => {
 const OverviewView = ({ config }) => {
   const { orders, period, stats } = useReportStats(config.period);
   if (orders.length === 0) return <EmptyState icon={Layers}>Aucune commande sur {period.short}.</EmptyState>;
-  return <ScaleToFit min={0.25}><OverviewTab stats={stats} orders={orders} /></ScaleToFit>;
+  return <ScaleToFit min={0.25}><OverviewReport stats={stats} orders={orders} /></ScaleToFit>;
 };
 
 const CustomersReportView = ({ config }) => {
@@ -40,7 +40,7 @@ const CustomersReportView = ({ config }) => {
     return map;
   }, [all]);
   if (orders.length === 0) return <EmptyState icon={Crown}>Aucune commande sur {period.short}.</EmptyState>;
-  return <ScaleToFit min={0.25}><CustomersTab stats={stats} firstOrderByName={firstOrderByName} onSelectCustomer={openCustomer} /></ScaleToFit>;
+  return <ScaleToFit min={0.25}><CustomersReport stats={stats} firstOrderByName={firstOrderByName} onSelectCustomer={openCustomer} /></ScaleToFit>;
 };
 
 const ProductsReportView = ({ config }) => {
@@ -48,7 +48,7 @@ const ProductsReportView = ({ config }) => {
   const { openProduct } = useOverlays();
   const { orders, period } = useReportStats(config.period);
   if (orders.length === 0) return <EmptyState icon={Package}>Aucune commande sur {period.short}.</EmptyState>;
-  return <ScaleToFit min={0.25}><ProductsReportTab products={products} orders={orders} onSelectProduct={openProduct} /></ScaleToFit>;
+  return <ScaleToFit min={0.25}><ProductsReport products={products} orders={orders} onSelectProduct={openProduct} /></ScaleToFit>;
 };
 
 const common = { category: 'Rapports', schema: [periodField()], defaultConfig: { period: 'page' } };

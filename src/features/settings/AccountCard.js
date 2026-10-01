@@ -1,41 +1,30 @@
 import React, { useEffect, useState } from 'react';
 import { Card } from '../../ui/Card';
 import { Button } from '../../ui/Button';
-import { apiClient } from '../../api/client';
-import { supabase } from '../../api/supabaseClient';
+import { useAccount } from '../../data/useAccount';
+import { saveDisplayName } from '../../services/profileService';
 
 export const AccountCard = () => {
-  const [loading, setLoading] = useState(true);
-  const [email, setEmail] = useState('');
+  const account = useAccount();
   const [displayName, setDisplayName] = useState('');
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState(null);
+  const [saveError, setSaveError] = useState(null);
   const [info, setInfo] = useState(null);
+  const { loading, email } = account;
+  const error = saveError || (account.error && (account.error.message || 'Impossible de charger ton compte.'));
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const { data } = await supabase.auth.getUser();
-        setEmail((data && data.user && data.user.email) || '');
-        const profile = await apiClient.get('/profile');
-        setDisplayName((profile && profile.display_name) || '');
-      } catch (err) {
-        setError(err.message || 'Impossible de charger ton compte.');
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
+  // Le champ est modifiable : on le remplit une fois, quand le nom enregistré arrive.
+  useEffect(() => { setDisplayName(account.displayName); }, [account.displayName]);
 
   const handleSave = async () => {
     setSaving(true);
-    setError(null);
+    setSaveError(null);
     setInfo(null);
     try {
-      await apiClient.patch('/profile', { display_name: displayName.trim() || null });
+      await saveDisplayName(displayName);
       setInfo('Enregistré.');
     } catch (err) {
-      setError(err.message || "Impossible d'enregistrer.");
+      setSaveError(err.message || "Impossible d'enregistrer.");
     } finally {
       setSaving(false);
     }

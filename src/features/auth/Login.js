@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Sparkles, Eye, EyeOff } from 'lucide-react';
 import { Card } from '../../ui/Card';
 import { Button } from '../../ui/Button';
-import { supabase } from '../../api/supabaseClient';
+import { signIn, signUp } from '../../services/authService';
 
 export const Login = () => {
   const [mode, setMode] = useState('signin'); // 'signin' | 'signup'
@@ -36,12 +36,10 @@ export const Login = () => {
     setSubmitting(true);
     try {
       if (isSignup) {
-        const { error: signUpError } = await supabase.auth.signUp({ email, password });
-        if (signUpError) throw signUpError;
+        await signUp(email, password);
         setInfo('Compte créé. Vérifie tes emails si une confirmation est demandée, sinon connecte-toi.');
       } else {
-        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-        if (signInError) throw signInError;
+        await signIn(email, password);
       }
     } catch (err) {
       setError(err.message || 'Une erreur est survenue.');

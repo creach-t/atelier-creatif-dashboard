@@ -4,7 +4,7 @@ import { Card } from '../../ui/Card';
 import { Paged } from '../../core/widgets/Fit';
 import { computeSoldByName } from '../../utils/computeSoldByName';
 
-export const ProductsReportTab = ({ products, orders, onSelectProduct }) => {
+export const ProductsReport = ({ products, orders, onSelectProduct }) => {
   const [search, setSearch] = useState('');
 
   const soldByName = useMemo(() => computeSoldByName(orders), [orders]);

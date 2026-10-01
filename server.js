@@ -1,6 +1,5 @@
-// Serveur Express : sert l'API (adaptée des handlers api/*.js, initialement écrits
-// au format serverless Vercel — signature (req, res) compatible telle quelle avec
-// Express) et le build React statique. Remplace Vercel pour un déploiement Docker/VPS.
+// Serveur Express : sert l'API (les handlers api/*.js, de simples fonctions (req, res)) et le build React
+// statique, dans un conteneur Docker derrière Traefik.
 const path = require('path');
 const express = require('express');
 const helmet = require('helmet');
@@ -61,8 +60,8 @@ app.use('/api/orders/import', express.json({ limit: '10mb' }));
 app.use(express.json({ limit: '100kb' }));
 app.use(express.urlencoded({ extended: false, limit: '100kb' }));
 
-// Les handlers api/orders/[id].js et api/products/[id].js lisent l'id via req.query.id
-// (convention Vercel) — on le reproduit ici à partir du param de route Express.
+// Les handlers api/*/[id].js lisent l'id via req.query.id
+// — on le reproduit ici à partir du param de route Express.
 const withIdParam = (handler) => (req, res) => {
   req.query.id = req.params.id;
   return handler(req, res);

@@ -24,7 +24,7 @@ const ChartTooltip = ({ active, payload, label }) => {
   );
 };
 
-export const OverviewTab = ({ stats, orders }) => {
+export const OverviewReport = ({ stats, orders }) => {
   const channelData = Object.keys(CHANNELS).map((channel, i) => {
     const channelOrders = orders.filter((o) => o.channel === channel);
     const value = channelOrders.reduce((s, o) => s + netOf(o), 0);

@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Settings, LogOut, User, ChevronUp, X, Plus } from 'lucide-react';
-import { apiClient } from '../api/client';
-import { supabase } from '../api/supabaseClient';
+import { useAccount } from '../data/useAccount';
+import { signOut } from '../services/authService';
 import { useWorkspace } from '../core/workspace/WorkspaceProvider';
 import { pageIcon } from '../core/workspace/pageIcons';
 import { spring } from '../core/ui/motion';
@@ -10,22 +10,8 @@ import { spring } from '../core/ui/motion';
 // Menu latéral : une entrée par page de l'espace de travail (donc personnalisable), puis Réglages.
 export const Sidebar = ({ mobileOpen, onCloseMobile }) => {
   const { pages, page, isSettings, navigate, addPage } = useWorkspace();
-  const [displayName, setDisplayName] = useState('');
-  const [email, setEmail] = useState('');
+  const { displayName, email } = useAccount(); // en cas d'échec, le menu retombe sur le placeholder
   const [menuOpen, setMenuOpen] = useState(false);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const { data } = await supabase.auth.getUser();
-        setEmail((data && data.user && data.user.email) || '');
-        const profile = await apiClient.get('/profile');
-        setDisplayName((profile && profile.display_name) || '');
-      } catch (err) {
-        // silencieux — le menu retombe sur l'email/le placeholder
-      }
-    })();
-  }, []);
 
   const go = (id) => {
     navigate(id);
@@ -92,7 +78,7 @@ export const Sidebar = ({ mobileOpen, onCloseMobile }) => {
                   <Settings size={16} /> Réglages
                 </button>
                 <button
-                  onClick={() => supabase.auth.signOut()}
+                  onClick={signOut}
                   className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-gray-100"
                 >
                   <LogOut size={16} /> Déconnexion

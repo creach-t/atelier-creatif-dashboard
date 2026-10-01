@@ -9,7 +9,7 @@ const { syncCustomerFromOrder } = require('./lib/customerSync');
 //
 // Multi-utilisateur : Ko-fi envoie le même verification_token à chaque événement
 // pour un créateur donné, et chaque créateur a le sien (stocké dans profiles.kofi_verification_token
-// via l'onboarding) — c'est ce qui permet de retrouver le bon compte sans connaître
+// via les Réglages) — c'est ce qui permet de retrouver le bon compte sans connaître
 // à l'avance qui possède quel token.
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {

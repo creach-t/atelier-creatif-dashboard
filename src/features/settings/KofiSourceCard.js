@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { Card } from '../../ui/Card';
 import { Button } from '../../ui/Button';
-import { apiClient } from '../../api/client';
+import { getProfile, saveKofiToken, clearKofiToken } from '../../services/profileService';
 import { ChannelLogo } from '../../ui/ChannelBadge';
 
 const WEBHOOK_URL = `${window.location.origin}/api/kofi-webhook`;
@@ -20,7 +20,7 @@ export const KofiSourceCard = () => {
   const loadProfile = async () => {
     setLoading(true);
     try {
-      const profile = await apiClient.get('/profile');
+      const profile = await getProfile();
       setConnectedToken(profile && profile.kofi_verification_token ? profile.kofi_verification_token : null);
       setToken(profile && profile.kofi_verification_token ? profile.kofi_verification_token : '');
     } catch (err) {
@@ -50,7 +50,7 @@ export const KofiSourceCard = () => {
     setError(null);
     setInfo(null);
     try {
-      const updated = await apiClient.patch('/profile', { kofi_verification_token: token.trim() });
+      const updated = await saveKofiToken(token);
       setConnectedToken(updated.kofi_verification_token);
       setInfo('Ko-fi connecté.');
     } catch (err) {
@@ -68,7 +68,7 @@ export const KofiSourceCard = () => {
     setError(null);
     setInfo(null);
     try {
-      await apiClient.patch('/profile', { kofi_verification_token: null });
+      await clearKofiToken();
       setConnectedToken(null);
       setToken('');
       setInfo('Ko-fi déconnecté.');

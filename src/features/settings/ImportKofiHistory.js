@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '../../ui/Button';
 import { Card } from '../../ui/Card';
-import { apiClient } from '../../api/client';
+import { importKofiOrders } from '../../services/importService';
 import { parseCsv } from '../../utils/parseCsv';
 import { normalizeKofiCsvRows } from '../../utils/normalizeKofiCsv';
 
@@ -49,7 +49,7 @@ export const ImportKofiHistory = () => {
     setImporting(true);
     setError(null);
     try {
-      const res = await apiClient.post('/orders/import', { rows });
+      const res = await importKofiOrders(rows);
       setResult(res);
     } catch (err) {
       setError(err.message || "Échec de l'import.");

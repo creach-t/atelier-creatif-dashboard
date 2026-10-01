@@ -1,5 +1,5 @@
 import { netOf } from './orderAmounts';
-// Statistiques dérivées des commandes pour l'onglet Rapports — inspiré de kofi-visualizer,
+// Statistiques dérivées des commandes pour les widgets Rapport — inspiré de kofi-visualizer,
 // adapté aux commandes multi-canal de Cashly (pas seulement Ko-fi) au lieu d'un CSV séparé.
 const MONTH_FR = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
 const DAYS_FR = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];

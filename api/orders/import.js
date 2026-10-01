@@ -7,7 +7,7 @@ const { isDay } = require('../lib/validate');
 
 const MAX_ROWS = 5000;
 
-// Rattrapage de l'historique Ko-fi (onboarding) : le front parse le CSV exporté depuis
+// Rattrapage de l'historique Ko-fi (page Réglages) : le front parse le CSV exporté depuis
 // Ko-fi (More > Transactions > Download CSV) et envoie un tableau de lignes déjà
 // normalisées (voir src/utils/normalizeKofiCsv.js). On réutilise kofi_transaction_id comme
 // clé de dédup, comme pour le webhook — mais ici en UPDATE (pas ignore) sur conflit, pour

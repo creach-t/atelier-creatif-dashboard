@@ -200,7 +200,8 @@ src/
 │   ├── metrics/            # metrics.js (indicateurs), periods.js (mois/année/plage), series.js (séries temporelles), format.js (money, dates…)
 │   ├── config/             # ConfigForm : formulaire de réglages généré depuis le schéma d'un widget
 │   └── ui/                 # Sheet (panneau/feuille), AnimatedNumber, réglages d'animation
-├── data/                   # DataProvider (commandes, produits, clients et dérivés partagés) + hooks de données (useResource, useOrders, useProducts, useCustomers, useEstimatedPrices)
+├── data/                   # DataProvider (commandes, produits, clients et dérivés partagés) + hooks de données (useResource, useOrders, useProducts, useCustomers, useEstimatedPrices, useAccount)
+├── services/               # authService, profileService, importService : seuls (avec data/ et api/) à parler au serveur ou à Supabase — imposé par ESLint
 ├── domain/                 # constants.js : statuts, canaux, valeurs par défaut
 ├── ui/                     # Briques d'interface sans logique métier : Card, Button, Badge, ChannelBadge (vrais logos), ProductThumbnail/Cover, Modal, PriceTag, SortHeader
 ├── features/               # Une feuille par domaine métier (composants + logique de saisie)

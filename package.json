@@ -54,11 +54,22 @@
     ],
     "overrides": [
       {
+        "files": ["src/features/**/*.js", "src/app/**/*.js", "src/widgets/**/*.js", "src/ui/**/*.js", "src/App.js"],
+        "rules": {
+          "no-restricted-imports": ["error", {
+            "patterns": [
+              { "group": ["**/api/client", "**/api/supabaseClient", "@supabase/*"], "message": "Passer par src/services/ : seuls services/, data/ et api/ parlent au serveur ou à Supabase." }
+            ]
+          }]
+        }
+      },
+      {
         "files": ["src/core/**/*.js"],
         "rules": {
           "no-restricted-imports": ["error", {
             "patterns": [
-              { "group": ["**/features/**", "**/app/**", "**/widgets/index", "**/widgets/*Widget"], "message": "core/ est le moteur : il ne dépend pas des couches supérieures (features, app, widgets)." }
+              { "group": ["**/features/**", "**/app/**", "**/widgets/index", "**/widgets/*Widget"], "message": "core/ est le moteur : il ne dépend pas des couches supérieures (features, app, widgets)." },
+              { "group": ["**/api/client", "**/api/supabaseClient", "@supabase/*"], "message": "Passer par src/services/ : seuls services/, data/ et api/ parlent au serveur ou à Supabase." }
             ]
           }]
         }
