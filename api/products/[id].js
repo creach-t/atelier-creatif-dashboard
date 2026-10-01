@@ -1,5 +1,6 @@
 const { route, pickFields, badRequest, updateOwned, deleteOwned } = require('../lib/resource');
 const { isFiniteNumber, optionalString, MAX_AMOUNT } = require('../lib/validate');
+const { isValidProductImage, isHttpsUrl } = require('../lib/productImage');
 
 const PATCHABLE_FIELDS = ['name', 'category', 'price', 'price_estimated', 'is_free', 'kind', 'image', 'kofi_url'];
 const KINDS = ['physical', 'digital', 'both'];
@@ -19,6 +20,11 @@ module.exports = route({
       return badRequest(res, 'price must be a number >= 0');
     }
     if (!optionalString(updates.image, 500) || !optionalString(updates.kofi_url, 500)) return badRequest(res, 'image or kofi_url too long');
+    // L'image est un emoji ou une URL https (jamais javascript:/data:/http:) ; kofi_url est affiché en lien : https aussi. null efface le lien.
+    if (updates.image !== undefined && !isValidProductImage(updates.image)) return badRequest(res, 'image must be an emoji or an https URL');
+    if (updates.kofi_url !== undefined && updates.kofi_url !== null && updates.kofi_url !== '' && !isHttpsUrl(updates.kofi_url)) {
+      return badRequest(res, 'kofi_url must be an https URL');
+    }
     if (updates.kind !== undefined && updates.kind !== null && !KINDS.includes(updates.kind)) {
       return badRequest(res, `kind must be one of: ${KINDS.join(', ')}`);
     }

@@ -48,6 +48,16 @@ app.use(
   '/api/kofi-webhook',
   rateLimit({ windowMs: 60 * 1000, limit: 60, standardHeaders: 'draft-7', legacyHeaders: false, message: { error: 'Too many requests' } })
 );
+// Aperçu Ko-fi (une requête sortante par appel) et envoi d'images : limites dédiées, plus serrées que l'API générale.
+// L'aperçu en masse (catalogue) enchaîne ~1 appel / 300 ms : 90 par minute suffisent à un catalogue de plusieurs dizaines de produits.
+app.use(
+  '/api/products/kofi-preview',
+  rateLimit({ windowMs: 60 * 1000, limit: 90, standardHeaders: 'draft-7', legacyHeaders: false, message: { error: 'Too many requests' } })
+);
+app.use(
+  '/api/products/image',
+  rateLimit({ windowMs: 60 * 1000, limit: 30, standardHeaders: 'draft-7', legacyHeaders: false, message: { error: 'Too many requests' } })
+);
 // API authentifiée : large (3 polls / 30 s par onglet), pensé pour stopper les abus, pas l'usage normal.
 app.use(
   '/api',
@@ -67,6 +77,16 @@ app.use('/api/orders/import', async (req, res, next) => {
   }
 });
 app.use('/api/orders/import', express.json({ limit: '10mb' }));
+// Envoi d'une photo de produit (base64, 1 Mo décodé max ≈ 1,4 Mo) : même principe, authentification avant lecture du corps.
+app.use('/api/products/image', async (req, res, next) => {
+  try {
+    req.user = await requireUser(req, res);
+    if (req.user) next();
+  } catch (err) {
+    next(err);
+  }
+});
+app.use('/api/products/image', express.json({ limit: '1500kb' }));
 app.use(express.json({ limit: '100kb' }));
 app.use(express.urlencoded({ extended: false, limit: '100kb' }));
 
@@ -93,6 +113,9 @@ app.all('/api/orders/import', safe(require('./api/orders/import'))); // avant /:
 app.all('/api/orders', safe(require('./api/orders')));
 app.all('/api/orders/:id', safe(withIdParam(require('./api/orders/[id]'))));
 app.all('/api/products', safe(require('./api/products')));
+// Avant /:id : « kofi-preview » et « image » ne sont pas des UUID.
+app.all('/api/products/kofi-preview', safe(require('./api/products/kofi-preview')));
+app.all('/api/products/image', safe(require('./api/products/image')));
 app.all('/api/products/:id', safe(withIdParam(require('./api/products/[id]'))));
 app.all('/api/customers', safe(require('./api/customers')));
 app.all('/api/customers/:id', safe(withIdParam(require('./api/customers/[id]'))));
