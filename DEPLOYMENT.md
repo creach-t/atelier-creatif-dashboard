@@ -54,7 +54,7 @@ Le déploiement (build + déploiement de l'image) ne touche jamais à la base �
 | `0009_orders_kofi_id_per_user.sql` | Unicité de l'id de transaction Ko-fi **par utilisateur** (et non plus globale) |
 | `0010_profiles_workspace.sql` | Colonne `profiles.workspace` (JSON) : pages, widgets et dispositions personnalisés, synchronisés entre appareils |
 
-L'API tolère l'absence de ces colonnes tant que la fonctionnalité n'est pas utilisée ; l'utiliser sans la migration renvoie un message clair (« la colonne … n'existe pas encore »). Cas particulier de `0010` : sans elle, la personnalisation des pages reste enregistrée dans le navigateur (localStorage) et l'app fonctionne normalement ; elle n'est simplement pas synchronisée entre appareils. Si Supabase répond `PGRST204` juste après l'exécution, recharge le cache de schéma : `notify pgrst, 'reload schema';`.
+**Toutes ces migrations doivent être passées avant de déployer** : l'API ne contourne plus l'absence de colonne (créer ou modifier une commande ou un produit échouerait en erreur 500 générique, le détail n'étant que dans les logs du serveur). Cas particulier de `0010` : sans elle, la personnalisation des pages reste enregistrée dans le navigateur (localStorage) et l'app fonctionne normalement ; elle n'est simplement pas synchronisée entre appareils. Si Supabase répond `PGRST204` juste après l'exécution, recharge le cache de schéma : `notify pgrst, 'reload schema';`.
 
 ## 🔄 Déploiement continu (GitHub Actions)
 

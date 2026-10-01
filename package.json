@@ -45,6 +45,7 @@
     "dev": "concurrently -n web,api -c blue,magenta \"npm:start\" \"cross-env PORT=4000 node server.js\"",
     "build": "react-scripts build",
     "test": "react-scripts test",
+    "lint": "eslint src api server.js --ext .js",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

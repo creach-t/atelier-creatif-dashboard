@@ -5,7 +5,7 @@ Merci de votre intérêt pour contribuer au Dashboard Atelier Créatif ! Ce guid
 ## 🚀 Avant de Commencer
 
 ### Prérequis
-- Node.js 16+ installé
+- Node.js 22 (celui de l'image Docker et de la CI)
 - Git configuré sur votre machine
 - Un compte GitHub
 
@@ -84,6 +84,13 @@ Types de commits :
 
 ### 3. Standards de Code
 
+#### Architecture (vérifiée par ESLint)
+Lisez [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) avant de créer des fichiers. Les deux règles à retenir :
+- `core/` (le moteur) n'importe jamais `features/`, `app/` ni `widgets/` ;
+- aucun composant, widget ni fichier de `core/` n'appelle directement l'API ou Supabase : passez par `src/services/` ou un hook de `src/data/`.
+
+Pas de `.toFixed(2)` pour un montant : utilisez `money()` de `src/core/metrics/format`. Les statuts et canaux viennent de `src/domain/constants.js`.
+
 #### React/JavaScript
 ```javascript
 // ✅ Bon
@@ -115,12 +122,17 @@ style={{ backgroundColor: 'white', borderRadius: '16px' }}
 
 ### 4. Tests
 ```bash
-# Lancer les tests
+# Lancer les tests (mode watch)
 npm test
 
-# Tests avec coverage
-npm run test:coverage
+# Une seule exécution, comme la CI
+npm test -- --watchAll=false --ci
+
+# Lint (inclut les règles de couches)
+npm run lint
 ```
+
+Mettez la logique dans des **fonctions pures** testables sans React ni réseau (exemple : `src/features/orders/orderDraft.js` et `src/__tests__/orderDraft.test.js`). Un test d'API utilise un faux client Supabase (voir `src/__tests__/apiResource.test.js`).
 
 ### 5. Pull Request
 

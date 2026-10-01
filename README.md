@@ -38,7 +38,7 @@ Toute l'application est composée de **pages de widgets** que chacun organise à
 - Notifications (activité récente) accessibles depuis la cloche de la barre du haut
 
 ### 🛒 **Gestion des Commandes**
-- **Calendrier d'activité** (26 semaines, une case par jour, un seul violet qui fonce avec le nombre de commandes) ; un clic sur un jour filtre la liste
+- **Calendrier d'activité** : une case carrée par jour, un seul violet qui fonce avec le nombre de commandes ; il remplit son widget (la hauteur fixe la taille des cases, la largeur le nombre de semaines, 3 mois / 6 mois / 1 an étant un minimum) ; un clic sur un jour ouvre ses commandes dans un panneau, sans toucher au calendrier
 - Liste unique (une ligne par commande, à toutes les tailles d'écran) **triable en cliquant les en-têtes** de colonnes (client, date, canal, total) ; le statut n'est qu'une couleur d'accent sur le numéro de commande
 - Filtrage par canal (logos Ko-fi / point de vente), période (7j/30j/année/tout) et recherche
 - **Fiche en lecture seule** : rien ne se modifie avant de cliquer sur « Modifier la commande » (client, email, articles, divers, date, statut, suivi, notes, commission) ; seuls les champs réellement changés sont envoyés. Suppression possible après **double confirmation**
@@ -149,11 +149,11 @@ Mobile d'abord : sous `md` (768px) la navigation passe en **barre du bas** (4 pr
 
 Les widgets ne se basent **pas** sur la largeur de l'écran mais sur **la leur** : leur corps est un conteneur (`@container`), et leurs variantes CSS sont `@md:`, `@lg:`, `@xl:` (seuils 640 / 768 / 896 px de *widget*, voir `tailwind.config.js`). Un widget étroit sur un grand écran adopte donc la disposition compacte, et réagit en direct quand on le redimensionne. **N'utilisez pas** les variantes `sm:`/`md:`/`lg:` dans un widget.
 
-**La hauteur compte aussi** : chaque widget reçoit sa taille mesurée en direct (`size` : largeur, hauteur et paliers `hTier` / `wTier` de `xs` à `lg`) et règle sa densité en conséquence — l'indicateur agrandit son chiffre jusqu'à remplir la place puis ajoute la période précédente et la courbe ; le graphique retire d'abord son total puis ses axes ; le podium devient une liste compacte quand il manque de hauteur ; les listes et le catalogue masquent filtres, tri puis recherche pour laisser la place aux lignes ; le calendrier ajuste la taille de ses cases ; le suivi des statuts ne garde que ses compteurs ; le titre s'efface si le widget est très court. Ces paliers sont calculés dans [`useContainerSize`](src/core/widgets/useContainerSize.js).
+**La hauteur compte aussi** : chaque widget reçoit sa taille mesurée en direct (`size` : largeur, hauteur et paliers `hTier` / `wTier` de `xs` à `lg`) et règle sa densité en conséquence — l'indicateur agrandit son chiffre jusqu'à remplir la place puis ajoute la période précédente et la courbe ; le graphique retire d'abord son total puis ses axes ; le podium devient une liste compacte quand il manque de hauteur ; les listes et le catalogue masquent filtres, tri puis recherche pour laisser la place aux lignes ; le calendrier garde des cases carrées et ajoute des semaines pour remplir sa largeur ; le suivi des statuts ne garde que ses compteurs ; le titre s'efface si le widget est très court. Ces paliers sont calculés dans [`useContainerSize`](src/core/widgets/useContainerSize.js).
 
 **Aucun défilement dans un widget.** Deux mécanismes, dans [`src/core/widgets/`](src/core/widgets) :
 - **Pagination** (`Fit.js` : `FitList`, `FitGrid`, `Paged`) pour les listes longues : le widget calcule combien de lignes (ou de cartes, en colonnes selon sa largeur) tiennent dans sa hauteur et répartit le reste en pages (« 1–8 sur 40 », points ou « 2 / 12 »). Agrandir le widget affiche plus de lignes par page. Les lignes ont une hauteur fixe pour que ce calcul soit exact. La barre d'outils (recherche, compteur, filtres, tri) fonctionne sur un **budget de hauteur** (`toolbarBudget`) : un élément n'apparaît que s'il reste de la place pour des lignes utiles.
-- **Mise à l'échelle** (`ScaleToFit.js`) pour le contenu de taille fixe (compteurs, légende, rapports, raccourcis, calendrier) : s'il ne rentre pas, il est réduit pour tout montrer, jamais coupé ni scrollé. La note réduit sa police, le calendrier réduit ses cases.
+- **Mise à l'échelle** (`ScaleToFit.js`) pour le contenu de taille fixe (compteurs, légende, rapports, raccourcis, calendrier) : s'il ne rentre pas, il est réduit pour tout montrer, jamais coupé ni scrollé. La note réduit sa police ; le calendrier, lui, ajuste ses cases (carrées) et son nombre de semaines à la place disponible.
 
 | Zone | Largeur de la page | Grille |
 |------|--------------------|--------|
@@ -163,16 +163,23 @@ Les widgets ne se basent **pas** sur la largeur de l'écran mais sur **la leur**
 
 ## 🛠️ Structure du Projet
 
+> Le « pourquoi » (couches, règles de dépendance, flux de données, où ranger quoi) est dans [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). Un prompt prêt à l'emploi pour un audit complet par Claude (via la base codebase-memory) est dans [`docs/AUDIT_PROMPT.md`](docs/AUDIT_PROMPT.md).
+
 ```
 server.js                   # Serveur Express : sert l'API (routes ci-dessous) + le build React
 
 api/                         # Routes API (montées par server.js)
 ├── lib/
+│   ├── resource.js         # route({ GET, POST… }, { withId }) : auth + aiguillage + 405/404 ; listOwned / insertOwned / updateOwned / deleteOwned (toujours bornés à l'utilisateur)
 │   ├── supabaseClient.js   # Client Supabase (clé secrète, côté serveur uniquement)
 │   ├── auth.js             # Vérification du JWT de session Supabase Auth
+│   ├── validate.js         # Validateurs de corps de requête (commande, UUID, bornes)
+│   ├── errors.js           # serverError (500 générique, détail loggé), notFound, doublon
+│   ├── dates.js            # Jours calendaires au fuseau Europe/Paris
+│   ├── batch.js            # chunk : lots pour les requêtes groupées
 │   ├── kofiMapper.js       # Traduction payload webhook Ko-fi -> commande
-│   ├── productSync.js       # Auto-création de produits à partir des articles vendus (Ko-fi)
-│   └── customerSync.js       # Auto-création de fiches clients à partir des commandes
+│   ├── productSync.js       # Auto-création de produits à partir des articles vendus (requêtes groupées)
+│   └── customerSync.js       # Auto-création de fiches clients à partir des commandes (requêtes groupées)
 ├── kofi-webhook.js         # Réception des webhooks Ko-fi (résout le compte via profiles.kofi_verification_token)
 ├── orders.js                # GET (liste triée par order_date, filtre ?channel=) / POST — filtré par user_id
 ├── orders/[id].js           # PATCH (tous les champs, validés) / DELETE
@@ -248,7 +255,7 @@ Depuis l'interface : bouton "Nouveau Produit" sur la page Produits. Ils se crée
 ### Personnaliser le Branding
 1. Remplacez "Cashly" par votre nom dans [`src/app/Sidebar.js`](src/app/Sidebar.js), [`src/features/auth/Login.js`](src/features/auth/Login.js), `public/index.html` et `public/manifest.json`
 2. Modifiez les gradients de couleur
-3. Ajoutez votre logo dans la sidebar
+3. Le logo est un symbole sans lettre (barres de ventes + étincelle), donc indépendant du nom : il vit dans [`src/ui/BrandMark.js`](src/ui/BrandMark.js) (écran de connexion, menu) et [`public/favicon.svg`](public/favicon.svg), deux fichiers à garder identiques si vous le redessinez
 
 ## 🔧 Scripts Disponibles
 
@@ -257,7 +264,8 @@ npm start          # Front seul (http://localhost:3000), sans backend
 npm run server     # API Express seule (port 3000 par défaut, ou PORT=xxxx)
 npm run dev        # Front + API ensemble, avec proxy /api -> API (dev complet)
 npm run build      # Build production
-npm test           # Tests unitaires
+npm test           # Tests unitaires (Jest, mode watch) — `npm test -- --watchAll=false` pour une exécution unique
+npm run lint       # ESLint sur src/, api/ et server.js (inclut les règles de couches, voir docs/ARCHITECTURE.md)
 npm run eject      # Éjection Create React App (⚠️ irréversible)
 ```
 
@@ -277,6 +285,8 @@ npm run eject      # Éjection Create React App (⚠️ irréversible)
 - [x] Prix estimés par résolution globale des commandes, produits gratuits, physique/numérique, variantes regroupées
 - [x] Commission de la boutique (revenus en net), lignes « divers », modification complète des commandes
 - [x] Application modulaire en widgets : pages personnalisables, déverrouillage par widget, aperçus, filtre de période (année navigable, plage libre), sauvegarde synchronisée
+- [x] Refonte d'architecture : couches `ui` / `features` / `data` / `services` / `core` avec garde-fous ESLint, helpers REST communs côté API, synchro produits/clients en requêtes groupées, formulaire de commande découpé et testé
+- [x] Logo et favicon SVG, calendrier d'activité à cases carrées qui remplit son widget
 
 ### À venir
 - [ ] Export des données (CSV/PDF)
