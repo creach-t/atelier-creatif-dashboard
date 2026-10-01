@@ -6,6 +6,7 @@ import { signOut } from '../services/authService';
 import { useWorkspace } from '../core/workspace/WorkspaceProvider';
 import { pageIcon } from '../core/workspace/pageIcons';
 import { spring } from '../core/ui/motion';
+import { BrandMark } from '../ui/BrandMark';
 
 // Menu latéral : une entrée par page de l'espace de travail (donc personnalisable), puis Réglages.
 export const Sidebar = ({ mobileOpen, onCloseMobile }) => {
@@ -31,9 +32,12 @@ export const Sidebar = ({ mobileOpen, onCloseMobile }) => {
         ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
       >
         <div className="p-4 sm:p-6 flex items-center justify-between shrink-0">
-          <div>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Cashly</h1>
-            <p className="text-sm text-gray-600 mt-1">Gestion multi-canal</p>
+          <div className="flex items-center gap-3 min-w-0">
+            <BrandMark size={36} className="shrink-0" />
+            <div className="min-w-0">
+              <h1 className="text-xl font-bold leading-tight bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Cashly</h1>
+              <p className="text-sm text-gray-600 truncate">Gestion multi-canal</p>
+            </div>
           </div>
           <button onClick={onCloseMobile} className="md:hidden p-2 text-gray-500" aria-label="Fermer"><X size={20} /></button>
         </div>

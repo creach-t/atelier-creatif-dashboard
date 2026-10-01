@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Sparkles, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { Card } from '../../ui/Card';
 import { Button } from '../../ui/Button';
+import { BrandMark } from '../../ui/BrandMark';
 import { signIn, signUp } from '../../services/authService';
 
 export const Login = () => {
@@ -52,9 +53,7 @@ export const Login = () => {
     <div className="flex h-screen items-center justify-center bg-gradient-to-br from-purple-25 via-pink-25 to-blue-25 p-4">
       <Card className="p-5 sm:p-8 w-full max-w-sm">
         <div className="flex flex-col items-center text-center mb-6">
-          <div className="w-14 h-14 bg-gradient-to-r from-purple-400 to-pink-400 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-purple-200">
-            <Sparkles size={26} className="text-white" />
-          </div>
+          <BrandMark size={56} className="mb-4 drop-shadow-lg" />
           <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
             Cashly
           </h1>
