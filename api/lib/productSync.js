@@ -6,9 +6,13 @@ const { chunk } = require('./batch');
 // Pas de gestion de stock dans Cashly — seule la quantité vendue (calculée depuis les
 // commandes côté front) compte, donc rien à initialiser ici au-delà du nom/catégorie/prix.
 // Requêtes groupées : un import peut contenir des milliers d'articles. Les erreurs sont loguées sans interrompre l'appelant.
-async function syncProductsFromItems(supabase, userId, items, { price = 0 } = {}) {
+// category : catégorie des produits créés (défaut « Ko-fi »). usePrices : reprend le prix unitaire de l'article quand il est connu (imports Etsy…).
+async function syncProductsFromItems(supabase, userId, items, { price = 0, category = 'Ko-fi', usePrices = false } = {}) {
   const names = [...new Set((Array.isArray(items) ? items : []).map((item) => item && item.name && item.name.trim()).filter(Boolean))];
   if (names.length === 0) return;
+
+  const unitPrice = new Map();
+  if (usePrices) (items || []).forEach((i) => { if (i && i.name && Number(i.price) > 0 && !unitPrice.has(i.name.trim())) unitPrice.set(i.name.trim(), Number(i.price)); });
 
   const known = new Set();
   for (const batch of chunk(names, 100)) {
@@ -22,7 +26,7 @@ async function syncProductsFromItems(supabase, userId, items, { price = 0 } = {}
 
   const rows = names
     .filter((name) => !known.has(name))
-    .map((name) => ({ user_id: userId, name, category: 'Ko-fi', price: Number(price) || 0, image: '🎁' }));
+    .map((name) => ({ user_id: userId, name, category, price: unitPrice.get(name) || Number(price) || 0, image: '🎁' }));
 
   for (const batch of chunk(rows, 500)) {
     // Index unique (user_id, name) : une course avec une autre requête ignore le doublon au lieu de le créer.

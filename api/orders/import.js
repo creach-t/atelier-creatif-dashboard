@@ -3,6 +3,7 @@ const { syncProductsFromItems } = require('../lib/productSync');
 const { syncCustomers } = require('../lib/customerSync');
 const { serverError } = require('../lib/errors');
 const { isDay } = require('../lib/validate');
+const { importSourceOrders } = require('../lib/importOrders');
 
 const MAX_ROWS = 5000;
 
@@ -24,7 +25,11 @@ function cleanImportedItems(items, type) {
 }
 
 module.exports = route({
-  POST: async ({ res, user, supabase, body }) => {
+  POST: async (ctx) => {
+    const { res, user, supabase, body } = ctx;
+    // Export CSV d'une autre source (Etsy…) : import générique dédoublonné par source_ref. Sans `source` : historique Ko-fi.
+    if (body.source !== undefined && body.source !== 'kofi') return importSourceOrders(ctx);
+
     const rows = Array.isArray(body.rows) ? body.rows : null;
     if (!rows || rows.length === 0) {
       res.status(400).json({ error: 'rows must be a non-empty array' });

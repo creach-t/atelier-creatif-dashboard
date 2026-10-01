@@ -29,6 +29,7 @@ describe('registre de sources', () => {
     expect(api.SOURCES.map((s) => s.id)).toEqual(SOURCE_IDS);
     api.SOURCES.forEach((back) => {
       const front = getSource(back.id);
+      expect(back.label).toBe(front.label);
       expect(back.kind).toBe(front.kind);
       expect(back.defaultStatus).toBe(front.defaultStatus);
       expect(back.commission).toEqual(front.commission && { mode: front.commission.mode, defaultRate: front.commission.defaultRate });
