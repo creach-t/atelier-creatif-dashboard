@@ -10,6 +10,30 @@ import { describeOrder, countOrderItems } from '../../utils/computeProductRevenu
 import { catalogPrices, estimatedNames } from '../../utils/estimatePrices';
 import { extrasOf, commissionRateOf, commissionOf, netOf } from '../../utils/orderAmounts';
 
+// Prix d'une ligne : « Gratuit » confirmé, ou le montant (précédé de ≈ quand il est estimé).
+const LinePrice = ({ line }) => {
+  if (!line) return null;
+  if (line.free) {
+    return (
+      <span
+        className="inline-flex items-center px-2 py-0.5 rounded-lg border border-dashed border-emerald-300 bg-emerald-50 text-xs font-semibold text-emerald-700 shrink-0"
+        title="0 € confirmé par vos commandes"
+      >
+        Gratuit
+      </span>
+    );
+  }
+  return (
+    <span
+      className="text-sm font-semibold text-gray-900 shrink-0"
+      title={line.estimated ? "Prix estimé à partir de l'ensemble des commandes (pas de prix connu)" : undefined}
+    >
+      {line.estimated && <span className="text-gray-400 font-normal">≈ </span>}
+      {money(line.total)}
+    </span>
+  );
+};
+
 // Fiche en lecture seule : rien ne se modifie ici. Toute modification passe par « Modifier la commande »,
 // qui ouvre le formulaire complet ; la seule action directe est la suppression, en deux confirmations.
 export const OrderDetailModal = ({ order, products, onDelete, onEdit, onNavigateToProduct, onClose }) => {
@@ -25,30 +49,6 @@ export const OrderDetailModal = ({ order, products, onDelete, onEdit, onNavigate
   const extras = extrasOf(order);
   const rate = commissionRateOf(order);
   const totalPaid = Number(order.total) || 0;
-
-  const Price = ({ item }) => {
-    const line = lineByItem.get(item);
-    if (!line) return null;
-    if (line.free) {
-      return (
-        <span
-          className="inline-flex items-center px-2 py-0.5 rounded-lg border border-dashed border-emerald-300 bg-emerald-50 text-xs font-semibold text-emerald-700 shrink-0"
-          title="0 € confirmé par vos commandes"
-        >
-          Gratuit
-        </span>
-      );
-    }
-    return (
-      <span
-        className="text-sm font-semibold text-gray-900 shrink-0"
-        title={line.estimated ? "Prix estimé à partir de l'ensemble des commandes (pas de prix connu)" : undefined}
-      >
-        {line.estimated && <span className="text-gray-400 font-normal">≈ </span>}
-        {money(line.total)}
-      </span>
-    );
-  };
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -98,7 +98,7 @@ export const OrderDetailModal = ({ order, products, onDelete, onEdit, onNavigate
                     <span className="text-sm text-gray-500 flex-1">{item.name}</span>
                     <span className="flex items-center gap-3">
                       <span className="text-sm text-gray-400">x{item.quantity}</span>
-                      <Price item={item} />
+                      <LinePrice line={lineByItem.get(item)} />
                     </span>
                   </div>
                 );
@@ -115,7 +115,7 @@ export const OrderDetailModal = ({ order, products, onDelete, onEdit, onNavigate
                   <span className="text-sm text-gray-800 flex-1">{item.name}</span>
                   <span className="flex items-center gap-3 text-sm text-gray-500 shrink-0">
                     x{item.quantity}
-                    <Price item={item} />
+                    <LinePrice line={lineByItem.get(item)} />
                     <ChevronRight size={14} className="text-purple-400" />
                   </span>
                 </button>
