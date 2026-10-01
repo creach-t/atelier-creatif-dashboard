@@ -4,6 +4,7 @@ import { KofiSourceCard } from './KofiSourceCard';
 import { ImportKofiHistory } from './ImportKofiHistory';
 import { SourcesCard } from './SourcesCard';
 import { WorkspaceCard } from './WorkspaceCard';
+import { CatalogRefreshCard } from './CatalogRefreshCard';
 
 export const Settings = () => {
   return (
@@ -23,6 +24,11 @@ export const Settings = () => {
       <div>
         <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Historique</h4>
         <ImportKofiHistory />
+      </div>
+
+      <div>
+        <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Catalogue</h4>
+        <CatalogRefreshCard />
       </div>
     </div>
   );
