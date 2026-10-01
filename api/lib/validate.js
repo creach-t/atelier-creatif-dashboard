@@ -43,7 +43,7 @@ const validExtras = (extras) =>
   );
 
 const STATUSES = ['pending', 'shipped', 'delivered', 'cancelled'];
-const CHANNELS = ['kofi', 'reel'];
+const { SOURCE_IDS: CHANNELS } = require('./sources'); // registre des sources (voir docs/SOURCES.md)
 
 // Valide les champs de commande présents dans `body` (création ET modification).
 function validateOrderFields(body) {

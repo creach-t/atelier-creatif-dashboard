@@ -10,10 +10,8 @@ export const STATUS_LABELS = {
   cancelled: 'Annulée',
 };
 
-export const CHANNEL_IDS = ['kofi', 'reel'];
-
-// Une vente en boutique est remise en main propre : elle n'a rien à expédier.
-export const defaultStatusFor = (channel) => (channel === 'reel' ? 'delivered' : 'pending');
+// Les canaux vivent dans le registre de sources (domain/sources.js) ; ré-exportés ici pour les anciens imports.
+export { SOURCE_IDS as CHANNEL_IDS, defaultStatusFor } from './sources';
 
 // Image et catégorie d'un produit créé sans détails (saisie d'un article inconnu dans une commande).
 export const DEFAULT_PRODUCT_IMAGE = '🎁';

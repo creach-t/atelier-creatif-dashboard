@@ -9,19 +9,24 @@ import { getMetric } from '../core/metrics/metrics';
 import { formatValue } from '../core/metrics/format';
 import { ChartTooltip, EmptyState } from '../core/widgets/parts';
 import { ScaleToFit } from '../core/widgets/ScaleToFit';
-import { ChannelBadge, CHANNELS } from '../ui/ChannelBadge';
-
-const PALETTE = ['#a78bfa', '#f472b6', '#fbbf24', '#34d399'];
+import { ChannelBadge, CHANNELS, channelStyle } from '../ui/ChannelBadge';
+import { SOURCE_IDS } from '../domain/sources';
 
 const ChannelsView = ({ config, size }) => {
   const { orders, allOrders, period } = useWidgetOrders(config.period);
   const metric = getMetric(config.metric);
   const ctx = useMemo(() => ({ allOrders }), [allOrders]);
 
-  const rows = useMemo(() => Object.keys(CHANNELS).map((channel, i) => {
-    const list = orders.filter((o) => o.channel === channel);
-    return { channel, name: CHANNELS[channel].label, value: metric.compute(list, ctx), count: list.length, color: PALETTE[i % PALETTE.length] };
-  }), [orders, metric, ctx]);
+  // Une ligne par source qui a des ventes sur la période (+ tout canal inconnu) : pas de légende de zéros pour N sources.
+  const rows = useMemo(() => {
+    const ids = [...SOURCE_IDS, ...new Set(orders.map((o) => o.channel).filter((c) => !CHANNELS[c]))];
+    return ids
+      .map((channel) => {
+        const list = orders.filter((o) => o.channel === channel);
+        return { channel, name: CHANNELS[channel] ? CHANNELS[channel].label : channel, value: metric.compute(list, ctx), count: list.length, color: channelStyle(channel).hex };
+      })
+      .filter((r) => r.count > 0);
+  }, [orders, metric, ctx]);
 
   const withValue = rows.filter((r) => r.value > 0);
   const total = rows.reduce((s, r) => s + r.value, 0);
@@ -38,7 +43,7 @@ const ChannelsView = ({ config, size }) => {
       {rows.map((r) => (
         <div key={r.channel}>
           <div className="flex items-center justify-between text-sm gap-2">
-            <span className="flex items-center gap-2 min-w-0">
+            <span className="flex items-center gap-2 min-w-0 overflow-hidden">
               <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: r.color }} />
               <ChannelBadge channel={r.channel} />
             </span>
@@ -87,7 +92,7 @@ const ChannelsView = ({ config, size }) => {
 defineWidget({
   type: 'channels',
   title: 'Répartition par canal',
-  description: 'Ko-fi ou point de vente : d’où viennent vos ventes.',
+  description: 'Ko-fi, Etsy, point de vente… : d’où viennent vos ventes.',
   icon: PieIcon,
   category: 'Ventes',
   size: { w: 5, h: 9, minW: 3, minH: 5, maxW: 12, maxH: 20 },

@@ -5,10 +5,10 @@ import {
   PieChart, Pie, Cell, BarChart, Bar,
 } from 'recharts';
 import { Card } from '../../ui/Card';
-import { CHANNELS } from '../../ui/ChannelBadge';
+import { CHANNELS, channelStyle } from '../../ui/ChannelBadge';
+import { SOURCE_IDS } from '../../domain/sources';
 import { netOf } from '../../utils/orderAmounts';
 
-const PALETTE = ['#a78bfa', '#f472b6', '#fbbf24', '#34d399'];
 
 const ChartTooltip = ({ active, payload, label }) => {
   if (!active || !payload || !payload.length) return null;
@@ -25,10 +25,10 @@ const ChartTooltip = ({ active, payload, label }) => {
 };
 
 export const OverviewReport = ({ stats, orders }) => {
-  const channelData = Object.keys(CHANNELS).map((channel, i) => {
+  const channelData = [...SOURCE_IDS, ...new Set(orders.map((o) => o.channel).filter((c) => !CHANNELS[c]))].map((channel) => {
     const channelOrders = orders.filter((o) => o.channel === channel);
     const value = channelOrders.reduce((s, o) => s + netOf(o), 0);
-    return { name: CHANNELS[channel].label, value: Math.round(value * 100) / 100, color: PALETTE[i % PALETTE.length] };
+    return { name: CHANNELS[channel] ? CHANNELS[channel].label : channel, value: Math.round(value * 100) / 100, color: channelStyle(channel).hex };
   }).filter((c) => c.value > 0);
 
   const maxDay = Math.max(1, ...stats.dayData.map((d) => d.montant));

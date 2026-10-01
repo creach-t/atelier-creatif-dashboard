@@ -42,7 +42,7 @@ create table if not exists customers (
 create table if not exists orders (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users(id) on delete cascade,
-  channel text not null check (channel in ('kofi', 'reel')),
+  channel text not null check (channel ~ '^[a-z][a-z0-9_]{1,31}$'),
   customer_name text,
   customer_email text,
   items jsonb not null default '[]',
@@ -56,6 +56,7 @@ create table if not exists orders (
   extras jsonb not null default '[]'::jsonb,
   notes text,
   kofi_transaction_id text,
+  source_ref text,
   raw_payload jsonb,
   created_at timestamptz not null default now()
 );
@@ -68,6 +69,7 @@ create index if not exists customers_user_id_idx on customers (user_id);
 create unique index if not exists customers_user_name_unique on customers (user_id, name);
 create unique index if not exists products_user_name_unique on products (user_id, name);
 create unique index if not exists orders_user_kofi_transaction_unique on orders (user_id, kofi_transaction_id);
+create unique index if not exists orders_user_channel_source_ref_unique on orders (user_id, channel, source_ref);
 
 -- Crée automatiquement une ligne "profiles" à chaque inscription (Supabase Auth)
 create or replace function public.handle_new_user()

@@ -10,14 +10,11 @@ import { ChannelLogo } from '../ui/ChannelBadge';
 import { SortChip } from '../ui/SortHeader';
 import { useSort, sortRows } from '../hooks/useSort';
 import { netOf } from '../utils/orderAmounts';
+import { visibleSources } from '../utils/sourceSettings';
+import { useSourceSettings } from '../data/useSourceSettings';
 import { money } from '../core/metrics/format';
 import { Chip, EmptyState, SearchBox } from '../core/widgets/parts';
 
-const CHANNEL_FILTERS = [
-  { id: 'all', label: 'Tous' },
-  { id: 'kofi', label: 'Ko-fi', logo: true },
-  { id: 'reel', label: 'Point de vente', logo: true },
-];
 const STATUS_FILTERS = [
   { id: 'all', label: 'Tous statuts' },
   { id: 'pending', label: 'En attente' },
@@ -28,8 +25,14 @@ const STATUS_FILTERS = [
 
 // Densité selon la hauteur du widget : on retire d'abord les filtres, puis le tri, puis la recherche, pour laisser la place à la liste.
 const OrdersTableView = ({ config, size }) => {
-  const { orders } = useWidgetOrders(config.period, { includeCancelled: true });
+  const { orders, allOrders } = useWidgetOrders(config.period, { includeCancelled: true });
   const { openOrder, newOrder } = useOverlays();
+  const { settings } = useSourceSettings();
+  // Filtres générés depuis le registre : sources actives + celles qui ont déjà des commandes.
+  const channelFilters = useMemo(
+    () => [{ id: 'all', label: 'Tous' }, ...visibleSources(settings, allOrders).map((s) => ({ id: s.id, label: s.label, logo: true }))],
+    [settings, allOrders]
+  );
   const [channel, setChannel] = useState('all');
   const [status, setStatus] = useState('all');
   const [term, setTerm] = useState('');
@@ -56,7 +59,8 @@ const OrdersTableView = ({ config, size }) => {
   const showTop = take(20 + 64); // marges du bloc + recherche / bouton
   const showCount = take(36);
   const showSort = take(narrow ? 84 : 44);
-  const showFilters = config.showFilters && take(narrow ? 108 : 56);
+  const manyChannels = channelFilters.length > 4; // les pastilles passent sur une ligne de plus
+  const showFilters = config.showFilters && take(narrow || manyChannels ? 108 : 56);
   const denseRows = size.wTier === 'xs' || size.wTier === 'sm';
 
   return (
@@ -74,7 +78,7 @@ const OrdersTableView = ({ config, size }) => {
         {showFilters && (
           <div className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center gap-1.5">
-              {CHANNEL_FILTERS.map((c) => (
+              {channelFilters.map((c) => (
                 <Chip key={c.id} active={channel === c.id} onClick={() => setChannel(c.id)}>
                   {c.logo && <ChannelLogo channel={c.id} size={12} className="inline mr-1.5 -mt-0.5" />}{c.label}
                 </Chip>

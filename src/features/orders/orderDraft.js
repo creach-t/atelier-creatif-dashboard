@@ -6,7 +6,8 @@ import { extrasSum } from '../../utils/orderAmounts';
 import { round2 } from '../../utils/money';
 import { todayLocal } from '../../utils/dates';
 import { scopedKey } from '../../utils/userScope';
-import { defaultStatusFor } from '../../domain/constants';
+import { defaultStatusFor, hasCommission } from '../../domain/sources';
+import { rateFor } from '../../utils/sourceSettings';
 
 export const emptyItem = () => ({ name: '', quantity: 1, price: 0 });
 export const emptyExtra = () => ({ label: '', amount: '' });
@@ -14,13 +15,24 @@ export const emptyExtra = () => ({ label: '', amount: '' });
 const sameJson = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
 // Dernière commission saisie, pour préremplir la suivante (la boutique garde en général le même taux).
-const LAST_COMMISSION_KEY = () => scopedKey('cashly.lastCommission');
-export const readLastCommission = () => {
-  try { return window.localStorage.getItem(LAST_COMMISSION_KEY()) || ''; } catch (e) { return ''; }
+// Une clé par source ; le point de vente garde la clé historique.
+const LAST_COMMISSION_KEY = (channel) => scopedKey(channel === 'reel' ? 'cashly.lastCommission' : `cashly.lastCommission.${channel}`);
+export const readLastCommission = (channel = 'reel') => {
+  try { return window.localStorage.getItem(LAST_COMMISSION_KEY(channel)) || ''; } catch (e) { return ''; }
 };
-export const rememberCommission = (value) => {
-  try { window.localStorage.setItem(LAST_COMMISSION_KEY(), String(value)); } catch (e) { /* stockage indisponible */ }
+export const rememberCommission = (value, channel = 'reel') => {
+  try { window.localStorage.setItem(LAST_COMMISSION_KEY(channel), String(value)); } catch (e) { /* stockage indisponible */ }
 };
+
+// Taux proposé à la création : le dernier utilisé pour cette source, sinon celui des Réglages / du registre.
+// '' si la source n'a pas de frais.
+export function defaultCommissionFor(channel, settings) {
+  if (!hasCommission(channel)) return '';
+  const last = readLastCommission(channel);
+  if (last) return last;
+  const rate = rateFor(settings, channel);
+  return rate > 0 ? String(rate) : '';
+}
 
 // En modification, chaque article reprend son prix (saisi, catalogue, ou déduit du total). Ce qui reste
 // pour retomber sur le total enregistré (don / prix libre, remise, ou montant jamais détaillé) est conservé
@@ -33,14 +45,14 @@ function itemsFromOrder(order, products) {
   return { items, gap: Math.abs(gap) < 0.03 ? 0 : gap };
 }
 
-export function initialDraft(order, products) {
+export function initialDraft(order, products, settings) {
   // `touched` : ce que l'utilisateur a réellement modifié. En modification, le reste n'est pas réécrit.
   const untouched = { items: false, extras: false, gap: false };
   if (!order) {
     return {
       channel: 'reel', customerName: '', customerEmail: '', orderDate: todayLocal(), status: defaultStatusFor('reel'),
       items: [emptyItem()], extras: [], gap: 0, undetailed: false,
-      commission: readLastCommission(), tracking: '', notes: '', touched: untouched,
+      commission: defaultCommissionFor('reel', settings), tracking: '', notes: '', touched: untouched,
     };
   }
   const { items, gap } = itemsFromOrder(order, products);
@@ -65,7 +77,7 @@ export function orderTotals(draft) {
   const itemsTotal = draft.items.reduce((sum, item) => sum + (Number(item.quantity) || 0) * (Number(item.price) || 0), 0);
   const extrasTotal = draft.extras.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
   const total = round2(itemsTotal + extrasTotal + draft.gap); // ce que le client paie (brut)
-  const commissionRate = draft.channel === 'reel' ? Math.min(Math.max(Number(draft.commission) || 0, 0), 100) : 0;
+  const commissionRate = hasCommission(draft.channel) ? Math.min(Math.max(Number(draft.commission) || 0, 0), 100) : 0;
   const commissionAmount = round2((total * commissionRate) / 100); // même arrondi que orderAmounts.commissionOf
   return { total, commissionRate, commissionAmount, net: round2(total - commissionAmount) };
 }

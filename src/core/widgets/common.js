@@ -2,6 +2,7 @@ import { PERIOD_OPTIONS } from '../metrics/periods';
 import { metricOptions } from '../metrics/metrics';
 import { ORDER_STATUSES, STATUS_LABELS } from '../../domain/constants';
 import { TINT_OPTIONS } from '../config/ConfigForm';
+import { SOURCES } from '../../domain/sources';
 
 // Champs de schéma réutilisables : les widgets les assemblent au lieu de les réécrire.
 export const periodField = (extra = {}) => ({
@@ -24,8 +25,7 @@ export const countField = (extra = {}) => ({ key: 'count', label: 'Nombre de lig
 
 export const CHANNEL_OPTIONS = [
   { value: 'all', label: 'Tous les canaux' },
-  { value: 'kofi', label: 'Ko-fi' },
-  { value: 'reel', label: 'Point de vente' },
+  ...SOURCES.map((s) => ({ value: s.id, label: s.label })),
 ];
 
 export const STATUS_OPTIONS = [

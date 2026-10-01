@@ -3,7 +3,7 @@
 // Chaque handler garde ce qui lui est propre : sa validation et ses effets de bord.
 const { getSupabaseClient } = require('./supabaseClient');
 const { requireUser } = require('./auth');
-const { serverError, notFound, isUniqueViolation } = require('./errors');
+const { serverError, notFound, isUniqueViolation, isMissingSourcesMigration, migrationRequired } = require('./errors');
 const { isUuid } = require('./validate');
 
 const badRequest = (res, message) => res.status(400).json({ error: message });
@@ -56,7 +56,8 @@ async function listOwned({ res, supabase, user }, table, { orderBy = [], context
 async function updateOwned({ res, supabase, user, id }, table, updates, { context, conflictMessage } = {}) {
   const { data, error } = await supabase.from(table).update(updates).eq('id', id).eq('user_id', user.id).select().maybeSingle();
   if (error) {
-    if (conflictMessage && isUniqueViolation(error)) res.status(409).json({ error: conflictMessage });
+    if (table === 'orders' && isMissingSourcesMigration(error)) migrationRequired(res);
+    else if (conflictMessage && isUniqueViolation(error)) res.status(409).json({ error: conflictMessage });
     else serverError(res, error, context);
     return null;
   }
@@ -79,7 +80,8 @@ async function deleteOwned({ res, supabase, user, id }, table, { context }) {
 async function insertOwned({ res, supabase }, table, row, { context, conflictMessage } = {}) {
   const { data, error } = await supabase.from(table).insert(row).select().single();
   if (error) {
-    if (conflictMessage && isUniqueViolation(error)) res.status(409).json({ error: conflictMessage });
+    if (table === 'orders' && isMissingSourcesMigration(error)) migrationRequired(res);
+    else if (conflictMessage && isUniqueViolation(error)) res.status(409).json({ error: conflictMessage });
     else serverError(res, error, context);
     return null;
   }

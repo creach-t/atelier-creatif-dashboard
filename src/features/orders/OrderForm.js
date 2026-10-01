@@ -2,24 +2,28 @@ import React, { useMemo, useState } from 'react';
 import { Modal } from '../../ui/Modal';
 import { Button } from '../../ui/Button';
 import { AutocompleteField } from '../../ui/AutocompleteField';
-import { ChannelLogo } from '../../ui/ChannelBadge';
+import { ChannelLogo, channelStyle } from '../../ui/ChannelBadge';
 import { FIELD_CLASS } from '../../ui/fieldClasses';
-import { ORDER_STATUSES, STATUS_LABELS, defaultStatusFor, DEFAULT_PRODUCT_IMAGE, UNCATEGORIZED } from '../../domain/constants';
+import { ORDER_STATUSES, STATUS_LABELS, DEFAULT_PRODUCT_IMAGE, UNCATEGORIZED } from '../../domain/constants';
+import { SOURCES, defaultStatusFor, hasCommission, getSource } from '../../domain/sources';
+import { isSourceEnabled } from '../../utils/sourceSettings';
+import { useSourceSettings } from '../../data/useSourceSettings';
 import { OrderItemsEditor } from './OrderItemsEditor';
 import { OrderExtrasEditor } from './OrderExtrasEditor';
 import { OrderTotals } from './OrderTotals';
 import {
   initialDraft, orderTotals, validateDraft, newProducts, cleanItems,
-  buildCreatePayload, buildUpdateChanges, rememberCommission,
+  buildCreatePayload, buildUpdateChanges, rememberCommission, defaultCommissionFor,
 } from './orderDraft';
 
 const MAX_SUGGESTIONS = 8;
 
-const ChannelButton = ({ channel, label, active, activeClass, onClick }) => (
+const ChannelButton = ({ channel, label, active, onClick }) => (
   <button
     type="button"
     onClick={onClick}
-    className={`flex-1 px-4 py-2 rounded-xl border text-sm font-medium ${active ? activeClass : 'border-gray-200 text-gray-600'}`}
+    aria-pressed={active}
+    className={`px-3 py-2 rounded-xl border text-sm font-medium min-w-0 truncate ${active ? channelStyle(channel).active : 'border-gray-200 text-gray-600'}`}
   >
     <ChannelLogo channel={channel} size={15} className="inline mr-1.5 -mt-0.5" />{label}
   </button>
@@ -36,7 +40,8 @@ const Field = ({ label, children }) => (
 // L'état saisi vit dans un brouillon (voir orderDraft.js) ; en modification, seuls les champs réellement changés sont envoyés.
 export const OrderForm = ({ order, products, customers, createProduct, onCreate, onUpdate, onClose }) => {
   const isEditing = Boolean(order);
-  const [draft, setDraft] = useState(() => initialDraft(order, products));
+  const { settings } = useSourceSettings();
+  const [draft, setDraft] = useState(() => initialDraft(order, products, settings));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
@@ -52,7 +57,13 @@ export const OrderForm = ({ order, products, customers, createProduct, onCreate,
     return (customers || []).filter((c) => c.name.toLowerCase().includes(q)).slice(0, MAX_SUGGESTIONS);
   }, [customers, draft.customerName]);
 
-  const changeChannel = (channel) => set({ channel, ...(!isEditing && { status: defaultStatusFor(channel) }) });
+  // Sources proposées : celles activées dans Réglages, plus celle de la commande en cours (jamais masquée).
+  const channels = SOURCES.filter((s) => isSourceEnabled(settings, s.id) || s.id === draft.channel);
+
+  const changeChannel = (channel) => set({
+    channel,
+    ...(!isEditing && { status: defaultStatusFor(channel), commission: defaultCommissionFor(channel, settings) }),
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -87,7 +98,7 @@ export const OrderForm = ({ order, products, customers, createProduct, onCreate,
         if (Object.keys(changes).length > 0) await onUpdate(order.id, changes);
       } else {
         await onCreate(buildCreatePayload(draft, email));
-        if (totals.commissionRate > 0) rememberCommission(totals.commissionRate);
+        if (totals.commissionRate > 0) rememberCommission(totals.commissionRate, draft.channel);
       }
       onClose();
     } catch (err) {
@@ -102,9 +113,10 @@ export const OrderForm = ({ order, products, customers, createProduct, onCreate,
       <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Canal</label>
-          <div className="flex gap-2">
-            <ChannelButton channel="reel" label="Point de vente" active={draft.channel === 'reel'} activeClass="bg-pink-50 border-pink-300 text-pink-800" onClick={() => changeChannel('reel')} />
-            <ChannelButton channel="kofi" label="Ko-fi (manuel)" active={draft.channel === 'kofi'} activeClass="bg-purple-50 border-purple-300 text-purple-800" onClick={() => changeChannel('kofi')} />
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {channels.map((c) => (
+              <ChannelButton key={c.id} channel={c.id} label={c.label} active={draft.channel === c.id} onClick={() => changeChannel(c.id)} />
+            ))}
           </div>
         </div>
 
@@ -155,9 +167,9 @@ export const OrderForm = ({ order, products, customers, createProduct, onCreate,
           </Field>
         </div>
 
-        {draft.channel === 'reel' && (
+        {hasCommission(draft.channel) && (
           <div>
-            <Field label="Commission de la boutique (%)">
+            <Field label={`${getSource(draft.channel).commission.label || 'Frais de la source'} (%)`}>
               <input
                 type="number"
                 min="0"
@@ -169,7 +181,7 @@ export const OrderForm = ({ order, products, customers, createProduct, onCreate,
                 className={FIELD_CLASS}
               />
             </Field>
-            <p className="text-xs text-gray-500 mt-1">Déduite automatiquement : tes revenus comptent le net. Préremplie avec la dernière utilisée.</p>
+            <p className="text-xs text-gray-500 mt-1">Déduite automatiquement : tes revenus comptent le net. Préremplie avec le dernier taux utilisé (ou celui des Réglages).</p>
           </div>
         )}
 

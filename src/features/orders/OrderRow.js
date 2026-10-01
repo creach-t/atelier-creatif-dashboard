@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
 import { STATUS_LABELS } from '../../domain/constants';
-import { CHANNELS, ChannelLogo } from '../../ui/ChannelBadge';
+import { CHANNELS, ChannelLogo, channelStyle } from '../../ui/ChannelBadge';
 import { netOf, commissionRateOf } from '../../utils/orderAmounts';
 import { money, relativeDay, itemsSummary } from '../../core/metrics/format';
 import { listItem } from '../../core/ui/motion';
@@ -18,11 +18,6 @@ const STATUS_STYLE = {
 export const ORDER_ROW_H = { compact: 64, full: 84 };
 
 const FALLBACK_STATUS = { bar: 'bg-purple-300', pill: 'bg-purple-50 text-purple-700' };
-
-const CHANNEL_TILE = {
-  kofi: 'bg-purple-100 text-purple-700',
-  reel: 'bg-pink-100 text-pink-700',
-};
 
 export const Avatar = ({ name, size = 'w-9 h-9' }) => (
   <div className={`${size} bg-gradient-to-r from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-white font-bold shrink-0`}>
@@ -74,7 +69,7 @@ export const OrderRow = ({ order, onClick, compact = false, showChannel = true, 
       {showChannel && (
         <span
           title={channel ? channel.label : order.channel}
-          className={`${compact ? 'w-9 h-9' : 'w-10 h-10'} rounded-xl flex items-center justify-center shrink-0 ${CHANNEL_TILE[order.channel] || 'bg-gray-100 text-gray-600'}`}
+          className={`${compact ? 'w-9 h-9' : 'w-10 h-10'} rounded-xl flex items-center justify-center shrink-0 ${channelStyle(order.channel).tile}`}
         >
           <ChannelLogo channel={order.channel} size={compact ? 16 : 18} />
         </span>

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Store, Package } from 'lucide-react';
+import { Store, Package, ShoppingBag, Shirt, Tag, Users } from 'lucide-react';
+import { SOURCES, getSource } from '../domain/sources';
 
 // Logo Ko-fi : Simple Icons (CC0), dessiné en currentColor pour suivre la couleur du contexte.
 const KofiLogo = ({ size = 14, className = '' }) => (
@@ -8,10 +9,37 @@ const KofiLogo = ({ size = 14, className = '' }) => (
   </svg>
 );
 
-export const CHANNELS = {
-  kofi: { label: 'Ko-fi', Logo: KofiLogo, className: 'bg-purple-100 text-purple-800 border-purple-200' },
-  reel: { label: 'Point de vente', Logo: (p) => <Store size={p.size} className={p.className} />, className: 'bg-pink-100 text-pink-800 border-pink-200' },
+// Teintes des sources (clé `color` du registre). Classes écrites en toutes lettres pour que Tailwind les garde ;
+// `hex` sert aux graphiques (Recharts), `active` au bouton sélectionné d'un sélecteur de canal.
+const TINTS = {
+  purple: { badge: 'bg-purple-100 text-purple-800 border-purple-200', tile: 'bg-purple-100 text-purple-700', active: 'bg-purple-50 border-purple-300 text-purple-800', hex: '#a78bfa' },
+  pink: { badge: 'bg-pink-100 text-pink-800 border-pink-200', tile: 'bg-pink-100 text-pink-700', active: 'bg-pink-50 border-pink-300 text-pink-800', hex: '#f472b6' },
+  orange: { badge: 'bg-orange-100 text-orange-800 border-orange-200', tile: 'bg-orange-100 text-orange-700', active: 'bg-orange-50 border-orange-300 text-orange-800', hex: '#fb923c' },
+  teal: { badge: 'bg-teal-100 text-teal-800 border-teal-200', tile: 'bg-teal-100 text-teal-700', active: 'bg-teal-50 border-teal-300 text-teal-800', hex: '#2dd4bf' },
+  rose: { badge: 'bg-rose-100 text-rose-800 border-rose-200', tile: 'bg-rose-100 text-rose-700', active: 'bg-rose-50 border-rose-300 text-rose-800', hex: '#fb7185' },
+  sky: { badge: 'bg-sky-100 text-sky-800 border-sky-200', tile: 'bg-sky-100 text-sky-700', active: 'bg-sky-50 border-sky-300 text-sky-800', hex: '#38bdf8' },
+  emerald: { badge: 'bg-emerald-100 text-emerald-800 border-emerald-200', tile: 'bg-emerald-100 text-emerald-700', active: 'bg-emerald-50 border-emerald-300 text-emerald-800', hex: '#34d399' },
 };
+const NEUTRAL_TINT = { badge: 'bg-gray-100 text-gray-800 border-gray-200', tile: 'bg-gray-100 text-gray-600', active: 'bg-gray-50 border-gray-300 text-gray-800', hex: '#9ca3af' };
+
+export const channelStyle = (channel) => {
+  const source = getSource(channel);
+  return (source && TINTS[source.color]) || NEUTRAL_TINT;
+};
+
+const ICONS = {
+  kofi: KofiLogo,
+  store: (p) => <Store size={p.size} className={p.className} />,
+  bag: (p) => <ShoppingBag size={p.size} className={p.className} />,
+  shirt: (p) => <Shirt size={p.size} className={p.className} />,
+  tag: (p) => <Tag size={p.size} className={p.className} />,
+  users: (p) => <Users size={p.size} className={p.className} />,
+};
+
+// { id: { label, Logo, className } } généré depuis le registre : une source ajoutée apparaît partout sans toucher ici.
+export const CHANNELS = Object.fromEntries(
+  SOURCES.map((s) => [s.id, { label: s.label, Logo: ICONS[s.icon] || ICONS.tag, className: channelStyle(s.id).badge }])
+);
 
 const FallbackLogo = ({ size, className }) => <Package size={size} className={className} />;
 
@@ -24,7 +52,7 @@ export const ChannelBadge = ({ channel }) => {
   const info = CHANNELS[channel] || { label: channel, className: 'bg-gray-100 text-gray-800 border-gray-200' };
 
   return (
-    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${info.className}`}>
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border whitespace-nowrap max-w-full ${info.className}`}>
       <ChannelLogo channel={channel} size={13} />
       {info.label}
     </span>
