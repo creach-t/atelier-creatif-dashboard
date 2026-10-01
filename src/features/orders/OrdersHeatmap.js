@@ -15,9 +15,9 @@ export const heatColor = (count, max) => {
 };
 
 // Calendrier de chaleur : `weeksCount` semaines (lundi -> dimanche), une case par jour.
-// `cellW` / `cellH` = largeur et hauteur d'une case en px (calculées par le widget pour remplir sa place) ;
-// `showStats` / `showLegend` se retirent quand le widget est court.
-export const OrdersHeatmap = ({ orders, weeksCount = 26, selectedDay, onSelectDay, cellW = DEFAULT_CELL, cellH = DEFAULT_CELL, showStats = true, showLegend = true }) => {
+// `cell` = côté d'une case carrée en px (calculé par le widget selon sa taille) ; `showStats` / `showLegend` se retirent
+// quand le widget est court.
+export const OrdersHeatmap = ({ orders, weeksCount = 26, selectedDay, onSelectDay, cell = DEFAULT_CELL, showStats = true, showLegend = true }) => {
   const { weeks, monthLabels, max, total, activeDays, best } = useMemo(() => {
     const counts = {};
     orders.forEach((o) => { if (o.order_date) counts[o.order_date] = (counts[o.order_date] || 0) + 1; });
@@ -81,12 +81,12 @@ export const OrdersHeatmap = ({ orders, weeksCount = 26, selectedDay, onSelectDa
         <div className="inline-flex" style={{ gap: GAP }}>
           <div className="flex flex-col mr-1 pt-[18px] text-[10px] text-gray-400" style={{ gap: GAP }}>
             {['Lun', '', 'Mer', '', 'Ven', '', ''].map((l, i) => (
-              <span key={i} style={{ height: cellH, lineHeight: `${cellH}px` }}>{l}</span>
+              <span key={i} style={{ height: cell, lineHeight: `${cell}px` }}>{l}</span>
             ))}
           </div>
           {weeks.map((days, w) => (
             <div key={w} className="flex flex-col" style={{ gap: GAP }}>
-              <span className="h-[14px] text-[10px] leading-[14px] text-gray-400 whitespace-nowrap">{weeksCount - w > Math.ceil(26 / (cellW + GAP)) ? monthLabels[w] : ''}</span>
+              <span className="h-[14px] text-[10px] leading-[14px] text-gray-400 whitespace-nowrap">{weeksCount - w > Math.ceil(26 / (cell + GAP)) ? monthLabels[w] : ''}</span>
               {days.map((day) => {
                 const isBest = day.count > 0 && day.count === max && max > 1;
                 return (
@@ -97,8 +97,8 @@ export const OrdersHeatmap = ({ orders, weeksCount = 26, selectedDay, onSelectDa
                     title={`${formatDate(day.key)} : ${plural(day.count, 'commande')}`}
                     aria-label={`${formatDate(day.key)} : ${plural(day.count, 'commande')}`}
                     style={{
-                      width: cellW,
-                      height: cellH,
+                      width: cell,
+                      height: cell,
                       background: day.future ? 'transparent' : heatColor(day.count, max),
                       boxShadow: isBest ? '0 0 8px 1px hsla(262, 80%, 45%, 0.55)' : undefined,
                     }}

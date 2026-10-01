@@ -5,15 +5,15 @@ import { CHANNEL_OPTIONS } from '../core/widgets/common';
 import { useData } from '../data/DataProvider';
 import { useOverlays } from '../features/overlays/OverlayProvider';
 import { OrdersHeatmap } from '../features/orders/OrdersHeatmap';
-import { heatmapCellSize } from '../features/orders/heatmapLayout';
+import { heatmapGrid } from '../features/orders/heatmapLayout';
 import { OrderRow } from '../features/orders/OrderRow';
 import { formatDate } from '../core/metrics/format';
 import { ScaleToFit } from '../core/widgets/ScaleToFit';
 import { Paged } from '../core/widgets/Fit';
 
-// Le calendrier tient toujours en entier, sans défilement : les cases s'étirent pour remplir la largeur ET la hauteur
-// du widget (sans devenir démesurément allongées), et si le tout dépasse encore, le contenu est réduit à l'échelle.
-// Court : on retire les chiffres et la légende.
+// Le calendrier tient toujours en entier, sans défilement, avec des cases carrées : leur taille suit la hauteur du
+// widget, puis on ajoute autant de semaines que la largeur en accepte (la durée choisie est un minimum). Si le tout
+// dépasse encore, le contenu est réduit à l'échelle. Court : on retire les chiffres et la légende.
 const CalendarView = ({ config, size }) => {
   const { orders } = useData();
   const { openOrder } = useOverlays();
@@ -22,13 +22,12 @@ const CalendarView = ({ config, size }) => {
   const scoped = useMemo(() => orders.filter((o) => config.channel === 'all' || o.channel === config.channel), [orders, config.channel]);
   const dayOrders = useMemo(() => (day ? scoped.filter((o) => o.order_date === day) : []), [scoped, day]);
 
-  const weeks = Number(config.weeks);
   const tall = size.hTier === 'md' || size.hTier === 'lg';
-  const { cellW, cellH } = heatmapCellSize({ ...size, weeks, showStats: tall, dayOpen: Boolean(day) });
+  const { cell, weeks } = heatmapGrid({ ...size, minWeeks: Number(config.weeks), showStats: tall, dayOpen: Boolean(day) });
 
   return (
     <ScaleToFit>
-      <OrdersHeatmap orders={scoped} weeksCount={weeks} selectedDay={day} onSelectDay={setDay} cellW={cellW} cellH={cellH} showStats={tall} showLegend={tall} />
+      <OrdersHeatmap orders={scoped} weeksCount={weeks} selectedDay={day} onSelectDay={setDay} cell={cell} showStats={tall} showLegend={tall} />
       {day && (
         <div className="mt-3 border-t border-purple-100 pt-3">
           <p className="text-xs font-semibold text-gray-500 mb-2">{formatDate(day)}</p>
@@ -53,7 +52,7 @@ defineWidget({
   size: { w: 12, h: 9, minW: 4, minH: 6, maxW: 12, maxH: 20 },
   defaultConfig: { weeks: 26, channel: 'all' },
   schema: [
-    { key: 'weeks', label: 'Durée', type: 'select', options: [{ value: 12, label: '3 mois' }, { value: 26, label: '6 mois' }, { value: 52, label: '1 an' }] },
+    { key: 'weeks', label: 'Durée minimale', help: 'Le calendrier ajoute des semaines tant que la largeur du widget le permet.', type: 'select', options: [{ value: 12, label: '3 mois' }, { value: 26, label: '6 mois' }, { value: 52, label: '1 an' }] },
     { key: 'channel', label: 'Canal', type: 'select', options: CHANNEL_OPTIONS.map((o) => ({ ...o, label: o.value === 'all' ? 'Tous' : o.label })) },
   ],
   component: CalendarView,
