@@ -67,4 +67,4 @@ function validateOrderFields(body) {
   return null;
 }
 
-module.exports = { isUuid, isDay, isFiniteNumber, optionalString, validItems, validExtras, validateOrderFields, MAX_AMOUNT };
+module.exports = { CHANNELS, STATUSES, isUuid, isDay, isFiniteNumber, optionalString, validItems, validExtras, validateOrderFields, MAX_AMOUNT };
